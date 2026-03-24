@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+*.db
+
+# Poetry
+poetry.lock
+
+# Node / frontend vendor
+frontend/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+
+uploads/

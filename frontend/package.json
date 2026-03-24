@@ -1,0 +1,11 @@
+{
+  "name": "homeerp-frontend",
+  "private": true,
+  "scripts": {
+    "vendor": "node vendor-copy.js"
+  },
+  "dependencies": {
+    "html5-qrcode": "2.3.8",
+    "lucide": "0.468.0"
+  }
+}

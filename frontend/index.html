@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HomeERP</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script src="/static/vendor/lucide.min.js"></script>
+  <script src="/static/vendor/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <div id="app-shell">
+
+    <!-- Desktop sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <i data-lucide="package-2" class="sidebar-logo-icon"></i>
+        <span class="sidebar-title">HomeERP</span>
+      </div>
+      <ul class="nav-list">
+        <li>
+          <a href="#dashboard" class="nav-link" data-page="dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#products" class="nav-link" data-page="products">
+            <i data-lucide="boxes"></i>
+            <span data-i18n="nav.products">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="#stock" class="nav-link" data-page="stock">
+            <i data-lucide="layers"></i>
+            <span data-i18n="nav.stock">Stock</span>
+          </a>
+        </li>
+        <li>
+          <a href="#scanner" class="nav-link" data-page="scanner">
+            <i data-lucide="scan-barcode"></i>
+            <span data-i18n="nav.scanner">Scanner</span>
+          </a>
+        </li>
+        <li>
+          <a href="#inventory" class="nav-link" data-page="inventory">
+            <i data-lucide="clipboard-check"></i>
+            <span data-i18n="nav.inventory">Inventory</span>
+          </a>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="#settings" class="nav-link" data-page="settings">
+          <i data-lucide="settings"></i>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+        <a href="#apidocs" class="nav-link" data-page="apidocs">
+          <i data-lucide="code-2"></i>
+          <span data-i18n="nav.apidocs">API Docs</span>
+        </a>
+        <div class="sidebar-version" id="sidebar-version"></div>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main id="app-content">
+      <div class="page-loading">
+        <i data-lucide="loader-circle" class="spin"></i>
+      </div>
+    </main>
+
+    <!-- Mobile bottom nav -->
+    <nav id="bottom-nav">
+      <a href="#dashboard" class="tab-item" data-page="dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span data-i18n="nav.home">Home</span>
+      </a>
+      <a href="#products" class="tab-item" data-page="products">
+        <i data-lucide="boxes"></i>
+        <span data-i18n="nav.products">Products</span>
+      </a>
+      <a href="#stock" class="tab-item" data-page="stock">
+        <i data-lucide="layers"></i>
+        <span data-i18n="nav.stock">Stock</span>
+      </a>
+      <a href="#scanner" class="tab-item" data-page="scanner">
+        <i data-lucide="scan-barcode"></i>
+        <span data-i18n="nav.scan">Scan</span>
+      </a>
+      <button class="tab-item" id="btn-more-nav" aria-label="Mehr">
+        <i data-lucide="more-horizontal"></i>
+        <span data-i18n="nav.more">More</span>
+      </button>
+    </nav>
+
+    <!-- Mobile more-menu sheet -->
+    <div id="more-menu-backdrop"></div>
+    <div id="more-menu" role="dialog" aria-label="Weitere Seiten">
+      <div class="more-menu-handle"></div>
+      <nav class="more-menu-grid">
+        <a href="#inventory" class="tab-item" data-page="inventory" data-more>
+          <i data-lucide="clipboard-check"></i>
+          <span data-i18n="nav.inventory">Inventory</span>
+        </a>
+        <a href="#settings" class="tab-item" data-page="settings" data-more>
+          <i data-lucide="settings"></i>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+        <a href="#apidocs" class="tab-item" data-page="apidocs" data-more>
+          <i data-lucide="code-2"></i>
+          <span data-i18n="nav.apidocs">API Docs</span>
+        </a>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
