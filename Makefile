@@ -1,10 +1,11 @@
 .PHONY: run install
 
 VENV ?= .venv/bin
+BIN = $(if $(VENV),$(VENV)/,)
 
 run:
-	$(VENV)/alembic upgrade head
-	$(VENV)/uvicorn backend.main:app --reload
+	$(BIN)alembic upgrade head
+	$(BIN)uvicorn backend.main:app --reload
 
 install:
 	python3 -m venv .venv
