@@ -5,6 +5,7 @@ import tempfile
 import uuid
 import zipfile
 from datetime import date
+from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -15,9 +16,13 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Session
 
 from ..database import Base, get_db
+from ..models import Product
 
 export_router = APIRouter()
 import_router = APIRouter()
+
+UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(Path(__file__).parent.parent.parent / "uploads")))
+IMAGES_ZIP_FOLDER = "images"
 
 # In-memory map of pending import sessions: {import_id: temp_file_path}
 _pending_imports: dict[str, str] = {}
@@ -64,18 +69,27 @@ def _coerce_row(cls, row_data: dict) -> dict:
     return result
 
 
-def _parse_zip(zip_path: str) -> dict[str, list[dict]]:
-    """Read a ZIP and return {table_name: [row_dicts]} for every .json entry."""
-    result = {}
+def _parse_zip(zip_path: str) -> tuple[dict[str, list[dict]], list[str]]:
+    """Read a ZIP and return (table_data, image_names).
+
+    table_data  — {table_name: [row_dicts]} for every *.json entry
+    image_names — list of ZIP entry names inside the images/ folder
+    """
+    table_data: dict[str, list[dict]] = {}
+    image_names: list[str] = []
+
     with zipfile.ZipFile(zip_path, 'r') as zf:
         for name in zf.namelist():
-            if not name.endswith('.json'):
-                continue
-            table_name = name[:-5]  # strip .json
-            raw = zf.read(name).decode('utf-8')
-            rows = [json.loads(line) for line in raw.splitlines() if line.strip()]
-            result[table_name] = rows
-    return result
+            if name.endswith('.json'):
+                table_name = name[:-5]
+                raw = zf.read(name).decode('utf-8')
+                table_data[table_name] = [
+                    json.loads(line) for line in raw.splitlines() if line.strip()
+                ]
+            elif name.startswith(f"{IMAGES_ZIP_FOLDER}/") and not name.endswith('/'):
+                image_names.append(name)
+
+    return table_data, image_names
 
 
 # ── Export ────────────────────────────────────────────────────────────────────
@@ -87,9 +101,9 @@ def list_exportable_models(db: Session = Depends(get_db)):
     for table_name, cls in sorted(model_map.items()):
         count = db.query(cls).count()
         result.append({
-            "table_name": table_name,
+            "table_name":   table_name,
             "display_name": table_name.replace('_', ' ').title(),
-            "row_count": count,
+            "row_count":    count,
         })
     return result
 
@@ -111,6 +125,14 @@ def export_data(req: ExportRequest, db: Session = Depends(get_db)):
             rows = db.query(cls).all()
             lines = '\n'.join(json.dumps(_row_to_dict(r), ensure_ascii=False) for r in rows)
             zf.writestr(f"{table_name}.json", lines)
+
+        # Bundle product images whenever the products table is selected
+        if "products" in req.tables:
+            for product in db.query(Product).filter(Product.image_path.isnot(None)).all():
+                filename = Path(product.image_path).name
+                img_path = UPLOADS_DIR / filename
+                if img_path.exists():
+                    zf.write(img_path, f"{IMAGES_ZIP_FOLDER}/{filename}")
 
     zip_buffer.seek(0)
     return StreamingResponse(
@@ -135,7 +157,7 @@ async def import_preview(file: UploadFile = File(...)):
         content = await file.read()
         with open(tmp_path, 'wb') as f:
             f.write(content)
-        table_data = _parse_zip(tmp_path)
+        table_data, image_names = _parse_zip(tmp_path)
     except HTTPException:
         raise
     except Exception as e:
@@ -151,13 +173,22 @@ async def import_preview(file: UploadFile = File(...)):
 
     preview = [
         {
-            "table_name": table_name,
+            "table_name":   table_name,
             "display_name": table_name.replace('_', ' ').title(),
-            "row_count": len(rows),
-            "known": table_name in model_map,
+            "row_count":    len(rows),
+            "known":        table_name in model_map,
         }
         for table_name, rows in sorted(table_data.items())
     ]
+
+    # Synthetic entry for product images
+    if image_names:
+        preview.append({
+            "table_name":   "__images__",
+            "display_name": "Produktfotos",
+            "row_count":    len(image_names),
+            "known":        True,
+        })
 
     return {"import_id": import_id, "preview": preview}
 
@@ -170,60 +201,92 @@ def import_apply(import_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Import session not found or expired.")
 
     try:
-        table_data = _parse_zip(tmp_path)
+        table_data, image_names = _parse_zip(tmp_path)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Could not read import file: {e}")
-    finally:
         try:
             os.unlink(tmp_path)
         except OSError:
             pass
+        raise HTTPException(status_code=400, detail=f"Could not read import file: {e}")
 
-    model_map = _get_model_map()
+    model_map     = _get_model_map()
     ordered_names = _sorted_table_names()
-
-    # Process known tables in topological order; unknown tables are reported as skipped
     known_ordered = [t for t in ordered_names if t in table_data and t in model_map]
-    unknown = [t for t in sorted(table_data) if t not in model_map]
+    unknown       = [t for t in sorted(table_data) if t not in model_map]
 
     results = []
 
+    # ── Import DB rows ────────────────────────────────────────────────────────
     for table_name in known_ordered:
-        rows = table_data[table_name]
-        cls = model_map[table_name]
-        imported = 0
+        rows      = table_data[table_name]
+        cls       = model_map[table_name]
+        imported  = 0
         error_msg = None
         try:
             with db.begin_nested():
                 for row_data in rows:
-                    coerced = _coerce_row(cls, row_data)
-                    db.merge(cls(**coerced))
+                    db.merge(cls(**_coerce_row(cls, row_data)))
                     imported += 1
         except Exception as e:
             error_msg = str(e)
-            imported = 0
+            imported  = 0
 
         results.append({
-            "table_name": table_name,
+            "table_name":   table_name,
             "display_name": table_name.replace('_', ' ').title(),
-            "imported": imported,
-            "total": len(rows),
-            "error": error_msg,
+            "imported":     imported,
+            "total":        len(rows),
+            "error":        error_msg,
         })
 
     for table_name in unknown:
         results.append({
-            "table_name": table_name,
+            "table_name":   table_name,
             "display_name": table_name.replace('_', ' ').title(),
-            "imported": 0,
-            "total": len(table_data[table_name]),
-            "error": "unknown_table",
+            "imported":     0,
+            "total":        len(table_data[table_name]),
+            "error":        "unknown_table",
         })
 
     try:
         db.commit()
     except Exception as e:
         db.rollback()
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
         raise HTTPException(status_code=500, detail=f"Commit failed: {e}")
+
+    # ── Extract product images ────────────────────────────────────────────────
+    if image_names:
+        UPLOADS_DIR.mkdir(exist_ok=True)
+        imported_images = 0
+        image_errors: list[str] = []
+        try:
+            with zipfile.ZipFile(tmp_path, 'r') as zf:
+                for name in image_names:
+                    filename = Path(name).name
+                    target   = UPLOADS_DIR / filename
+                    try:
+                        target.write_bytes(zf.read(name))
+                        imported_images += 1
+                    except Exception as e:
+                        image_errors.append(f"{filename}: {e}")
+        except Exception as e:
+            image_errors.append(str(e))
+
+        results.append({
+            "table_name":   "__images__",
+            "display_name": "Produktfotos",
+            "imported":     imported_images,
+            "total":        len(image_names),
+            "error":        '; '.join(image_errors) if image_errors else None,
+        })
+
+    try:
+        os.unlink(tmp_path)
+    except OSError:
+        pass
 
     return {"results": results}

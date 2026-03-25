@@ -369,8 +369,10 @@ const en = {
     status_ok:               'OK',
     status_error:            'Error',
     status_skipped:          'Skipped',
-    toast_import_done:       'Import completed successfully.',
+    toast_import_done:        'Import completed successfully.',
     toast_import_with_errors: 'Import finished — some tables could not be imported.',
+    images_label:             'Product images',
+    export_images_hint:       'Product images are automatically included in the export when the "Products" table is selected.',
   },
 
   stockid: {

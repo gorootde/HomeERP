@@ -44,7 +44,7 @@ export async function render() {
           </label>
         `).join('')}
       </div>
-      <div class="export-actions">
+        <div class="export-actions">
         <button class="btn btn-primary" id="btn-export">
           <i data-lucide="download"></i>
           ${t('data_transfer.btn_export')}
@@ -52,6 +52,10 @@ export async function render() {
         <span id="export-status" class="text-muted text-sm"></span>
       </div>
     </div>
+    <p class="text-muted text-sm" style="margin-top:8px;max-width:560px">
+      <i data-lucide="image" style="width:13px;height:13px;vertical-align:-2px"></i>
+      ${t('data_transfer.export_images_hint')}
+    </p>
 
     <!-- ── Import ── -->
     <div class="section-heading" style="margin-top:40px">${t('data_transfer.import_title')}</div>
@@ -231,15 +235,19 @@ export async function render() {
 
       const tbody = content.querySelector('#preview-tbody');
       tbody.innerHTML = data.preview.map(row => {
+        const isImages = row.table_name === '__images__';
         const badge = row.known
           ? `<span class="badge badge-green">${t('data_transfer.status_known')}</span>`
           : `<span class="badge badge-gray">${t('data_transfer.status_unknown')}</span>`;
+        const icon = isImages ? `<i data-lucide="image" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>` : '';
+        const label = isImages ? t('data_transfer.images_label') : escHtml(row.display_name);
         return `<tr>
-          <td>${escHtml(row.display_name)}</td>
+          <td>${icon}${label}</td>
           <td>${row.row_count}</td>
           <td>${badge}</td>
         </tr>`;
       }).join('');
+      lucide.createIcons({ nodes: [tbody] });
 
       previewPanel.style.display = '';
       btnImport.disabled = data.preview.every(r => !r.known);
@@ -268,6 +276,7 @@ export async function render() {
       const hasErrors = data.results.some(r => r.error);
       const tbody = content.querySelector('#result-tbody');
       tbody.innerHTML = data.results.map(row => {
+        const isImages = row.table_name === '__images__';
         let statusCell;
         if (row.error === 'unknown_table') {
           statusCell = `<span class="badge badge-gray">${t('data_transfer.status_skipped')}</span>`;
@@ -276,13 +285,16 @@ export async function render() {
         } else {
           statusCell = `<span class="badge badge-green">${t('data_transfer.status_ok')}</span>`;
         }
+        const icon  = isImages ? `<i data-lucide="image" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>` : '';
+        const label = isImages ? t('data_transfer.images_label') : escHtml(row.display_name);
         return `<tr>
-          <td>${escHtml(row.display_name)}</td>
+          <td>${icon}${label}</td>
           <td>${row.imported}</td>
           <td>${row.total}</td>
           <td>${statusCell}</td>
         </tr>`;
       }).join('');
+      lucide.createIcons({ nodes: [tbody] });
 
       previewPanel.style.display = 'none';
       resultPanel.style.display  = '';
