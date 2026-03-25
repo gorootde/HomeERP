@@ -7,8 +7,9 @@ import * as scanner    from './scanner.js';
 import * as inventory  from './inventory.js';
 import * as units      from './units.js';
 import * as categories from './categories.js';
-import * as settings   from './settings.js';
-import * as stockid    from './stockid.js';
+import * as settings      from './settings.js';
+import * as stockid       from './stockid.js';
+import * as dataTransfer  from './data_transfer.js';
 
 const apidocs = {
   render() {
@@ -26,9 +27,10 @@ const ROUTES = {
   inventory:  inventory,
   units:      units,
   categories: categories,
-  settings:   settings,
-  stockid:    stockid,
-  apidocs:    apidocs,
+  settings:      settings,
+  stockid:       stockid,
+  data_transfer: dataTransfer,
+  apidocs:       apidocs,
 };
 
 window.AppState = {

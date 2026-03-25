@@ -41,6 +41,14 @@ export function render() {
         </div>
         <i data-lucide="chevron-right" class="settings-card-arrow"></i>
       </a>
+      <a href="#data_transfer" class="settings-card">
+        <div class="settings-card-icon"><i data-lucide="hard-drive-download"></i></div>
+        <div>
+          <div class="settings-card-title">${t('settings.data_transfer_title')}</div>
+          <div class="settings-card-desc">${t('settings.data_transfer_desc')}</div>
+        </div>
+        <i data-lucide="chevron-right" class="settings-card-arrow"></i>
+      </a>
     </div>
 
     <div class="page-header" style="margin-top:32px">

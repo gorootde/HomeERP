@@ -1300,6 +1300,74 @@ hr.divider {
   flex-shrink: 0;
 }
 
+/* ── Export / data-transfer page ────────────────────────────────────────────── */
+.export-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 8px 0;
+  max-width: 560px;
+}
+
+.export-model-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.export-model-row:hover { background: var(--color-bg); }
+
+.export-model-row input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+.export-model-name { flex: 1; font-size: 0.9375rem; }
+
+.export-model-row--header .export-model-name { font-weight: 600; }
+
+.export-model-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
+}
+
+.export-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px 8px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.import-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+.import-drop-zone i { width: 32px; height: 32px; }
+.import-drop-zone:hover,
+.import-drop-zone.drag-over {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
 /* ── Settings radio cards ────────────────────────────────────────────────────── */
 .settings-radio-group {
   display: flex;
