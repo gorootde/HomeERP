@@ -48,4 +48,4 @@ ENV UPLOADS_DIR=/app/uploads
 EXPOSE 8000
 
 # Run migrations, then start the server
-CMD ["make", "run", "VENV="]
+CMD ["make", "run", "VENV=", "HOST=0.0.0.0"]
