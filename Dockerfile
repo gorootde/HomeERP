@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir poetry
 # Install dependencies (no virtualenv inside the container)
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --only main
+    && poetry install --no-interaction --no-ansi --only main --no-root
 
 # Copy application source
 COPY backend/    backend/
