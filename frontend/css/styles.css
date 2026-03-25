@@ -789,6 +789,50 @@ tbody td {
   padding: 10px 14px;
 }
 
+.scanner-hint {
+  margin-top: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 4px 0;
+}
+
+.scanner-hint-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.scanner-hint-row + .scanner-hint-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.scanner-hint-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.scanner-hint-icon i { width: 16px; height: 16px; }
+.scanner-hint-icon--ean     { background: #DBEAFE; color: #1D4ED8; }
+.scanner-hint-icon--stockid { background: #EDE9FE; color: #6D28D9; }
+
+.scanner-hint-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+.scanner-hint-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
 .off-prefill-banner {
   display: flex;
   align-items: center;

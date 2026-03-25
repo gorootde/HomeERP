@@ -309,6 +309,10 @@ const de = {
     toast_entry_created:  'Bestandseintrag für "{name}" angelegt',
     off_banner_label:     'Daten von OpenFoodFacts übernommen',
     off_banner_hint:      'Bitte Angaben prüfen und ggf. anpassen.',
+    hint_ean_title:       'EAN / Barcode',
+    hint_ean_desc:        'Sucht das zugehörige Produkt und öffnet den Dialog für einen neuen Bestandseintrag. Unbekannte Codes können direkt als neues Produkt angelegt werden.',
+    hint_stockid_title:   'Stock ID ({prefix}…)',
+    hint_stockid_desc:    'Öffnet den Bestandseintrag direkt — Menge entnehmen oder anpassen.',
   },
 
   nav: {

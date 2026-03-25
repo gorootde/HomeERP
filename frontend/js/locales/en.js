@@ -309,6 +309,10 @@ const en = {
     toast_entry_created:  'Stock entry for "{name}" created',
     off_banner_label:     'Data from OpenFoodFacts',
     off_banner_hint:      'Please review and adjust the details if needed.',
+    hint_ean_title:       'EAN / Barcode',
+    hint_ean_desc:        'Looks up the matching product and opens the stock entry dialog. Unknown codes can be created as a new product on the spot.',
+    hint_stockid_title:   'Stock ID ({prefix}…)',
+    hint_stockid_desc:    'Opens the stock entry directly — take out or adjust the quantity.',
   },
 
   nav: {

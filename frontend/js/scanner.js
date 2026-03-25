@@ -26,6 +26,16 @@ export async function render() {
     };
   } catch (_) {}
 
+  const stockIdActive = _settings.mode === 'generated' && !!_settings.prefix;
+  const stockIdHintRow = stockIdActive ? `
+    <div class="scanner-hint-row">
+      <span class="scanner-hint-icon scanner-hint-icon--stockid"><i data-lucide="qr-code"></i></span>
+      <div>
+        <div class="scanner-hint-title">${t('scanner.hint_stockid_title', { prefix: escHtml(_settings.prefix) })}</div>
+        <div class="scanner-hint-desc">${t('scanner.hint_stockid_desc')}</div>
+      </div>
+    </div>` : '';
+
   content.innerHTML = `
     <div class="page-header">
       <h1 class="page-title">${t('scanner.title')}</h1>
@@ -36,6 +46,16 @@ export async function render() {
         ${t('scanner.status_starting')}
       </div>
       <div id="scan-result"></div>
+      <div class="scanner-hint">
+        <div class="scanner-hint-row">
+          <span class="scanner-hint-icon scanner-hint-icon--ean"><i data-lucide="scan-barcode"></i></span>
+          <div>
+            <div class="scanner-hint-title">${t('scanner.hint_ean_title')}</div>
+            <div class="scanner-hint-desc">${t('scanner.hint_ean_desc')}</div>
+          </div>
+        </div>
+        ${stockIdHintRow}
+      </div>
     </div>`;
 
   await startScanner();
