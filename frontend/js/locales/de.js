@@ -131,6 +131,7 @@ const de = {
     col_qty:         'Menge',
     col_bbd:         'MHD',
     col_comment:     'Kommentar',
+    col_stockids:    'Stock IDs',
     empty:           'Noch keine Bestandseinträge.',
     empty_filter:    'Keine Einträge für diesen Filter.',
     confirm_delete:  'Bestandseintrag löschen?',

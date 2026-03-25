@@ -36,8 +36,7 @@ function renderView(content, entries, products, vaults) {
       : '<span class="text-muted">—</span>';
 
     const tagChips = renderTagChips(e.tags);
-
-    const qrChips = renderStockIdChips(e.stock_ids);
+    const qrChips  = renderStockIdChips(e.stock_ids);
     const unitAbbr = e.product.unit ? ' ' + escHtml(e.product.unit.abbreviation) : '';
     return `
       <tr>
@@ -45,12 +44,12 @@ function renderView(content, entries, products, vaults) {
           <div class="font-semibold">${escHtml(e.product.name)}</div>
           <div class="text-muted text-sm">${escHtml(e.product.vendor)} · ${escHtml(e.product.size)}${unitAbbr}</div>
           ${tagChips ? `<div class="item-tags mt-1">${tagChips}</div>` : ''}
-          ${qrChips ? `<div class="ean-tags mt-1">${qrChips}</div>` : ''}
         </td>
         <td class="text-muted">${escHtml(e.vault.description)}</td>
         <td><span class="badge badge-blue">${fmtQty(e.quantity)}</span></td>
         <td>${bbdCell}</td>
         <td class="text-muted text-sm">${escHtml(e.comment ?? '')}</td>
+        <td>${qrChips || '<span class="text-muted">—</span>'}</td>
         <td>
           <div class="td-actions">
             <button class="btn btn-ghost btn-sm" data-edit="${e.id}"><i data-lucide="pencil"></i></button>
@@ -62,7 +61,7 @@ function renderView(content, entries, products, vaults) {
   }).join('');
 
   const emptyRow = `
-    <tr><td colspan="6">
+    <tr><td colspan="7">
       <div class="empty-state"><i data-lucide="layers"></i><p>${t('stock.empty')}</p></div>
     </td></tr>`;
 
@@ -97,6 +96,7 @@ function renderView(content, entries, products, vaults) {
               <th>${t('stock.col_qty')}</th>
               <th>${t('stock.col_bbd')}</th>
               <th>${t('stock.col_comment')}</th>
+              <th>${t('stock.col_stockids')}</th>
               <th></th>
             </tr>
           </thead>
@@ -130,7 +130,7 @@ function rebuildRows(entries) {
   const tbody = document.getElementById('entries-tbody');
   if (!tbody) return;
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i data-lucide="layers"></i><p>${t('stock.empty_filter')}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i data-lucide="layers"></i><p>${t('stock.empty_filter')}</p></div></td></tr>`;
     lucide.createIcons();
     return;
   }
@@ -141,7 +141,7 @@ function rebuildRows(entries) {
       ? `<span class="badge ${isExpired ? 'badge-red' : 'badge-green'}">${fmtDate(bbd)}</span>`
       : '<span class="text-muted">—</span>';
     const tagChips = renderTagChips(e.tags);
-    const qrChips = renderStockIdChips(e.stock_ids);
+    const qrChips  = renderStockIdChips(e.stock_ids);
     const unitAbbr = e.product.unit ? ' ' + escHtml(e.product.unit.abbreviation) : '';
     return `
       <tr>
@@ -149,12 +149,12 @@ function rebuildRows(entries) {
           <div class="font-semibold">${escHtml(e.product.name)}</div>
           <div class="text-muted text-sm">${escHtml(e.product.vendor)} · ${escHtml(e.product.size)}${unitAbbr}</div>
           ${tagChips ? `<div class="item-tags mt-1">${tagChips}</div>` : ''}
-          ${qrChips ? `<div class="ean-tags mt-1">${qrChips}</div>` : ''}
         </td>
         <td class="text-muted">${escHtml(e.vault.description)}</td>
         <td><span class="badge badge-blue">${fmtQty(e.quantity)}</span></td>
         <td>${bbdCell}</td>
         <td class="text-muted text-sm">${escHtml(e.comment ?? '')}</td>
+        <td>${qrChips || '<span class="text-muted">—</span>'}</td>
         <td>
           <div class="td-actions">
             <button class="btn btn-ghost btn-sm" data-edit="${e.id}"><i data-lucide="pencil"></i></button>

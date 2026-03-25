@@ -131,6 +131,7 @@ const en = {
     col_qty:         'Qty',
     col_bbd:         'Best before',
     col_comment:     'Comment',
+    col_stockids:    'Stock IDs',
     empty:           'No stock entries yet.',
     empty_filter:    'No entries match the filter.',
     confirm_delete:  'Delete this stock entry?',

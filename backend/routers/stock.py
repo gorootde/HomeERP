@@ -151,6 +151,30 @@ def _get_setting(db: Session, key: str, default: str = "") -> str:
     return s.value if s else default
 
 
+def _apply_generated_stock_id(entry: StockEntry, db: Session) -> None:
+    """If mode is 'generated', build an incremental ID and attach it to the entry."""
+    if _get_setting(db, "stock_id_mode") != "generated":
+        return
+    prefix     = _get_setting(db, "stock_id_prefix", "")
+    counter    = int(_get_setting(db, "stock_id_counter", "0") or "0")
+    pad_length = int(_get_setting(db, "stock_id_pad_length", "0") or "0")
+
+    next_counter = counter + 1
+    num_str = str(next_counter).zfill(pad_length) if pad_length > 0 else str(next_counter)
+    code = f"{prefix}{num_str}"
+
+    # Persist incremented counter
+    setting = db.get(Setting, "stock_id_counter")
+    if setting:
+        setting.value = str(next_counter)
+    else:
+        db.add(Setting(key="stock_id_counter", value=str(next_counter)))
+
+    db.add(StockEntryId(code=code, stock_entry_id=entry.id))
+    db.commit()
+    db.refresh(entry)
+
+
 def _apply_webhook_stock_id(entry: StockEntry, db: Session) -> None:
     """If mode is 'extern', call the configured webhook and attach the returned ID."""
     if _get_setting(db, "stock_id_mode") != "extern":
@@ -190,6 +214,7 @@ def create_stock_entry(data: StockEntryCreate, db: Session = Depends(get_db)):
     db.add(entry)
     db.commit()
     db.refresh(entry)
+    _apply_generated_stock_id(entry, db)
     _apply_webhook_stock_id(entry, db)
     return entry
 
