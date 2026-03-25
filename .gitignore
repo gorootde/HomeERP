@@ -6,8 +6,7 @@ __pycache__/
 dist/
 *.db
 
-# Poetry
-poetry.lock
+
 
 # Node / frontend vendor
 frontend/node_modules/
