@@ -24,6 +24,7 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --only main --no-root
 
 # Copy application source
+COPY Makefile    ./
 COPY backend/    backend/
 COPY migrations/ migrations/
 COPY alembic.ini ./
