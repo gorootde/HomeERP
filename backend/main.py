@@ -19,16 +19,23 @@ app.include_router(ean_lookup.router, prefix="/api/ean-info", tags=["ean-info"])
 app.include_router(data_transfer.export_router, prefix="/api/export", tags=["export"])
 app.include_router(data_transfer.import_router, prefix="/api/import", tags=["import"])
 
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+FRONTEND_DIR = Path(os.getenv("FRONTEND_DIR", str(Path(__file__).parent.parent / "frontend_dist")))
 UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(Path(__file__).parent.parent / "uploads")))
 UPLOADS_DIR.mkdir(exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
-app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+# Serve SvelteKit static assets under /_app
+_app_dir = FRONTEND_DIR / "_app"
+if _app_dir.exists():
+    app.mount("/_app", StaticFiles(directory=str(_app_dir)), name="spa_assets")
 
 
 @app.get("/{full_path:path}", include_in_schema=False)
 async def spa_fallback(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
-    return FileResponse(FRONTEND_DIR / "index.html")
+    index = FRONTEND_DIR / "index.html"
+    if index.exists():
+        return FileResponse(str(index))
+    raise HTTPException(status_code=404, detail="Frontend not found")

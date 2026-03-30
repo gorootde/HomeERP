@@ -106,6 +106,7 @@ class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     size: str = Field(..., min_length=1, max_length=64)
     unit_id: int
+    entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
 
     @field_validator('size')
@@ -121,6 +122,7 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     size: Optional[str] = Field(None, min_length=1, max_length=64)
     unit_id: Optional[int] = None  # optional in PATCH-style update, but UI always sends a value
+    entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
 
     @field_validator('size')

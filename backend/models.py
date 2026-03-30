@@ -90,9 +90,10 @@ class Product(Base):
     vendor      = Column(String(255), nullable=False)
     name        = Column(String(255), nullable=False)
     size        = Column(String(64), nullable=False)
-    unit_id     = Column(Integer, ForeignKey("units.id"), nullable=True)
-    category_id = Column(Integer, ForeignKey("product_categories.id"), nullable=True)
-    image_path  = Column(String(512), nullable=True)
+    unit_id         = Column(Integer, ForeignKey("units.id"), nullable=True)
+    entry_unit_key  = Column(String(64), nullable=True)   # 'base' | 'puc_<id>' | 'global_<id>'
+    category_id     = Column(Integer, ForeignKey("product_categories.id"), nullable=True)
+    image_path      = Column(String(512), nullable=True)
 
     unit     = relationship("Unit")
     category = relationship("ProductCategory", back_populates="products")
