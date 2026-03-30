@@ -84,6 +84,12 @@ function renderView(content, entries, products, vaults) {
         <option value="">${t('stock.filter_all_products')}</option>
         ${products.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}
       </select>
+      <select id="filter-expiry">
+        <option value="">${t('stock.filter_expiry_all')}</option>
+        <option value="7">${t('stock.filter_expiry_7d')}</option>
+        <option value="30">${t('stock.filter_expiry_30d')}</option>
+        <option value="180">${t('stock.filter_expiry_6m')}</option>
+      </select>
     </div>
 
     <div class="table-container">
@@ -107,17 +113,29 @@ function renderView(content, entries, products, vaults) {
 
   // ── Filter logic ─────────────────────────────────────────────────────────
   const applyFilter = () => {
-    const vaultId   = Number(document.getElementById('filter-vault').value)   || null;
-    const productId = Number(document.getElementById('filter-product').value) || null;
-    const filtered  = entries.filter(e =>
-      (!vaultId   || e.vault_id   === vaultId) &&
-      (!productId || e.product_id === productId)
-    );
+    const vaultId    = Number(document.getElementById('filter-vault').value)   || null;
+    const productId  = Number(document.getElementById('filter-product').value) || null;
+    const expiryDays = Number(document.getElementById('filter-expiry').value)  || null;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const filtered = entries.filter(e => {
+      if (vaultId   && e.vault_id   !== vaultId)   return false;
+      if (productId && e.product_id !== productId)  return false;
+      if (expiryDays) {
+        if (!e.best_before_date) return false;
+        const bbd = new Date(e.best_before_date);
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() + expiryDays);
+        if (bbd < now || bbd > cutoff) return false;
+      }
+      return true;
+    });
     rebuildRows(filtered);
   };
 
   document.getElementById('filter-vault').addEventListener('change', applyFilter);
   document.getElementById('filter-product').addEventListener('change', applyFilter);
+  document.getElementById('filter-expiry').addEventListener('change', applyFilter);
 
   document.getElementById('btn-add-entry').addEventListener('click', () => {
     showEntryModal(null, products, vaults);
