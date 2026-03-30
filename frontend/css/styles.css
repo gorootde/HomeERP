@@ -1608,3 +1608,131 @@ hr.divider {
   color: var(--color-text-muted);
 }
 .font-semibold { font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS — iPhone & small viewports
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Prevent iOS from auto-zooming into focused inputs (requires ≥ 16px) */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* Safe-area insets for iPhone X+ notch / home indicator */
+@media (max-width: 767px) {
+  #bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+  #app-content {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+  #toast-container {
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+    right: 12px;
+    left: 12px;
+    align-items: stretch;
+  }
+  .toast { max-width: 100%; }
+  #more-menu {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Filter bar: stack vertically on mobile ──────────────────────────────────── */
+@media (max-width: 767px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .filter-bar select {
+    width: 100%;
+  }
+}
+
+/* ── Modal: bottom sheet on mobile ──────────────────────────────────────────── */
+@keyframes slideUpSheet {
+  from { transform: translateY(60%); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 92dvh;
+    animation: slideUpSheet 280ms cubic-bezier(.32,.72,0,1);
+  }
+  /* Handle bar hint above sheet */
+  .modal-header::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-border);
+  }
+  .modal-header { position: relative; }
+}
+
+/* ── Tables: better mobile experience ───────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Smooth momentum scrolling on iOS */
+  .table-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tighter cell padding to fit more content */
+  thead th  { padding: 8px 10px; }
+  tbody td  { padding: 10px 10px; }
+
+  /* Bigger tap targets for icon-only action buttons */
+  .td-actions .btn-sm {
+    padding: 9px 10px;
+    min-width: 36px;
+    justify-content: center;
+  }
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .page-title { font-size: 1.125rem; }
+}
+
+/* ── Dashboard grids: 2 columns on mobile ───────────────────────────────────── */
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .cat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+}
+
+/* ── Inventory step card: reduce padding on mobile ───────────────────────────── */
+@media (max-width: 767px) {
+  .step-card { padding: 16px; }
+  .tally-counter { gap: 8px; }
+}
+
+/* ── Very small screens (iPhone SE, < 390px) ─────────────────────────────────── */
+@media (max-width: 389px) {
+  .page-title { font-size: 1rem; }
+  .cat-grid   { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .btn        { font-size: 0.8125rem; padding: 7px 12px; }
+  .more-menu-grid { grid-template-columns: repeat(3, 1fr); }
+}
