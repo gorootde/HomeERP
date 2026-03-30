@@ -129,8 +129,8 @@ const de = {
     label_qty: 'Menge', label_bbd_form: 'MHD', label_comment: 'Kommentar',
     placeholder_comment: 'Kommentar', btn_add_entry: 'Eintrag hinzufügen',
     toast_entry_created: 'Eintrag erstellt', off_banner_label: 'OpenFoodFacts', off_banner_hint: 'Daten aus OpenFoodFacts',
-    hint_ean_title: 'EAN scannen', hint_ean_desc: 'Scanne den EAN-Barcode eines Produkts',
-    hint_stockid_title: 'Stock ID scannen', hint_stockid_desc: 'Scanne eine Stock ID zum Verwalten'
+    hint_ean_title: 'EAN / Barcode', hint_ean_desc: 'Sucht das zugehörige Produkt und öffnet den Dialog für einen neuen Bestandseintrag. Unbekannte Codes können direkt als neues Produkt angelegt werden.',
+    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Öffnet den Bestandseintrag direkt — Menge entnehmen oder anpassen.'
   },
   settings: {
     title: 'Einstellungen', stockid_title: 'Stock ID', stockid_desc: 'Konfiguriere die Stock ID-Generierung',
@@ -290,8 +290,8 @@ const en = {
     label_qty: 'Quantity', label_bbd_form: 'Best Before', label_comment: 'Comment',
     placeholder_comment: 'Comment', btn_add_entry: 'Add Entry', toast_entry_created: 'Entry created',
     off_banner_label: 'OpenFoodFacts', off_banner_hint: 'Data from OpenFoodFacts',
-    hint_ean_title: 'Scan EAN', hint_ean_desc: 'Scan product barcode',
-    hint_stockid_title: 'Scan Stock ID', hint_stockid_desc: 'Scan a Stock ID to manage it'
+    hint_ean_title: 'EAN / Barcode', hint_ean_desc: 'Looks up the matching product and opens the stock entry dialog. Unknown codes can be created as a new product on the spot.',
+    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Opens the stock entry directly — take out or adjust the quantity.'
   },
   settings: {
     title: 'Settings', stockid_title: 'Stock ID', stockid_desc: 'Configure Stock ID generation',

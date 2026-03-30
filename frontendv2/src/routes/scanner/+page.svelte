@@ -10,9 +10,9 @@
   import { fmtDate, fmtQty } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
-  import { ScanBarcode, Package, Minus, Sliders } from 'lucide-svelte';
+  import { ScanBarcode, QrCode, Package, Minus, Sliders } from 'lucide-svelte';
 
-  let scannerActive = $state(false);
+  let scannerActive = $state(true);
   let vaults = $state([]);
   let units = $state([]);
   let categories = $state([]);
@@ -186,16 +186,24 @@
   </div>
 
   <!-- Hints -->
-  {#if !result && !scannerActive}
+  {#if !result}
+    {@const stockPrefix = getSetting('stock_id_prefix')}
+    {@const stockMode = getSetting('stock_id_mode')}
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-        <p class="text-xs font-semibold text-gray-700 mb-0.5">{t('scanner.hint_ean_title')}</p>
+        <p class="text-xs font-semibold text-gray-700 mb-0.5 flex items-center gap-1.5">
+          <ScanBarcode size={13} class="shrink-0" /> {t('scanner.hint_ean_title')}
+        </p>
         <p class="text-xs text-gray-500">{t('scanner.hint_ean_desc')}</p>
       </div>
-      <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-        <p class="text-xs font-semibold text-gray-700 mb-0.5">{t('scanner.hint_stockid_title')}</p>
-        <p class="text-xs text-gray-500">{t('scanner.hint_stockid_desc')}</p>
-      </div>
+      {#if stockMode === 'generated' && stockPrefix}
+        <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <p class="text-xs font-semibold text-gray-700 mb-0.5 flex items-center gap-1.5">
+            <QrCode size={13} class="shrink-0" /> {t('scanner.hint_stockid_title', { prefix: stockPrefix })}
+          </p>
+          <p class="text-xs text-gray-500">{t('scanner.hint_stockid_desc')}</p>
+        </div>
+      {/if}
     </div>
   {/if}
 
