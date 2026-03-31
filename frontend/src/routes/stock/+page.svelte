@@ -10,6 +10,7 @@
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
+  import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import { Plus, Pencil, Trash2, QrCode, X } from 'lucide-svelte';
 
   let entries = $state([]);
@@ -26,39 +27,11 @@
   let stockIdModal = $state(null);
   let confirmDelete = $state(null);
 
-  let form = $state({ product_id: '', vault_id: '', quantity: '1', entry_unit_id: 'base', best_before_date: '', comment: '' });
   let stockIdInput = $state('');
   let stockIdScannerActive = $state(false);
   let stockIdList = $state([]);
 
-  // When product changes in form, reset entry_unit_id to that product's configured default
-  $effect(() => {
-    if (!editModal?.isNew) return;
-    const product = products.find(p => p.id === Number(form.product_id));
-    form.entry_unit_id = product?.entry_unit_key || 'base';
-  });
-
-  // All selectable units for the entry form: base unit + product conversions + global units with known factor
-  let entryUnits = $derived(() => {
-    const product = products.find(p => p.id === Number(form.product_id));
-    if (!product?.unit) return [];
-    const baseUnitId = product.unit.id;
-    const result = [{ id: 'base', label: product.unit.name, abbreviation: product.unit.abbreviation, factor: 1 }];
-    // Product-specific conversions: 1 puc = factor × base
-    for (const puc of product.unit_conversions || []) {
-      result.push({ id: 'puc_' + puc.id, label: puc.unit_name, abbreviation: puc.unit_name, factor: puc.factor });
-    }
-    // Global units that have a direct conversion to the product's base unit
-    for (const u of units) {
-      if (u.id === baseUnitId) continue;
-      const conv = (u.conversions || []).find(c => c.to_unit?.id === baseUnitId);
-      if (conv) {
-        result.push({ id: 'global_' + u.id, label: u.name, abbreviation: u.abbreviation, factor: conv.factor });
-      }
-    }
-    return result;
-  });
-
+  // editModal.initial holds the pre-filled form values passed into StockEntryModal
   let filtered = $derived(() => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -89,35 +62,26 @@
     }
   }
 
-  function openAdd(productId = '') {
-    const product = productId ? products.find(p => p.id === Number(productId)) : null;
-    const defaultUnit = product?.entry_unit_key || 'base';
-    form = { product_id: productId ? String(productId) : '', vault_id: '', quantity: '1', entry_unit_id: defaultUnit, best_before_date: '', comment: '' };
-    editModal = { entry: null, isNew: true };
+  function openAdd() {
+    editModal = { entry: null, isNew: true, initial: { quantity: '1' } };
   }
 
   function openEdit(e) {
-    form = {
-      product_id: e.product_id,
-      vault_id: e.vault_id,
-      quantity: e.quantity,
-      entry_unit_id: 'base',
-      best_before_date: e.best_before_date || '',
-      comment: e.comment || ''
+    editModal = {
+      entry: e,
+      isNew: false,
+      initial: {
+        product_id: e.product_id,
+        vault_id: e.vault_id,
+        quantity: e.quantity,
+        entry_unit_id: 'base',
+        best_before_date: e.best_before_date || '',
+        comment: e.comment || ''
+      }
     };
-    editModal = { entry: e, isNew: false };
   }
 
-  async function save() {
-    const eu = entryUnits().find(u => u.id === form.entry_unit_id);
-    const factor = eu?.factor ?? 1;
-    const data = {
-      product_id: Number(form.product_id),
-      vault_id: Number(form.vault_id),
-      quantity: Number(form.quantity) * factor,
-      best_before_date: form.best_before_date || null,
-      comment: form.comment || null
-    };
+  async function save(data) {
     try {
       if (editModal.isNew) {
         await createStockEntry(data);
@@ -306,71 +270,14 @@
 
 <!-- Edit/Add Modal -->
 {#if editModal}
-  <Modal title={editModal.isNew ? t('stock.modal_add') : t('stock.modal_edit')} onclose={() => editModal = null}>
-    <div class="space-y-4">
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_product')}</label>
-        <select bind:value={form.product_id}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">{t('stock.select_product')}</option>
-          {#each products as p}
-            <option value={p.id}>{p.name}</option>
-          {/each}
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_vault')}</label>
-        <select bind:value={form.vault_id}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">{t('stock.select_vault')}</option>
-          {#each vaults as v}
-            <option value={v.id}>{v.description}</option>
-          {/each}
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_qty')}</label>
-        <div class="flex gap-2">
-          <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden flex-1">
-            <input bind:value={form.quantity} type="number" step="any"
-              class="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0" />
-          </div>
-          {#if entryUnits().length > 1}
-            <select bind:value={form.entry_unit_id}
-              class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {#each entryUnits() as u}
-                <option value={u.id}>{u.abbreviation}</option>
-              {/each}
-            </select>
-          {:else if entryUnits().length === 1}
-            <span class="px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-300 rounded-lg shrink-0 flex items-center">
-              {entryUnits()[0].abbreviation}
-            </span>
-          {/if}
-        </div>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_bbd')}</label>
-        <input bind:value={form.best_before_date} type="date"
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_comment')}</label>
-        <input bind:value={form.comment} placeholder={t('stock.placeholder_comment')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
-        <button onclick={() => editModal = null}
-          class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          {t('common.cancel')}
-        </button>
-        <button onclick={save}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-          {editModal.isNew ? t('common.create') : t('common.save')}
-        </button>
-      </div>
-    </div>
-  </Modal>
+  <StockEntryModal
+    {products}
+    {vaults}
+    {units}
+    initial={editModal.initial}
+    isNew={editModal.isNew}
+    onsave={save}
+    onclose={() => editModal = null} />
 {/if}
 
 <!-- Stock ID Modal -->

@@ -5,15 +5,17 @@
   import {
     getByEan, getEanInfo, getStockEntryByStockId,
     createProduct, createStockEntry, updateStockEntry, deleteStockEntry,
-    getVaults, getUnits, getCategories, getSettings
+    getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
   import { fmtDate, fmtQty } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
+  import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import { ScanBarcode, QrCode, Package, Minus, Sliders } from 'lucide-svelte';
 
   let scannerActive = $state(true);
   let vaults = $state([]);
+  let products = $state([]);
   let units = $state([]);
   let categories = $state([]);
   let settings = $state([]);
@@ -29,11 +31,10 @@
 
   let adjustQty = $state('');
   let newProd = $state({ name: '', vendor: '', size: '', unit_id: '', category_id: '' });
-  let newEntry = $state({ vault_id: '', quantity: '', best_before_date: '', comment: '' });
 
   onMount(async () => {
-    [vaults, units, categories, settings] = await Promise.all([
-      getVaults(), getUnits(), getCategories(), getSettings()
+    [vaults, products, units, categories, settings] = await Promise.all([
+      getVaults(), getProducts('', 500), getUnits(), getCategories(), getSettings()
     ]);
   });
 
@@ -145,19 +146,12 @@
   }
 
   function openAddEntry(product, ean) {
-    newEntry = { vault_id: '', quantity: '1', best_before_date: '', comment: '' };
     addEntryModal = { product, ean };
   }
 
-  async function createEntry() {
+  async function createEntry(data) {
     try {
-      await createStockEntry({
-        product_id: addEntryModal.product.id,
-        vault_id: Number(newEntry.vault_id),
-        quantity: Number(newEntry.quantity),
-        best_before_date: newEntry.best_before_date || null,
-        comment: newEntry.comment || null
-      });
+      await createStockEntry(data);
       showToast(t('scanner.toast_entry_created'), 'success');
       addEntryModal = null;
       result = null;
@@ -361,42 +355,13 @@
 
 <!-- Add Entry Modal -->
 {#if addEntryModal}
-  <Modal title={t('scanner.stock_entry_modal')} onclose={() => addEntryModal = null}>
-    <div class="space-y-4">
-      <p class="text-sm font-medium text-gray-900">{addEntryModal.product?.name}</p>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_vault')}</label>
-        <select bind:value={newEntry.vault_id}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">{t('scanner.select_vault')}</option>
-          {#each vaults as v}
-            <option value={v.id}>{v.description}</option>
-          {/each}
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_qty')}</label>
-        <input bind:value={newEntry.quantity} type="number" step="any"
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_bbd_form')}</label>
-        <input bind:value={newEntry.best_before_date} type="date"
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_comment')}</label>
-        <input bind:value={newEntry.comment} placeholder={t('scanner.placeholder_comment')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick={() => addEntryModal = null}
-          class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
-        <button onclick={createEntry}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-          {t('scanner.btn_add_entry')}
-        </button>
-      </div>
-    </div>
-  </Modal>
+  <StockEntryModal
+    {products}
+    {vaults}
+    {units}
+    initial={{ product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || 'base' }}
+    productLocked={true}
+    isNew={true}
+    onsave={createEntry}
+    onclose={() => addEntryModal = null} />
 {/if}
