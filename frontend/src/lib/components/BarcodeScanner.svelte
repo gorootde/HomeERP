@@ -9,6 +9,27 @@
   let status = $state('idle'); // idle | starting | active | error
   let errorMsg = $state('');
 
+  let _lastCode = '';
+  let _lastCodeTime = 0;
+  const SCAN_COOLDOWN_MS = 1500;
+
+  function beep() {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 640; // A4
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+      osc.onended = () => ctx.close();
+    } catch {}
+  }
+
   async function start() {
     if (typeof window === 'undefined') return;
     const { Html5Qrcode } = await import('html5-qrcode');
@@ -19,6 +40,11 @@
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 150 } },
         (code) => {
+          const now = Date.now();
+          if (code === _lastCode && now - _lastCodeTime < SCAN_COOLDOWN_MS) return;
+          _lastCode = code;
+          _lastCodeTime = now;
+          beep();
           onscan?.(code);
         },
         () => {}

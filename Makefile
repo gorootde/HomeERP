@@ -13,7 +13,7 @@ install:
 	$(VENV)/pip install fastapi "uvicorn[standard]" sqlalchemy "pydantic>=2.7" python-multipart alembic httpx
 
 build-frontend:
-	cd frontendv2 && npm run build
+	cd frontend && npm run build
 
 dev-frontend:
-	cd frontendv2 && npm run dev
+	cd frontend && npm run dev
