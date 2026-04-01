@@ -142,11 +142,12 @@
       const p = await createProduct({
         name: newProd.name,
         vendor: newProd.vendor || null,
-        size: newProd.size || null,
+        size: newProd.size ? parseFloat(newProd.size) : null,
         unit_id: newProd.unit_id ? Number(newProd.unit_id) : null,
         category_id: newProd.category_id ? Number(newProd.category_id) : null,
         ean_codes: newProd.ean ? [newProd.ean] : []
       });
+      products = [...products, p];
       showToast(t('scanner.toast_product_created'), 'success');
       newProductModal = null;
       // Open add entry modal
@@ -326,7 +327,7 @@
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_size')}</label>
-          <input bind:value={newProd.size} placeholder={t('scanner.placeholder_size')}
+          <input bind:value={newProd.size} type="number" step="any" min="0" placeholder={t('scanner.placeholder_size')}
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
@@ -370,7 +371,7 @@
     {products}
     {vaults}
     {units}
-    initial={{ product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || 'base' }}
+    initial={{ product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || (addEntryModal.product.size ? 'stueck' : 'base') }}
     productLocked={true}
     isNew={true}
     onsave={createEntry}

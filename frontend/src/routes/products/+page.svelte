@@ -90,7 +90,7 @@
     form = {
       name: p.name || '',
       vendor: p.vendor || '',
-      size: p.size || '',
+      size: p.size != null ? String(p.size) : '',
       unit_id: p.unit_id || '',
       entry_unit_key: p.entry_unit_key || '',
       category_id: p.category_id || '',
@@ -107,7 +107,7 @@
     const data = {
       name: form.name,
       vendor: form.vendor || null,
-      size: form.size || null,
+      size: form.size ? parseFloat(form.size) : null,
       unit_id: form.unit_id ? Number(form.unit_id) : null,
       entry_unit_key: form.entry_unit_key || null,
       category_id: form.category_id ? Number(form.category_id) : null
@@ -406,7 +406,7 @@
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_size')}</label>
-          <input bind:value={form.size} placeholder={t('products.placeholder_size')}
+          <input bind:value={form.size} type="number" step="any" min="0" placeholder={t('products.placeholder_size')}
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>

@@ -1,8 +1,7 @@
 from __future__ import annotations
 from datetime import date
 from typing import Optional
-import re
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ── Units ───────────────────────────────────────────────────────────────────
@@ -95,24 +94,13 @@ class EanCodeRead(EanCodeBase):
 
 # ── Products ───────────────────────────────────────────────────────────────────
 
-def _validate_size(v: str) -> str:
-    if not re.fullmatch(r'\d+([.,]\d+)?', v.strip()):
-        raise ValueError('size muss eine Zahl sein (z.B. "500"), keine Einheit angeben')
-    return v.strip()
-
-
 class ProductBase(BaseModel):
     vendor: str = Field(..., min_length=1, max_length=255)
     name: str = Field(..., min_length=1, max_length=255)
-    size: str = Field(..., min_length=1, max_length=64)
-    unit_id: int
+    size: Optional[float] = None
+    unit_id: Optional[int] = None
     entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
-
-    @field_validator('size')
-    @classmethod
-    def size_must_be_numeric(cls, v: str) -> str:
-        return _validate_size(v)
 
 class ProductCreate(ProductBase):
     ean_codes: list[str] = Field(default_factory=list)
@@ -120,17 +108,10 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     vendor: Optional[str] = Field(None, min_length=1, max_length=255)
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    size: Optional[str] = Field(None, min_length=1, max_length=64)
-    unit_id: Optional[int] = None  # optional in PATCH-style update, but UI always sends a value
+    size: Optional[float] = None
+    unit_id: Optional[int] = None
     entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
-
-    @field_validator('size')
-    @classmethod
-    def size_must_be_numeric(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return v
-        return _validate_size(v)
 
 class ProductUnitConversionCreate(BaseModel):
     unit_name:    str   = Field(..., min_length=1, max_length=64)
@@ -227,7 +208,7 @@ class StockSummaryItem(BaseModel):
     product_id: int
     vendor: str
     product_name: str
-    size: str
+    size: Optional[float] = None
     unit: Optional[UnitSimple] = None
     total_quantity: float
     by_vault: list[StockSummaryVaultQty]

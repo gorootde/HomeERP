@@ -89,7 +89,7 @@ class Product(Base):
     id          = Column(Integer, primary_key=True, index=True)
     vendor      = Column(String(255), nullable=False)
     name        = Column(String(255), nullable=False)
-    size        = Column(String(64), nullable=False)
+    size        = Column(Float, nullable=True)
     unit_id         = Column(Integer, ForeignKey("units.id"), nullable=True)
     entry_unit_key  = Column(String(64), nullable=True)   # 'base' | 'puc_<id>' | 'global_<id>'
     category_id     = Column(Integer, ForeignKey("product_categories.id"), nullable=True)
