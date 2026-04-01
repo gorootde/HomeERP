@@ -346,7 +346,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{p.size || '—'}</td>
+                <td class="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{p.size ? `${p.size}${p.unit?.abbreviation ? ' ' + p.unit.abbreviation : ''}` : '—'}</td>
                 <td class="px-4 py-2.5 hidden md:table-cell">
                   <div class="flex flex-wrap gap-1">
                     {#each p.ean_codes || [] as ean}

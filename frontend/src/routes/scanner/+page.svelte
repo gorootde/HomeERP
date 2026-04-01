@@ -116,12 +116,22 @@
   }
 
   // New product + entry flow
+  function parseSizeString(sizeStr) {
+    if (!sizeStr) return { numeric: '', unitAbbr: '' };
+    const match = sizeStr.trim().match(/^([\d.,]+)\s*([a-zA-Z]+)/);
+    if (match) return { numeric: match[1], unitAbbr: match[2].toLowerCase() };
+    return { numeric: sizeStr, unitAbbr: '' };
+  }
+
   function openNewProduct(code, offData) {
+    const { numeric, unitAbbr } = parseSizeString(offData?.size);
+    const matchedUnit = unitAbbr ? units.find(u => u.abbreviation.toLowerCase() === unitAbbr) : null;
     newProd = {
       name: offData?.name || '',
       vendor: offData?.vendor || '',
-      size: offData?.size || '',
-      unit_id: '', category_id: '',
+      size: numeric || offData?.size || '',
+      unit_id: matchedUnit ? String(matchedUnit.id) : '',
+      category_id: '',
       ean: code
     };
     newProductModal = { code, offData };
@@ -134,7 +144,8 @@
         vendor: newProd.vendor || null,
         size: newProd.size || null,
         unit_id: newProd.unit_id ? Number(newProd.unit_id) : null,
-        category_id: newProd.category_id ? Number(newProd.category_id) : null
+        category_id: newProd.category_id ? Number(newProd.category_id) : null,
+        ean_codes: newProd.ean ? [newProd.ean] : []
       });
       showToast(t('scanner.toast_product_created'), 'success');
       newProductModal = null;
