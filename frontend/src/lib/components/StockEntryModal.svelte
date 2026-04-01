@@ -26,13 +26,25 @@
     onclose
   } = $props();
 
+  const LAST_VAULT_KEY = 'homeerp_last_vault_id';
+
+  function loadLastVault() {
+    try { return Number(localStorage.getItem(LAST_VAULT_KEY)) || ''; } catch { return ''; }
+  }
+
+  function saveLastVault(id) {
+    try { if (id) localStorage.setItem(LAST_VAULT_KEY, String(id)); } catch {}
+  }
+
+  const defaultVaultId = initial.vault_id ?? loadLastVault();
+
   let form = $state({
-    product_id:      String(initial.product_id      ?? ''),
-    vault_id:        String(initial.vault_id         ?? ''),
-    quantity:        String(initial.quantity         ?? '1'),
-    entry_unit_id:   initial.entry_unit_id           ?? 'base',
-    best_before_date: initial.best_before_date       ?? '',
-    comment:         initial.comment                 ?? ''
+    product_id:       initial.product_id      ?? '',
+    vault_id:         defaultVaultId,
+    quantity:         String(initial.quantity  ?? '1'),
+    entry_unit_id:    initial.entry_unit_id    ?? 'base',
+    best_before_date: initial.best_before_date ?? '',
+    comment:          initial.comment          ?? ''
   });
 
   // When product changes (only in unlocked mode), reset entry_unit_id to that product's default
@@ -66,6 +78,7 @@
   function save() {
     const eu = entryUnits().find(u => u.id === form.entry_unit_id);
     const factor = eu?.factor ?? 1;
+    saveLastVault(form.vault_id);
     onsave?.({
       product_id:      Number(form.product_id),
       vault_id:        Number(form.vault_id),
