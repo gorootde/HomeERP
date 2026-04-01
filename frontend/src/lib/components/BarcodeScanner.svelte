@@ -38,7 +38,7 @@
       scanner = new Html5Qrcode(containerId);
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
+        { fps: 10, qrbox: { width: 300, height: 200 } },
         (code) => {
           const now = Date.now();
           if (code === _lastCode && now - _lastCodeTime < SCAN_COOLDOWN_MS) return;
@@ -49,6 +49,18 @@
         },
         () => {}
       );
+      // Try to apply 2x zoom so barcodes can be scanned from further away
+      try {
+        const capabilities = scanner.getRunningTrackCapabilities?.();
+        if (capabilities?.zoom) {
+          const min = capabilities.zoom.min ?? 1;
+          const max = capabilities.zoom.max ?? 1;
+          const target = Math.min(2, max);
+          if (target > min) {
+            await scanner.applyVideoConstraints({ advanced: [{ zoom: target }] });
+          }
+        }
+      } catch {}
       status = 'active';
     } catch (e) {
       status = 'error';

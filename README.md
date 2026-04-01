@@ -56,17 +56,45 @@ Open <http://localhost:8000>.
 
 **Volumes:**
 
-| Mount | Contents |
-|---|---|
-| `/data` | SQLite database (`homeerp.db`) |
-| `/app/uploads` | User-uploaded product images |
+| Mount          | Contents                       |
+| -------------- | ------------------------------ |
+| `/data`        | SQLite database (`homeerp.db`) |
+| `/app/uploads` | User-uploaded product images   |
 
 **Environment variables:**
 
-| Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | `sqlite:////data/homeerp.db` | SQLAlchemy database URL |
-| `UPLOADS_DIR` | `/app/uploads` | Path for uploaded images |
+| Variable       | Default                      | Description              |
+| -------------- | ---------------------------- | ------------------------ |
+| `DATABASE_URL` | `sqlite:////data/homeerp.db` | SQLAlchemy database URL  |
+| `UPLOADS_DIR`  | `/app/uploads`               | Path for uploaded images |
+
+---
+
+## Concepts
+
+HomeERP manages household inventory - cellar, kitchen, pantry, or any other storage location in your home.
+
+### Products and EAN codes
+
+A **product** is a generic item description, e.g. _Coca-Cola 0.33 l can_. Products are created by scanning or entering their EAN barcode. If the code is known to the OpenFoodFacts database, HomeERP automatically populates the name, manufacturer, image, and other details.
+
+### Stock entries and Stock IDs
+
+A **stock entry** is a concrete instance of a product — e.g. _the 0.33 l Cola can with best-before date 2027-03-01_. Because an EAN code carries no expiry information, each entry (or multi-pack) gets an additional **Stock ID**. Only through this ID can you unambiguously identify "the water with best-before date XYZ".
+
+Stock IDs can be assigned in several ways:
+
+- **Manual** — write the ID directly on the item, e.g. with a marker pen
+- **Auto-increment** — a sequential number, optionally with a freely chosen prefix (e.g. `INV<ID>`)
+- **Webhook** — HomeERP calls an external endpoint that supplies the ID and can, for example, trigger a label printer directly, so a new label is printed immediately after a stock entry is created
+
+### Categories and minimum stock levels
+
+Products are assigned to **categories**. Each category can have a **minimum stock level**. If the actual stock falls below that threshold, HomeERP shows an alert on the dashboard.
+
+### Units of measure and conversions
+
+Units and conversion factors can be defined **globally** (e.g. litres → millilitres) or **per product** (e.g. 1 pack = 6 bottles), so stock quantities are correctly aggregated and compared regardless of packaging unit.
 
 ---
 
