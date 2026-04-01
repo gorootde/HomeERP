@@ -1,6 +1,8 @@
 <script>
   import { t } from '$lib/i18n.js';
   import Modal from './Modal.svelte';
+  import BarcodeScanner from './BarcodeScanner.svelte';
+  import { ScanLine } from 'lucide-svelte';
 
   /**
    * Props:
@@ -44,8 +46,16 @@
     quantity:         String(initial.quantity  ?? '1'),
     entry_unit_id:    initial.entry_unit_id    ?? 'base',
     best_before_date: initial.best_before_date ?? '',
-    comment:          initial.comment          ?? ''
+    comment:          initial.comment          ?? '',
+    stock_id:         ''
   });
+
+  let stockIdScannerActive = $state(false);
+
+  function handleStockIdScan(code) {
+    form.stock_id = code;
+    stockIdScannerActive = false;
+  }
 
   // When product changes (only in unlocked mode), reset entry_unit_id to that product's default
   $effect(() => {
@@ -84,7 +94,8 @@
       vault_id:        Number(form.vault_id),
       quantity:        Number(form.quantity) * factor,
       best_before_date: form.best_before_date || null,
-      comment:         form.comment || null
+      comment:         form.comment || null,
+      ...(isNew && form.stock_id ? { stock_id: form.stock_id } : {})
     });
   }
 </script>
@@ -158,6 +169,32 @@
       <input bind:value={form.comment} placeholder={t('stock.placeholder_comment')}
         class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
     </div>
+
+    <!-- Stock ID (only when creating new entry) -->
+    {#if isNew}
+    <div>
+      <label class="block text-xs font-medium text-gray-700 mb-1">
+        {t('stock.label_stock_id')}
+        <span class="text-gray-400 font-normal ml-1">({t('common.optional')})</span>
+      </label>
+      {#if stockIdScannerActive}
+        <BarcodeScanner active={true} onscan={handleStockIdScan} />
+        <button type="button" onclick={() => stockIdScannerActive = false}
+          class="w-full mt-1 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          {t('stock.stockid_btn_stop')}
+        </button>
+      {:else}
+        <div class="flex gap-2">
+          <input bind:value={form.stock_id} placeholder={t('stock.placeholder_stock_id')}
+            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+          <button type="button" onclick={() => stockIdScannerActive = true}
+            class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5">
+            <ScanLine size={15} />
+          </button>
+        </div>
+      {/if}
+    </div>
+    {/if}
 
     <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
       <button onclick={onclose}

@@ -175,7 +175,7 @@ class StockEntryBase(BaseModel):
     best_before_date: Optional[date] = None
 
 class StockEntryCreate(StockEntryBase):
-    pass
+    stock_id: Optional[str] = Field(None, max_length=512)
 
 class StockEntryUpdate(BaseModel):
     quantity: Optional[float] = Field(None, gt=0)

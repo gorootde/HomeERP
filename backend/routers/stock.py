@@ -210,12 +210,17 @@ def create_stock_entry(data: StockEntryCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Product not found")
     if not db.get(Vault, data.vault_id):
         raise HTTPException(status_code=404, detail="Vault not found")
-    entry = StockEntry(**data.model_dump())
+    entry = StockEntry(**data.model_dump(exclude={"stock_id"}))
     db.add(entry)
     db.commit()
     db.refresh(entry)
-    _apply_generated_stock_id(entry, db)
-    _apply_webhook_stock_id(entry, db)
+    if data.stock_id:
+        db.add(StockEntryId(code=data.stock_id, stock_entry_id=entry.id))
+        db.commit()
+        db.refresh(entry)
+    else:
+        _apply_generated_stock_id(entry, db)
+        _apply_webhook_stock_id(entry, db)
     return entry
 
 
