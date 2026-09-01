@@ -16,6 +16,7 @@ I was deeply disappointed by the attitude of maintainers in some existing open-s
 - 📊 **Dashboard** — Stock overview, category breakdown, and low-stock / critical-stock alerts
 - ⚖️ **Units** — Configurable units of measure with conversion factors
 - 🏷️ **Stock IDs** — Manual, auto-incremented, or webhook-assigned stock IDs
+- 🖨️ **Label printing** — Configurable QR-code labels for stock entries, sent to a network label printer (IPP or Brother QL raster over port 9100); live preview, test print, auto-print on stock creation, and per-entry opt-out
 - 🔖 **Tags** — Free-form tagging on products and storage locations
 - 🌍 **i18n** — English and German UI, switchable at runtime
 - 🔌 **REST API** — Full API coverage; interactive docs at `/docs`

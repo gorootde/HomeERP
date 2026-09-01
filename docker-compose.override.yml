@@ -1,0 +1,14 @@
+# Local development override.
+# Docker Compose merges this on top of docker-compose.yml automatically
+# (`docker compose up` picks it up with no extra flags).
+#
+# It builds the image from the local Dockerfile instead of pulling the
+# prebuilt one from GHCR.
+services:
+  homeerp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Override the pulled image name so the local build gets a distinct tag.
+    image: homeerp:local
+    pull_policy: build
