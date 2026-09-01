@@ -13,6 +13,7 @@
    *                   best_before_date, comment }
    *   productLocked — when true, product field is shown as readonly text (pre-selected)
    *   isNew         — controls modal title and save button label
+   *   autoPrintEnabled — when true (and isNew), show the per-entry "print label" opt-out
    *   onsave(data)  — called with { product_id, vault_id, quantity, best_before_date, comment }
    *                   quantity is already converted to the product's base unit
    *   onclose()     — called on cancel / modal close
@@ -24,6 +25,7 @@
     initial = {},
     productLocked = false,
     isNew = true,
+    autoPrintEnabled = false,
     onsave,
     onclose
   } = $props();
@@ -47,7 +49,8 @@
     entry_unit_id:    initial.entry_unit_id    ?? 'base',
     best_before_date: initial.best_before_date ?? '',
     comment:          initial.comment          ?? '',
-    stock_id:         ''
+    stock_id:         '',
+    print_label:      true
   });
 
   let stockIdScannerActive = $state(false);
@@ -95,7 +98,8 @@
       quantity:        Number(form.quantity) * factor,
       best_before_date: form.best_before_date || null,
       comment:         form.comment || null,
-      ...(isNew && form.stock_id ? { stock_id: form.stock_id } : {})
+      ...(isNew && form.stock_id ? { stock_id: form.stock_id } : {}),
+      ...(isNew && autoPrintEnabled ? { print_label: form.print_label } : {})
     });
   }
 </script>
@@ -194,6 +198,14 @@
         </div>
       {/if}
     </div>
+    {/if}
+
+    <!-- Per-entry label print opt-out (only when auto-print is enabled globally) -->
+    {#if isNew && autoPrintEnabled}
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" bind:checked={form.print_label} />
+      <span class="text-sm text-gray-700">{t('stock.label_print_label')}</span>
+    </label>
     {/if}
 
     <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">

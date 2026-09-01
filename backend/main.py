@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from .routers import products, vaults, stock, tags, units, categories, app_settings, ean_lookup, data_transfer
+from .routers import products, vaults, stock, tags, units, categories, app_settings, ean_lookup, data_transfer, label_printing
 
 app = FastAPI(title="HomeERP", version="1.0.0")
 
@@ -15,6 +15,7 @@ app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
 app.include_router(units.router, prefix="/api/units", tags=["units"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(app_settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(label_printing.router, prefix="/api/settings/printing", tags=["printing"])
 app.include_router(ean_lookup.router, prefix="/api/ean-info", tags=["ean-info"])
 app.include_router(data_transfer.export_router, prefix="/api/export", tags=["export"])
 app.include_router(data_transfer.import_router, prefix="/api/import", tags=["import"])

@@ -374,6 +374,7 @@
     initial={{ product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || (addEntryModal.product.size ? 'stueck' : 'base') }}
     productLocked={true}
     isNew={true}
+    autoPrintEnabled={getSetting('label_auto_print') === '1'}
     onsave={createEntry}
     onclose={() => addEntryModal = null} />
 {/if}

@@ -1,9 +1,10 @@
 <script>
   import { t, locale, setLocale } from '$lib/i18n.js';
-  import { Tag, Layers, Ruler, LayoutList, ArrowLeftRight, Languages } from 'lucide-svelte';
+  import { Tag, Layers, Ruler, LayoutList, ArrowLeftRight, Languages, Printer } from 'lucide-svelte';
 
   const cards = [
     { href: '/settings/stockid', icon: Tag, titleKey: 'settings.stockid_title', descKey: 'settings.stockid_desc' },
+    { href: '/settings/printing', icon: Printer, titleKey: 'settings.printing_title', descKey: 'settings.printing_desc' },
     { href: '/settings/vaults', icon: Layers, titleKey: 'settings.vaults_title', descKey: 'settings.vaults_desc' },
     { href: '/settings/units', icon: Ruler, titleKey: 'settings.units_title', descKey: 'settings.units_desc' },
     { href: '/settings/categories', icon: LayoutList, titleKey: 'settings.categories_title', descKey: 'settings.categories_desc' },

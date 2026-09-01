@@ -1,10 +1,11 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import httpx
 
 from ..database import get_db
+from ..label_printing import print_label, render_label_png
 from ..models import StockEntry, Product, Vault, Tag, ProductCategory, StockEntryId, Setting
 from ..schemas import (
     StockEntryCreate, StockEntryRead, StockEntryUpdate,
@@ -204,13 +205,81 @@ def _apply_webhook_stock_id(entry: StockEntry, db: Session) -> None:
         pass  # Webhook failure must not prevent entry creation
 
 
+def _render_and_print(product_name: str, vendor: str, best_before: Optional[str],
+                      code: Optional[str], printer_ip: str, width_mm: float,
+                      length_mm: float, orientation: str, length_mode: str,
+                      quantity: Optional[float], unit: str,
+                      protocol: str, model: str) -> None:
+    try:
+        png = render_label_png(
+            product_name=product_name,
+            vendor=vendor,
+            best_before=best_before,
+            stock_id_code=code,  # may be None → label without QR
+            width_mm=width_mm,
+            length_mm=length_mm,
+            orientation=orientation,
+            length_mode=length_mode,
+            quantity=quantity,
+            unit=unit,
+        )
+        print_label(png, printer_ip, protocol=protocol, width_mm=width_mm, model=model)
+    except Exception:
+        pass  # Printer failure must not affect stock-entry creation
+
+
+def _float_setting(db: Session, key: str, default: float) -> float:
+    try:
+        return float(_get_setting(db, key, str(default)) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _maybe_print_label(entry: StockEntry, db: Session, requested: Optional[bool],
+                       background_tasks: BackgroundTasks) -> None:
+    """Queue a label print for a freshly created stock entry.
+
+    Gated by the ``label_auto_print`` setting; ``requested is False`` is a
+    per-entry opt-out. The actual print runs in a background task so a slow or
+    unreachable printer never delays the response.
+    """
+    if requested is False:
+        return
+    if _get_setting(db, "label_auto_print") != "1":
+        return
+    printer_ip = _get_setting(db, "label_printer_ip")
+    if not printer_ip:
+        return
+    unit = ""
+    product_unit = getattr(entry.product, "unit", None)
+    if product_unit is not None:
+        unit = product_unit.abbreviation or product_unit.name or ""
+    background_tasks.add_task(
+        _render_and_print,
+        entry.product.name,
+        entry.product.vendor,
+        entry.best_before_date.isoformat() if entry.best_before_date else None,
+        entry.stock_ids[0].code if entry.stock_ids else None,
+        printer_ip,
+        _float_setting(db, "label_width_mm", 62),
+        _float_setting(db, "label_length_mm", 90),
+        _get_setting(db, "label_orientation", "landscape"),
+        _get_setting(db, "label_length_mode", "auto"),
+        entry.quantity,
+        unit,
+        _get_setting(db, "label_printer_protocol", "ipp"),
+        _get_setting(db, "label_printer_model", "QL-710W"),
+    )
+
+
 @router.post("/entries", response_model=StockEntryRead, status_code=201)
-def create_stock_entry(data: StockEntryCreate, db: Session = Depends(get_db)):
+def create_stock_entry(data: StockEntryCreate, background_tasks: BackgroundTasks,
+                       db: Session = Depends(get_db)):
     if not db.get(Product, data.product_id):
         raise HTTPException(status_code=404, detail="Product not found")
     if not db.get(Vault, data.vault_id):
         raise HTTPException(status_code=404, detail="Vault not found")
-    entry = StockEntry(**data.model_dump(exclude={"stock_id"}))
+    entry = StockEntry(**data.model_dump(exclude={"stock_id", "print_label"}))
     db.add(entry)
     db.commit()
     db.refresh(entry)
@@ -221,6 +290,7 @@ def create_stock_entry(data: StockEntryCreate, db: Session = Depends(get_db)):
     else:
         _apply_generated_stock_id(entry, db)
         _apply_webhook_stock_id(entry, db)
+    _maybe_print_label(entry, db, data.print_label, background_tasks)
     return entry
 
 

@@ -176,6 +176,8 @@ class StockEntryBase(BaseModel):
 
 class StockEntryCreate(StockEntryBase):
     stock_id: Optional[str] = Field(None, max_length=512)
+    # None → follow the global auto-print setting; False → don't print for this entry.
+    print_label: Optional[bool] = None
 
 class StockEntryUpdate(BaseModel):
     quantity: Optional[float] = Field(None, gt=0)

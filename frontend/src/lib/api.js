@@ -79,6 +79,19 @@ export const getSettings = () => get('/settings');
 export const getSetting = (key) => get(`/settings/${key}`);
 export const putSetting = (key, value) => put(`/settings/${key}`, { value });
 
+// Printing
+export const getLabelOptions = () => get('/settings/printing/options');
+export const getLabelPreviewUrl = (widthMm, lengthMm, orientation, lengthMode) => {
+  const q = new URLSearchParams({ t: Date.now() });
+  if (widthMm) q.set('width_mm', widthMm);
+  if (lengthMm) q.set('length_mm', lengthMm);
+  if (orientation) q.set('orientation', orientation);
+  if (lengthMode) q.set('length_mode', lengthMode);
+  return `${BASE}/settings/printing/preview?${q.toString()}`;
+};
+export const testPrintLabel = () => post('/settings/printing/test-print');
+export const clearPrintQueue = () => post('/settings/printing/clear-queue');
+
 // Categories
 export const getCategories = () => get('/categories');
 export const createCategory = (data) => post('/categories', data);

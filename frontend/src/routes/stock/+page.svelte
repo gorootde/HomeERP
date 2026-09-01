@@ -4,7 +4,7 @@
   import { showToast } from '$lib/toast.js';
   import {
     getStockEntries, createStockEntry, updateStockEntry, deleteStockEntry,
-    getVaults, getProducts, addStockId, removeStockId, getUnits
+    getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting
   } from '$lib/api.js';
   import { fmtQty, fmtDate } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
@@ -17,6 +17,7 @@
   let vaults = $state([]);
   let products = $state([]);
   let units = $state([]);
+  let autoPrintEnabled = $state(false);
   let loading = $state(true);
 
   let filterVault = $state('');
@@ -54,9 +55,12 @@
   async function reload() {
     loading = true;
     try {
-      [entries, vaults, products, units] = await Promise.all([
-        getStockEntries(), getVaults(), getProducts('', 500), getUnits()
+      let autoPrintSetting;
+      [entries, vaults, products, units, autoPrintSetting] = await Promise.all([
+        getStockEntries(), getVaults(), getProducts('', 500), getUnits(),
+        getSetting('label_auto_print')
       ]);
+      autoPrintEnabled = autoPrintSetting?.value === '1';
     } finally {
       loading = false;
     }
@@ -276,6 +280,7 @@
     {units}
     initial={editModal.initial}
     isNew={editModal.isNew}
+    {autoPrintEnabled}
     onsave={save}
     onclose={() => editModal = null} />
 {/if}
