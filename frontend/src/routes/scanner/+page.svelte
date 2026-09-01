@@ -83,10 +83,10 @@
     const newQty = entry.quantity - 1;
     try {
       if (newQty <= 0) {
-        await deleteStockEntry(entry.id);
+        await deleteStockEntry(entry.id, 'consume');
         showToast(t('scanner.toast_consumed_deleted'), 'success');
       } else {
-        await updateStockEntry(entry.id, { ...entry, quantity: newQty });
+        await updateStockEntry(entry.id, { quantity: newQty, reason: 'consume' });
         showToast(t('scanner.toast_consumed', { qty: fmtQty(entry.quantity) }), 'success');
       }
       result = null;
@@ -105,7 +105,11 @@
     const qty = parseFloat(adjustQty);
     if (isNaN(qty) || qty < 0) { showToast(t('scanner.err_invalid_qty'), 'error'); return; }
     try {
-      await updateStockEntry(adjustModal.entry.id, { ...adjustModal.entry, quantity: qty });
+      if (qty === 0) {
+        await deleteStockEntry(adjustModal.entry.id, 'adjust');
+      } else {
+        await updateStockEntry(adjustModal.entry.id, { quantity: qty, reason: 'adjust' });
+      }
       showToast(t('scanner.toast_qty_updated'), 'success');
       adjustModal = null;
       result = null;

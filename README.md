@@ -13,7 +13,8 @@ I was deeply disappointed by the attitude of maintainers in some existing open-s
 - 📷 **Barcode scanning** — Camera-based scanner for product lookup, stock operations, and quick product creation
 - 🌐 **OpenFoodFacts** — Automatic product data and image retrieval via EAN lookup
 - 📋 **Inventory** — Guided counting workflow with scan support and a diff view to spot discrepancies
-- 📊 **Dashboard** — Stock overview, category breakdown, and low-stock / critical-stock alerts
+- 📊 **Dashboard** — Stock overview, category breakdown, low-stock / critical-stock alerts, and a "running low" consumption forecast
+- 🕓 **Movement history** — Append-only audit log of every stock-in, correction, consumption and removal; per-product consumption rate and days-of-stock-remaining forecast; one-click undo for mis-scans (a removed entry is recreated from a snapshot)
 - ⚖️ **Units** — Configurable units of measure with conversion factors
 - 🏷️ **Stock IDs** — Manual, auto-incremented, or webhook-assigned stock IDs
 - 🖨️ **Label printing** — Configurable QR-code labels for stock entries, sent to a network label printer (IPP or Brother QL raster over port 9100); live preview, test print, auto-print on stock creation, and per-entry opt-out
@@ -97,6 +98,12 @@ Products are assigned to **categories**. Each category can have a **minimum stoc
 
 Units and conversion factors can be defined **globally** (e.g. litres → millilitres) or **per product** (e.g. 1 pack = 6 bottles), so stock quantities are correctly aggregated and compared regardless of packaging unit.
 
+### Movement history and consumption forecast
+
+Every change to a stock entry's quantity — the initial stock-in, a scanner "consume", a manual correction, or removing the entry — is written to an append-only `stock_movements` log (`delta`, `quantity_before`/`quantity_after`, `reason`, `note`, timestamp). Because `product_id` and `vault_id` are stored on each row, the per-product **consumption rate** and projected **days of stock remaining** ("runs out in ~12 days") survive even after the originating entry is gone.
+
+Each movement can be **undone** from the History page or the per-entry history dialog: the entry's quantity is moved back, and an entry that a mis-scan removed is recreated from a snapshot taken at deletion (re-attaching any stock IDs that are still free). Undoing appends a compensating movement rather than erasing history.
+
 ---
 
 ## Architecture
@@ -134,7 +141,7 @@ Key endpoint groups:
 
 ```
 /api/products      Products and EAN codes
-/api/stock         Stock entries and summaries
+/api/stock         Stock entries, summaries, movement history and consumption forecast
 /api/vaults        Storage locations
 /api/units         Units of measure and conversions
 /api/categories    Product categories

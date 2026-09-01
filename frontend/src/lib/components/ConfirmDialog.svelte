@@ -1,7 +1,7 @@
 <script>
   import { t } from '$lib/i18n.js';
 
-  let { message, onconfirm, oncancel } = $props();
+  let { message, onconfirm, oncancel, confirmLabel = null } = $props();
 </script>
 
 <div class="fixed inset-0 z-50 flex items-center justify-center">
@@ -15,7 +15,7 @@
       </button>
       <button onclick={onconfirm}
         class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-        {t('common.delete')}
+        {confirmLabel ?? t('common.delete')}
       </button>
     </div>
   </div>

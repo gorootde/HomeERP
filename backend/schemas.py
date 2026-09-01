@@ -1,7 +1,7 @@
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 # ── Units ───────────────────────────────────────────────────────────────────
@@ -183,6 +183,9 @@ class StockEntryUpdate(BaseModel):
     quantity: Optional[float] = Field(None, gt=0)
     comment: Optional[str] = None
     best_before_date: Optional[date] = None
+    # Audit-log context; consumed by the router, not persisted on the entry.
+    reason: Optional[str] = Field(None, max_length=32)
+    note: Optional[str] = Field(None, max_length=255)
 
 class StockEntryRead(StockEntryBase):
     model_config = ConfigDict(from_attributes=True)
@@ -222,3 +225,46 @@ class CategoryStockSummaryItem(BaseModel):
     min_stock_unit: Optional[UnitSimple]
     total_quantity: float
     product_count: int
+
+
+# ── Stock Movements (audit log) ────────────────────────────────────────────────
+
+class StockMovementRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    stock_entry_id: Optional[int] = None
+    product_id: Optional[int] = None
+    vault_id: Optional[int] = None
+    product_name: Optional[str] = None
+    vendor: Optional[str] = None
+    unit: Optional[UnitSimple] = None
+    vault_description: Optional[str] = None
+    delta: float
+    quantity_before: float
+    quantity_after: float
+    reason: str
+    note: Optional[str] = None
+    undone: bool = False
+    can_undo: bool = False
+    created_at: datetime
+
+    @field_serializer("created_at")
+    def _serialize_created_at(self, value: datetime) -> str:
+        # Stored naive in UTC (SQLite drops tzinfo) — re-attach it so clients
+        # don't parse the timestamp as local time.
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.isoformat()
+
+
+class ConsumptionForecastItem(BaseModel):
+    product_id: int
+    product_name: str
+    vendor: Optional[str] = None
+    unit: Optional[UnitSimple] = None
+    current_stock: float
+    window_days: int
+    consumed_in_window: float
+    avg_daily_consumption: float
+    days_remaining: Optional[float] = None
+    depletion_date: Optional[date] = None

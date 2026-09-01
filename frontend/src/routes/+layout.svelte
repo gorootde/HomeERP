@@ -8,7 +8,7 @@
   import { onMount } from 'svelte';
   import {
     LayoutDashboard, Boxes, Layers, ScanBarcode, ClipboardCheck,
-    Settings, Code2, MoreHorizontal, Package2
+    History, Settings, Code2, MoreHorizontal, Package2
   } from 'lucide-svelte';
 
   let { children } = $props();
@@ -21,6 +21,7 @@
     { href: '/stock', icon: Layers, labelKey: 'nav.stock' },
     { href: '/scanner', icon: ScanBarcode, labelKey: 'nav.scanner' },
     { href: '/inventory', icon: ClipboardCheck, labelKey: 'nav.inventory' },
+    { href: '/history', icon: History, labelKey: 'nav.history' },
   ];
 
   const bottomPrimary = [
@@ -32,6 +33,7 @@
 
   const moreItems = [
     { href: '/inventory', icon: ClipboardCheck, labelKey: 'nav.inventory' },
+    { href: '/history', icon: History, labelKey: 'nav.history' },
     { href: '/settings', icon: Settings, labelKey: 'nav.settings' },
     { href: '/apidocs', icon: Code2, labelKey: 'nav.apidocs' },
   ];

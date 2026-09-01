@@ -62,10 +62,23 @@ export const getStockEntries = (params = {}) => {
 };
 export const createStockEntry = (data) => post('/stock/entries', data);
 export const updateStockEntry = (id, data) => put(`/stock/entries/${id}`, data);
-export const deleteStockEntry = (id) => del(`/stock/entries/${id}`);
+export const deleteStockEntry = (id, reason) =>
+  del(`/stock/entries/${id}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`);
 export const getStockSummary = () => get('/stock/summary');
 export const getCategoryStockSummary = () => get('/stock/category-summary');
 export const getStockEntryByStockId = (code) => get(`/stock/entries/by-stockid/${encodeURIComponent(code)}`);
+
+// Stock Movements (audit log)
+export const getStockMovements = (params = {}) => {
+  const q = new URLSearchParams({ limit: 500, ...params }).toString();
+  return get(`/stock/movements?${q}`);
+};
+export const getEntryMovements = (entryId) => get(`/stock/entries/${entryId}/movements`);
+export const undoStockMovement = (id) => post(`/stock/movements/${id}/undo`);
+export const getConsumptionForecast = (params = {}) => {
+  const q = new URLSearchParams(params).toString();
+  return get(`/stock/movements/forecast${q ? `?${q}` : ''}`);
+};
 
 // Stock IDs
 export const addStockId = (entryId, code) => post(`/stock/entries/${entryId}/stockids`, { code });

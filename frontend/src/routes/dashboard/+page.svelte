@@ -1,21 +1,26 @@
 <script>
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n.js';
-  import { getStockSummary, getCategoryStockSummary } from '$lib/api.js';
-  import { fmtQty, trafficStatus } from '$lib/utils.js';
-  import { Package, BarChart3, Warehouse, AlertTriangle } from 'lucide-svelte';
+  import { getStockSummary, getCategoryStockSummary, getConsumptionForecast } from '$lib/api.js';
+  import { fmtQty, fmtDate, trafficStatus } from '$lib/utils.js';
+  import { Package, BarChart3, Warehouse, AlertTriangle, TrendingDown } from 'lucide-svelte';
 
   let summary = $state([]);
   let catSummary = $state([]);
+  let forecast = $state([]);
   let loading = $state(true);
 
   onMount(async () => {
     try {
-      [summary, catSummary] = await Promise.all([getStockSummary(), getCategoryStockSummary()]);
+      [summary, catSummary, forecast] = await Promise.all([
+        getStockSummary(), getCategoryStockSummary(), getConsumptionForecast({ days: 90 })
+      ]);
     } finally {
       loading = false;
     }
   });
+
+  let runningLow = $derived(forecast.filter(f => f.days_remaining != null).slice(0, 6));
 
   let totalProducts = $derived(summary.length);
   let totalQty = $derived(summary.reduce((s, e) => s + (e.total_quantity || 0), 0));
@@ -93,6 +98,32 @@
               </p>
             {/if}
           </div>
+        {/each}
+      </div>
+    {/if}
+
+    <!-- Consumption forecast -->
+    {#if runningLow.length > 0}
+      <div class="flex items-center gap-2 mb-1">
+        <TrendingDown size={15} class="text-gray-500" />
+        <h2 class="text-sm font-semibold text-gray-700">{t('forecast.dashboard_title')}</h2>
+      </div>
+      <p class="text-xs text-gray-400 mb-3">{t('forecast.dashboard_hint')}</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {#each runningLow as f}
+          {@const days = Math.round(f.days_remaining)}
+          <a href="/history"
+            class="rounded-xl border p-3 block hover:shadow-sm transition-shadow
+              {days <= 14 ? 'bg-red-50 border-red-200' : days <= 30 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200'}">
+            <p class="text-sm font-semibold text-gray-900 truncate">{f.product_name}</p>
+            <p class="text-lg font-bold {days <= 14 ? 'text-red-600' : days <= 30 ? 'text-yellow-700' : 'text-gray-900'}">
+              {t('forecast.days_value', { days })}
+            </p>
+            <p class="text-xs text-gray-500">
+              {fmtQty(f.current_stock)} {f.unit?.abbreviation || ''}
+              {#if f.depletion_date} · {fmtDate(f.depletion_date)}{/if}
+            </p>
+          </a>
         {/each}
       </div>
     {/if}

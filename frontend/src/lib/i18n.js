@@ -12,7 +12,7 @@ const de = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produkte', stock: 'Lager', scanner: 'Scanner',
-    inventory: 'Inventur', settings: 'Einstellungen', apidocs: 'API Docs',
+    inventory: 'Inventur', history: 'Historie', settings: 'Einstellungen', apidocs: 'API Docs',
     more: 'Mehr', home: 'Home', scan: 'Scan'
   },
   dashboard: {
@@ -69,7 +69,27 @@ const de = {
     stockid_modal_title: 'Stock IDs verwalten', stockid_modal_hint: 'Scanne oder gib Stock IDs ein',
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scannen', stockid_btn_add: 'Hinzufügen',
     stockid_btn_stop: 'Scanner stoppen', stockid_btn_done: 'Fertig',
-    stockid_toast_removed: 'Stock ID entfernt', stockid_toast_added: 'Stock ID hinzugefügt'
+    stockid_toast_removed: 'Stock ID entfernt', stockid_toast_added: 'Stock ID hinzugefügt',
+    col_history: 'Historie', history_modal_title: 'Bewegungshistorie'
+  },
+  history: {
+    title: 'Bestandsbewegungen', subtitle: 'Alle Zu- und Abgänge – mit Rückgängig-Funktion',
+    filter_all_products: 'Alle Produkte', filter_all_vaults: 'Alle Lagerorte', filter_all_reasons: 'Alle Gründe',
+    show_undone: 'Rückgängige anzeigen',
+    col_time: 'Zeitpunkt', col_product: 'Produkt', col_vault: 'Lagerort', col_change: 'Änderung',
+    col_result: 'Vorher → Nachher', col_reason: 'Grund', col_note: 'Notiz',
+    reason_create: 'Zugang', reason_edit: 'Korrektur', reason_consume: 'Verbrauch',
+    reason_adjust: 'Anpassung', reason_delete: 'Entfernt', reason_undo: 'Rückgängig', reason_import: 'Import',
+    btn_undo: 'Rückgängig', undone_badge: 'rückgängig gemacht',
+    confirm_undo: 'Diese Bestandsbewegung rückgängig machen?',
+    toast_undone: 'Bewegung rückgängig gemacht', empty: 'Keine Bewegungen erfasst'
+  },
+  forecast: {
+    title: 'Verbrauchsprognose', window_label: 'Zeitraum',
+    window_30d: '30 Tage', window_90d: '90 Tage', window_365d: '1 Jahr',
+    col_product: 'Produkt', col_stock: 'Bestand', col_rate: 'Ø / Tag', col_days_left: 'Reichweite', col_until: 'Leer am',
+    days_value: '~{days} Tage', na: '—', empty: 'Noch keine Verbrauchsdaten',
+    dashboard_title: 'Bald leer', dashboard_hint: 'Voraussichtliche Reichweite beim aktuellen Verbrauch'
   },
   units: {
     title: 'Einheiten', btn_add: 'Einheit hinzufügen', col_id: 'ID', col_name: 'Name',
@@ -215,7 +235,8 @@ const en = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', stock: 'Stock', scanner: 'Scanner',
-    inventory: 'Inventory', settings: 'Settings', apidocs: 'API Docs', more: 'More', home: 'Home', scan: 'Scan'
+    inventory: 'Inventory', history: 'History', settings: 'Settings', apidocs: 'API Docs',
+    more: 'More', home: 'Home', scan: 'Scan'
   },
   dashboard: {
     title: 'Dashboard', products_in_stock: 'Products in Stock', total_stock: 'Total Stock',
@@ -271,7 +292,27 @@ const en = {
     stockid_modal_title: 'Manage Stock IDs', stockid_modal_hint: 'Scan or enter Stock IDs',
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scan', stockid_btn_add: 'Add',
     stockid_btn_stop: 'Stop scanner', stockid_btn_done: 'Done',
-    stockid_toast_removed: 'Stock ID removed', stockid_toast_added: 'Stock ID added'
+    stockid_toast_removed: 'Stock ID removed', stockid_toast_added: 'Stock ID added',
+    col_history: 'History', history_modal_title: 'Movement history'
+  },
+  history: {
+    title: 'Stock Movements', subtitle: 'Every stock-in and outflow — with undo',
+    filter_all_products: 'All Products', filter_all_vaults: 'All Vaults', filter_all_reasons: 'All Reasons',
+    show_undone: 'Show undone',
+    col_time: 'Time', col_product: 'Product', col_vault: 'Vault', col_change: 'Change',
+    col_result: 'Before → After', col_reason: 'Reason', col_note: 'Note',
+    reason_create: 'Stock-in', reason_edit: 'Correction', reason_consume: 'Consumption',
+    reason_adjust: 'Adjustment', reason_delete: 'Removed', reason_undo: 'Undo', reason_import: 'Import',
+    btn_undo: 'Undo', undone_badge: 'undone',
+    confirm_undo: 'Undo this stock movement?',
+    toast_undone: 'Movement undone', empty: 'No movements recorded'
+  },
+  forecast: {
+    title: 'Consumption Forecast', window_label: 'Window',
+    window_30d: '30 days', window_90d: '90 days', window_365d: '1 year',
+    col_product: 'Product', col_stock: 'Stock', col_rate: 'avg / day', col_days_left: 'Runs out in', col_until: 'Empty on',
+    days_value: '~{days} days', na: '—', empty: 'No consumption data yet',
+    dashboard_title: 'Running low', dashboard_hint: 'Projected days left at the current consumption rate'
   },
   units: {
     title: 'Units', btn_add: 'Add Unit', col_id: 'ID', col_name: 'Name',

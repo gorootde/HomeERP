@@ -9,6 +9,16 @@ export function fmtDate(d) {
   return date.toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
+export function fmtDateTime(d) {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (isNaN(date)) return '—';
+  return date.toLocaleString('de-DE', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
 export function fmtFactor(n) {
   if (n == null) return '';
   return Number.isInteger(n) ? String(n) : Number(n).toFixed(4).replace(/\.?0+$/, '');

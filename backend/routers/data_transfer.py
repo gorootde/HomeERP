@@ -4,7 +4,7 @@ import os
 import tempfile
 import uuid
 import zipfile
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import List
 
@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import Date as SADate
+from sqlalchemy import DateTime as SADateTime
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Session
 
@@ -62,6 +63,8 @@ def _coerce_row(cls, row_data: dict) -> dict:
     for key, val in row_data.items():
         if val is None:
             result[key] = None
+        elif key in col_types and isinstance(col_types[key], SADateTime):
+            result[key] = datetime.fromisoformat(val) if isinstance(val, str) else val
         elif key in col_types and isinstance(col_types[key], SADate):
             result[key] = date.fromisoformat(val) if isinstance(val, str) else val
         else:

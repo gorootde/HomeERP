@@ -4,14 +4,16 @@
   import { showToast } from '$lib/toast.js';
   import {
     getStockEntries, createStockEntry, updateStockEntry, deleteStockEntry,
-    getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting
+    getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
+    getEntryMovements, undoStockMovement
   } from '$lib/api.js';
   import { fmtQty, fmtDate } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
-  import { Plus, Pencil, Trash2, QrCode, X } from 'lucide-svelte';
+  import MovementList from '$lib/components/MovementList.svelte';
+  import { Plus, Pencil, Trash2, QrCode, X, History } from 'lucide-svelte';
 
   let entries = $state([]);
   let vaults = $state([]);
@@ -27,6 +29,10 @@
   let editModal = $state(null);
   let stockIdModal = $state(null);
   let confirmDelete = $state(null);
+  let historyModal = $state(null);
+  let historyRows = $state([]);
+  let historyLoading = $state(false);
+  let historyBusyId = $state(null);
 
   let stockIdInput = $state('');
   let stockIdScannerActive = $state(false);
@@ -154,6 +160,34 @@
     addSid();
   }
 
+  // Per-entry movement history
+  async function openHistory(entry) {
+    historyModal = { entry };
+    historyLoading = true;
+    historyRows = [];
+    try {
+      historyRows = await getEntryMovements(entry.id);
+    } catch (e) {
+      showToast(String(e), 'error');
+    } finally {
+      historyLoading = false;
+    }
+  }
+
+  async function undoFromHistory(id) {
+    historyBusyId = id;
+    try {
+      await undoStockMovement(id);
+      showToast(t('history.toast_undone'), 'success');
+      historyRows = await getEntryMovements(historyModal.entry.id);
+      await reload();
+    } catch (e) {
+      showToast(String(e), 'error');
+    } finally {
+      historyBusyId = null;
+    }
+  }
+
   function bbdClass(dateStr) {
     if (!dateStr) return '';
     const now = new Date(); now.setHours(0,0,0,0);
@@ -248,6 +282,10 @@
                   </td>
                   <td class="px-4 py-2.5">
                     <div class="flex items-center gap-1 justify-end">
+                      <button onclick={() => openHistory(e)} title={t('stock.col_history')}
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                        <History size={15} />
+                      </button>
                       <button onclick={() => openStockIdModal(e)} title={t('stock.col_stockids')}
                         class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
                         <QrCode size={15} />
@@ -323,6 +361,33 @@
       {/if}
       <div class="flex justify-end pt-1">
         <button onclick={() => { stockIdModal = null; stockIdScannerActive = false; }}
+          class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+          {t('stock.stockid_btn_done')}
+        </button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- Movement history -->
+{#if historyModal}
+  <Modal title={t('stock.history_modal_title')} onclose={() => historyModal = null}>
+    <div class="space-y-3">
+      <p class="text-sm text-gray-500">
+        {historyModal.entry.product?.name || '—'} · {historyModal.entry.vault?.description || '—'}
+      </p>
+      {#if historyLoading}
+        <div class="py-8 text-center text-gray-400">Loading…</div>
+      {:else if historyRows.length === 0}
+        <p class="py-8 text-center text-gray-400">{t('history.empty')}</p>
+      {:else}
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <MovementList movements={historyRows} showContext={false}
+            busyId={historyBusyId} onundo={undoFromHistory} />
+        </div>
+      {/if}
+      <div class="flex justify-end pt-1">
+        <button onclick={() => historyModal = null}
           class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">
           {t('stock.stockid_btn_done')}
         </button>

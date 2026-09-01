@@ -1,3 +1,4 @@
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -6,12 +7,16 @@ import httpx
 
 from ..database import get_db
 from ..label_printing import print_label, render_label_png
-from ..models import StockEntry, Product, Vault, Tag, ProductCategory, StockEntryId, Setting
+from ..models import (
+    StockEntry, StockMovement, Product, Vault, Tag, ProductCategory,
+    StockEntryId, Setting,
+)
 from ..schemas import (
     StockEntryCreate, StockEntryRead, StockEntryUpdate,
     StockSummaryItem, StockSummaryVaultQty,
     CategoryStockSummaryItem,
     StockEntryIdCreate, StockEntryIdRead,
+    StockMovementRead, ConsumptionForecastItem,
     TagCreate, TagRead,
 )
 
@@ -150,6 +155,91 @@ def list_stock_entries(
 def _get_setting(db: Session, key: str, default: str = "") -> str:
     s = db.get(Setting, key)
     return s.value if s else default
+
+
+# ── Stock-movement audit log ─────────────────────────────────────────────────
+
+_MOVEMENT_REASONS = {"create", "edit", "consume", "adjust", "delete", "undo", "import"}
+
+
+def _record_movement(db: Session, *, stock_entry_id: Optional[int], product_id: Optional[int],
+                     vault_id: Optional[int], before: float, after: float, reason: str,
+                     note: Optional[str] = None, snapshot: Optional[dict] = None) -> StockMovement:
+    """Append one audit row. Caller is responsible for committing."""
+    before = float(before or 0.0)
+    after = float(after or 0.0)
+    mv = StockMovement(
+        stock_entry_id=stock_entry_id,
+        product_id=product_id,
+        vault_id=vault_id,
+        delta=after - before,
+        quantity_before=before,
+        quantity_after=after,
+        reason=reason if reason in _MOVEMENT_REASONS else "edit",
+        note=(note or None),
+        entry_snapshot=snapshot,
+    )
+    db.add(mv)
+    return mv
+
+
+def _entry_snapshot(entry: StockEntry) -> dict:
+    """Enough state to recreate an entry that a mis-scan removed."""
+    return {
+        "product_id": entry.product_id,
+        "vault_id": entry.vault_id,
+        "quantity": entry.quantity,
+        "comment": entry.comment,
+        "best_before_date": entry.best_before_date.isoformat() if entry.best_before_date else None,
+        "stock_ids": [s.code for s in entry.stock_ids],
+    }
+
+
+def _movement_can_undo(mv: StockMovement) -> bool:
+    if mv.undone or mv.reason == "undo":
+        return False
+    # Reversible if the entry still exists, or we kept a snapshot to rebuild it.
+    return mv.stock_entry_id is not None or bool(mv.entry_snapshot)
+
+
+def _serialize_movements(db: Session, rows: list[StockMovement]) -> list[StockMovementRead]:
+    product_ids = {r.product_id for r in rows if r.product_id is not None}
+    vault_ids = {r.vault_id for r in rows if r.vault_id is not None}
+    entry_ids = {r.stock_entry_id for r in rows if r.stock_entry_id is not None}
+
+    products = {p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()} if product_ids else {}
+    vaults = {v.id: v for v in db.query(Vault).filter(Vault.id.in_(vault_ids)).all()} if vault_ids else {}
+    live_entries = (
+        {e for (e,) in db.query(StockEntry.id).filter(StockEntry.id.in_(entry_ids)).all()}
+        if entry_ids else set()
+    )
+
+    out: list[StockMovementRead] = []
+    for r in rows:
+        p = products.get(r.product_id)
+        v = vaults.get(r.vault_id)
+        can_undo = _movement_can_undo(r) and (
+            r.stock_entry_id is None or r.stock_entry_id in live_entries
+        )
+        out.append(StockMovementRead(
+            id=r.id,
+            stock_entry_id=r.stock_entry_id,
+            product_id=r.product_id,
+            vault_id=r.vault_id,
+            product_name=p.name if p else None,
+            vendor=p.vendor if p else None,
+            unit=p.unit if p else None,
+            vault_description=v.description if v else None,
+            delta=r.delta,
+            quantity_before=r.quantity_before,
+            quantity_after=r.quantity_after,
+            reason=r.reason,
+            note=r.note,
+            undone=bool(r.undone),
+            can_undo=can_undo,
+            created_at=r.created_at,
+        ))
+    return out
 
 
 def _apply_generated_stock_id(entry: StockEntry, db: Session) -> None:
@@ -291,6 +381,12 @@ def create_stock_entry(data: StockEntryCreate, background_tasks: BackgroundTasks
         _apply_generated_stock_id(entry, db)
         _apply_webhook_stock_id(entry, db)
     _maybe_print_label(entry, db, data.print_label, background_tasks)
+    _record_movement(
+        db, stock_entry_id=entry.id, product_id=entry.product_id, vault_id=entry.vault_id,
+        before=0.0, after=entry.quantity, reason="create", note=entry.comment,
+    )
+    db.commit()
+    db.refresh(entry)
     return entry
 
 
@@ -307,18 +403,41 @@ def update_stock_entry(entry_id: int, data: StockEntryUpdate, db: Session = Depe
     entry = db.get(StockEntry, entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Stock entry not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
+
+    changes = data.model_dump(exclude_unset=True)
+    reason = changes.pop("reason", None) or "edit"
+    note = changes.pop("note", None)
+
+    old_qty = entry.quantity
+    for field, value in changes.items():
         setattr(entry, field, value)
     db.commit()
     db.refresh(entry)
+
+    if "quantity" in changes and entry.quantity != old_qty:
+        _record_movement(
+            db, stock_entry_id=entry.id, product_id=entry.product_id, vault_id=entry.vault_id,
+            before=old_qty, after=entry.quantity, reason=reason, note=note,
+        )
+        db.commit()
+        db.refresh(entry)
     return entry
 
 
 @router.delete("/entries/{entry_id}", status_code=204)
-def delete_stock_entry(entry_id: int, db: Session = Depends(get_db)):
+def delete_stock_entry(
+    entry_id: int,
+    reason: str = Query("delete", description="Audit-log reason: delete | consume | adjust"),
+    db: Session = Depends(get_db),
+):
     entry = db.get(StockEntry, entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Stock entry not found")
+    _record_movement(
+        db, stock_entry_id=None, product_id=entry.product_id, vault_id=entry.vault_id,
+        before=entry.quantity, after=0.0, reason=reason, note=entry.comment,
+        snapshot=_entry_snapshot(entry),
+    )
     db.delete(entry)
     db.commit()
 
@@ -373,3 +492,192 @@ def remove_stock_id(entry_id: int, sid: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Stock ID not found")
     db.delete(stock_id)
     db.commit()
+
+
+# ── Movement history / audit log ───────────────────────────────────────────────
+
+@router.get("/movements/forecast", response_model=list[ConsumptionForecastItem])
+def consumption_forecast(
+    days: int = Query(90, ge=1, le=3650, description="Look-back window for the consumption rate"),
+    product_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Per-product consumption rate and projected days of stock remaining.
+
+    Rate = sum of outflows (negative deltas, undo excluded) over the window,
+    divided by the window length. ``days_remaining = current_stock / rate``.
+    Only products with measured consumption are returned, soonest-empty first.
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+
+    stock_q = (
+        db.query(StockEntry.product_id, func.sum(StockEntry.quantity).label("qty"))
+        .group_by(StockEntry.product_id)
+    )
+    if product_id is not None:
+        stock_q = stock_q.filter(StockEntry.product_id == product_id)
+    current = {r.product_id: float(r.qty or 0.0) for r in stock_q.all()}
+
+    cons_q = (
+        db.query(StockMovement.product_id, func.sum(-StockMovement.delta).label("consumed"))
+        .filter(
+            StockMovement.delta < 0,
+            StockMovement.reason != "undo",
+            StockMovement.undone == 0,
+            StockMovement.created_at >= since,
+            StockMovement.product_id.isnot(None),
+        )
+        .group_by(StockMovement.product_id)
+    )
+    if product_id is not None:
+        cons_q = cons_q.filter(StockMovement.product_id == product_id)
+    consumed = {r.product_id: float(r.consumed or 0.0) for r in cons_q.all()}
+
+    product_ids = set(current) | set(consumed)
+    products = (
+        {p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()}
+        if product_ids else {}
+    )
+    today = date.today()
+
+    out: list[ConsumptionForecastItem] = []
+    for pid in product_ids:
+        p = products.get(pid)
+        c = consumed.get(pid, 0.0)
+        if p is None or c <= 0:
+            continue
+        stock = current.get(pid, 0.0)
+        avg = c / days
+        remaining = stock / avg if avg > 0 else None
+        depletion = None
+        if remaining is not None and remaining < 100_000:
+            depletion = today + timedelta(days=int(round(remaining)))
+        out.append(ConsumptionForecastItem(
+            product_id=pid,
+            product_name=p.name,
+            vendor=p.vendor,
+            unit=p.unit,
+            current_stock=stock,
+            window_days=days,
+            consumed_in_window=c,
+            avg_daily_consumption=avg,
+            days_remaining=remaining,
+            depletion_date=depletion,
+        ))
+    out.sort(key=lambda x: (x.days_remaining is None, x.days_remaining or 0.0))
+    return out
+
+
+@router.get("/movements", response_model=list[StockMovementRead])
+def list_stock_movements(
+    product_id: Optional[int] = Query(None),
+    vault_id: Optional[int] = Query(None),
+    stock_entry_id: Optional[int] = Query(None),
+    reason: Optional[str] = Query(None),
+    include_undone: bool = Query(True),
+    skip: int = 0,
+    limit: int = Query(200, ge=1, le=2000),
+    db: Session = Depends(get_db),
+):
+    q = db.query(StockMovement)
+    if product_id is not None:
+        q = q.filter(StockMovement.product_id == product_id)
+    if vault_id is not None:
+        q = q.filter(StockMovement.vault_id == vault_id)
+    if stock_entry_id is not None:
+        q = q.filter(StockMovement.stock_entry_id == stock_entry_id)
+    if reason:
+        q = q.filter(StockMovement.reason == reason)
+    if not include_undone:
+        q = q.filter(StockMovement.undone == 0)
+    rows = (
+        q.order_by(StockMovement.created_at.desc(), StockMovement.id.desc())
+        .offset(skip).limit(limit).all()
+    )
+    return _serialize_movements(db, rows)
+
+
+@router.get("/entries/{entry_id}/movements", response_model=list[StockMovementRead])
+def list_entry_movements(entry_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(StockMovement)
+        .filter(StockMovement.stock_entry_id == entry_id)
+        .order_by(StockMovement.created_at.desc(), StockMovement.id.desc())
+        .all()
+    )
+    return _serialize_movements(db, rows)
+
+
+@router.post("/movements/{movement_id}/undo", response_model=StockMovementRead)
+def undo_movement(movement_id: int, db: Session = Depends(get_db)):
+    """Reverse a single movement.
+
+    * Entry still exists  → its quantity is moved back by ``-delta`` (the entry
+      is removed instead if that lands it at zero).
+    * Entry was removed   → it is recreated from the snapshot taken at deletion,
+      re-attaching any stock IDs that are still free.
+
+    A compensating ``undo`` movement is appended and the original is flagged.
+    """
+    mv = db.get(StockMovement, movement_id)
+    if not mv:
+        raise HTTPException(status_code=404, detail="Movement not found")
+    if mv.undone:
+        raise HTTPException(status_code=409, detail="Movement already undone")
+    if mv.reason == "undo":
+        raise HTTPException(status_code=409, detail="Cannot undo an undo")
+
+    entry = db.get(StockEntry, mv.stock_entry_id) if mv.stock_entry_id else None
+
+    if entry is not None:
+        restored = entry.quantity - mv.delta
+        if restored < 0:
+            raise HTTPException(status_code=409, detail="Undo would produce a negative stock level")
+        before = entry.quantity
+        if restored == 0:
+            snapshot = _entry_snapshot(entry)
+            db.delete(entry)
+            reversal = _record_movement(
+                db, stock_entry_id=None, product_id=mv.product_id, vault_id=mv.vault_id,
+                before=before, after=0.0, reason="undo",
+                note=f"Rückgängig von #{mv.id}", snapshot=snapshot,
+            )
+        else:
+            entry.quantity = restored
+            reversal = _record_movement(
+                db, stock_entry_id=entry.id, product_id=mv.product_id, vault_id=mv.vault_id,
+                before=before, after=restored, reason="undo", note=f"Rückgängig von #{mv.id}",
+            )
+    elif mv.entry_snapshot:
+        snap = mv.entry_snapshot
+        if not db.get(Product, snap.get("product_id")) or not db.get(Vault, snap.get("vault_id")):
+            raise HTTPException(status_code=409, detail="Product or vault no longer exists")
+        entry = StockEntry(
+            product_id=snap["product_id"],
+            vault_id=snap["vault_id"],
+            quantity=snap["quantity"],
+            comment=snap.get("comment"),
+            best_before_date=(
+                date.fromisoformat(snap["best_before_date"]) if snap.get("best_before_date") else None
+            ),
+        )
+        db.add(entry)
+        db.flush()
+        for code in snap.get("stock_ids", []):
+            if not db.query(StockEntryId).filter(StockEntryId.code == code).first():
+                db.add(StockEntryId(code=code, stock_entry_id=entry.id))
+        reversal = _record_movement(
+            db, stock_entry_id=entry.id, product_id=entry.product_id, vault_id=entry.vault_id,
+            before=0.0, after=entry.quantity, reason="undo",
+            note=f"Rückgängig von #{mv.id} (Eintrag wiederhergestellt)",
+        )
+    else:
+        raise HTTPException(
+            status_code=409,
+            detail="Stock entry no longer exists and cannot be restored",
+        )
+
+    mv.undone = 1
+    db.commit()
+    db.refresh(reversal)
+    return _serialize_movements(db, [reversal])[0]

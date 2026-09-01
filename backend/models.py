@@ -1,6 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, Date, Text, ForeignKey, UniqueConstraint, Table
+from datetime import datetime, timezone
+
+from sqlalchemy import (
+    Column, Integer, String, Float, Date, DateTime, Text, JSON,
+    ForeignKey, UniqueConstraint, Table,
+)
 from sqlalchemy.orm import relationship
 from .database import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 # ── Association tables ──────────────────────────────────────────────────────
@@ -162,3 +171,38 @@ class StockEntry(Base):
     vault    = relationship("Vault", back_populates="stock_entries")
     tags     = relationship("Tag", secondary=stock_entry_tags)
     stock_ids = relationship("StockEntryId", back_populates="stock_entry", cascade="all, delete-orphan")
+    # No cascade delete: movements outlive their entry so the audit trail is kept.
+    # SQLite has FK enforcement off, so the ORM nulls stock_entry_id on entry delete.
+    movements = relationship("StockMovement", back_populates="stock_entry")
+
+
+class StockMovement(Base):
+    """Append-only audit log of every change to a StockEntry's quantity.
+
+    One row per stock-in, correction, consumption or removal. ``delta`` is
+    ``quantity_after - quantity_before`` (negative = outflow). Rows are never
+    updated except to flip ``undone`` when a movement is reversed via the
+    undo endpoint. ``product_id`` / ``vault_id`` are denormalised so per-product
+    consumption stats survive the deletion of the originating entry, and
+    ``entry_snapshot`` keeps enough state to recreate an entry removed by a
+    mis-scan.
+    """
+
+    __tablename__ = "stock_movements"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    stock_entry_id  = Column(Integer, ForeignKey("stock_entries.id", ondelete="SET NULL"), nullable=True, index=True)
+    product_id      = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True, index=True)
+    vault_id        = Column(Integer, ForeignKey("vaults.id", ondelete="SET NULL"), nullable=True)
+    delta           = Column(Float, nullable=False)
+    quantity_before = Column(Float, nullable=False)
+    quantity_after  = Column(Float, nullable=False)
+    reason          = Column(String(32), nullable=False, default="edit")  # create|edit|consume|adjust|delete|undo|import
+    note            = Column(String(255), nullable=True)
+    entry_snapshot  = Column(JSON, nullable=True)   # set on 'delete' so the movement can be undone
+    undone          = Column(Integer, nullable=False, default=0)
+    created_at      = Column(DateTime, nullable=False, default=_utcnow, index=True)
+
+    stock_entry = relationship("StockEntry", back_populates="movements")
+    product     = relationship("Product")
+    vault       = relationship("Vault")
