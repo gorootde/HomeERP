@@ -28,8 +28,9 @@
       await Promise.all([
         putSetting('stock_id_mode', mode),
         putSetting('stock_id_prefix', prefix),
-        putSetting('stock_id_counter', counter),
-        putSetting('stock_id_pad_length', padLength),
+        // number inputs make bind:value numeric – settings are stored as strings
+        putSetting('stock_id_counter', String(counter)),
+        putSetting('stock_id_pad_length', String(padLength)),
         putSetting('stock_id_webhook_url', webhookUrl)
       ]);
       showToast(t('stockid.toast_saved'), 'success');

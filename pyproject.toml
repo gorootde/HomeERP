@@ -19,6 +19,18 @@ qrcode = "^8.2"
 pyipp = "^0.17.2"
 brother-ql = "^0.9.4"
 
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.2"
+respx = ">=0.21"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+filterwarnings = [
+    "ignore::DeprecationWarning:pyipp.*",
+    "ignore:No path_separator found in configuration:DeprecationWarning",
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

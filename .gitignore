@@ -11,6 +11,13 @@ dist/
 # Node / frontend vendor
 frontend/node_modules/
 
+# Tests
+.pytest_cache/
+test-results/
+playwright-report/
+frontend/e2e-data/
+frontend/playwright/.cache/
+
 # IDE
 .idea/
 .vscode/

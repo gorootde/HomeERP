@@ -6,7 +6,7 @@
 
 <div class="fixed inset-0 z-50 flex items-center justify-center">
   <div class="absolute inset-0 bg-black/50" onclick={oncancel}></div>
-  <div class="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+  <div role="alertdialog" aria-modal="true" class="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
     <p class="text-sm text-gray-700 mb-5">{message}</p>
     <div class="flex gap-3 justify-end">
       <button onclick={oncancel}

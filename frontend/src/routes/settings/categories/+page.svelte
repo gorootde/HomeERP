@@ -89,10 +89,11 @@
               </td>
               <td class="px-4 py-2.5">
                 <div class="flex gap-1 justify-end">
-                  <button onclick={() => openEdit(c)} class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                  <button onclick={() => openEdit(c)} aria-label={t('common.edit')} title={t('common.edit')}
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
                     <Pencil size={15} />
                   </button>
-                  <button onclick={() => confirmDelete = { id: c.id }}
+                  <button onclick={() => confirmDelete = { id: c.id }} aria-label={t('common.delete')} title={t('common.delete')}
                     class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
                     <Trash2 size={15} />
                   </button>

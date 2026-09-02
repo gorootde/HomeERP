@@ -1,6 +1,6 @@
 # HomeERP
 
-A self-hosted home inventory and stock management system built with FastAPI and vanilla JavaScript.
+A self-hosted home inventory and stock management system built with FastAPI and SvelteKit.
 
 I was deeply disappointed by the attitude of maintainers in some existing open-source inventory management solutions who were unwilling to accept contributions or changes, so I created this project as a more flexible and community-driven alternative.
 
@@ -34,8 +34,8 @@ I was deeply disappointed by the attitude of maintainers in some existing open-s
 # One-time setup: creates .venv and installs Python dependencies
 make install
 
-# Build frontend vendor files (Lucide icons, html5-qrcode)
-cd frontend && npm install && npm run vendor && cd ..
+# Build the SvelteKit frontend (output goes to frontend_dist/, served by the backend)
+cd frontend && npm install && npm run build && cd ..
 
 # Run migrations and start the dev server (with --reload)
 make run
@@ -116,20 +116,22 @@ HomeERP/
 │   ├── models.py     # ORM models
 │   ├── schemas.py    # Pydantic schemas
 │   └── routers/      # API route handlers
-├── frontend/         # Vanilla JS SPA (no build step)
-│   ├── index.html
-│   ├── css/
-│   ├── js/           # ES modules, hash-based routing
-│   └── vendor/       # Bundled third-party libs
+├── frontend/         # SvelteKit SPA (Svelte 5 + Tailwind CSS)
+│   ├── src/routes/   # File-based routes (+page.svelte / +layout.svelte)
+│   ├── src/lib/       # API client, i18n, stores, shared components
+│   └── tests/e2e/    # Playwright end-to-end tests
+├── frontend_dist/    # Built SPA, served by the backend
 ├── migrations/       # Alembic migration scripts
 ├── Dockerfile
 ├── Makefile
 └── pyproject.toml
 ```
 
-**Stack:** FastAPI · SQLAlchemy 2 · Alembic · SQLite · Vanilla JS · Lucide Icons
+**Stack:** FastAPI · SQLAlchemy 2 · Alembic · SQLite · SvelteKit (Svelte 5) · Tailwind CSS · Vite · Lucide Icons
 
-The backend serves the frontend as static files and acts as the API. No separate frontend server or build pipeline is required.
+The SvelteKit app is built with Vite (`adapter-static`) into `frontend_dist/`, which the
+backend serves as static files alongside the API — so production runs as a single process
+with no separate frontend server.
 
 ---
 
