@@ -43,17 +43,13 @@
   }
 
   function isStockId(code) {
-    const mode = getSetting('stock_id_mode');
-    const prefix = getSetting('stock_id_prefix');
-    if (mode === 'generated' && prefix && code.startsWith(prefix)) return true;
-    if (mode === 'manual') {
-      // Heuristic: if it doesn't look like an EAN (digits only, 8/12/13 chars), treat as stock ID
-      if (!/^\d{8}$|^\d{12}$|^\d{13}$/.test(code)) return true;
-    }
-    return false;
+    // Simple heuristic, independent of stock_id_mode: a pure-digit code is an
+    // EAN/barcode, anything else (e.g. "INV0033") is a stock ID.
+    return !/^\d+$/.test(code.trim());
   }
 
   async function handleScan(code) {
+    code = code.trim();
     if (code === lastCode) return;
     lastCode = code;
     result = null;
