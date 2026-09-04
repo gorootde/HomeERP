@@ -1,23 +1,36 @@
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+
 import httpx
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..label_printing import print_label, render_label_png
 from ..models import (
-    StockEntry, StockMovement, Product, Vault, Tag, ProductCategory,
-    StockEntryId, Setting,
+    Product,
+    ProductCategory,
+    Setting,
+    StockEntry,
+    StockEntryId,
+    StockMovement,
+    Tag,
+    Vault,
 )
 from ..schemas import (
-    StockEntryCreate, StockEntryRead, StockEntryUpdate,
-    StockSummaryItem, StockSummaryVaultQty,
     CategoryStockSummaryItem,
-    StockEntryIdCreate, StockEntryIdRead,
-    StockMovementRead, ConsumptionForecastItem,
-    TagCreate, TagRead,
+    ConsumptionForecastItem,
+    StockEntryCreate,
+    StockEntryIdCreate,
+    StockEntryIdRead,
+    StockEntryRead,
+    StockEntryUpdate,
+    StockMovementRead,
+    StockSummaryItem,
+    StockSummaryVaultQty,
+    TagCreate,
+    TagRead,
 )
 
 router = APIRouter()

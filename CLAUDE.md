@@ -81,6 +81,9 @@ gotchas that aren't obvious from the code.
 
 ## CI
 
-`.github/workflows/docker-publish.yml` builds and pushes the image to GHCR on every push to
-`main`. There is no automated test workflow — run `pytest` (and the E2E suite) locally
-before pushing.
+`.github/workflows/docker-publish.yml` runs on every push and pull request: `ruff check .` +
+`pytest` (backend), `eslint .` + the Playwright E2E suite (frontend) — all as separate jobs,
+so failures are attributed per area. The GHCR image build/push only runs on pushes to `main`
+and only after all four check jobs succeed (`needs:`). `poetry.toml` pins the venv to
+`.venv/` in-project; `frontend/playwright.config.js` relies on that path to boot the backend
+for E2E.

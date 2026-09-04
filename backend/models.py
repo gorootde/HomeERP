@@ -1,10 +1,20 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column, Integer, String, Float, Date, DateTime, Text, JSON,
-    ForeignKey, UniqueConstraint, Table,
+    JSON,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+
 from .database import Base
 
 

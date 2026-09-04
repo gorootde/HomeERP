@@ -22,6 +22,7 @@ brother-ql = "^0.9.4"
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.2"
 respx = ">=0.21"
+ruff = ">=0.16"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -30,6 +31,18 @@ filterwarnings = [
     "ignore::DeprecationWarning:pyipp.*",
     "ignore:No path_separator found in configuration:DeprecationWarning",
 ]
+
+[tool.ruff]
+# Alembic-generated revision files follow its own boilerplate import order;
+# linting them would fight the code generator on every new migration.
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+# Baseline: real bugs (pyflakes), broken syntax/formatting (pycodestyle
+# errors), import hygiene (isort) — deliberately not the full default rule
+# set (e.g. no B008, which flags FastAPI's idiomatic `Depends(...)` default
+# args, and no stylistic-only rules like line-length or Optional-vs-`| None`).
+select = ["E4", "E7", "E9", "F", "I"]
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,9 +3,9 @@
 ``print_label`` / ``clear_print_queue`` are stubbed by the conftest autouse
 fixture; individual tests re-stub them to assert behaviour or simulate failure.
 """
-import pytest
-from PIL import Image
 import io
+
+from PIL import Image
 
 from backend.label_printing import (
     DEFAULT_ORIENTATION,

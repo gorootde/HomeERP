@@ -7,8 +7,8 @@ from alembic.command import upgrade
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect
 
-from backend.database import Base
 import backend.models  # noqa: F401
+from backend.database import Base
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 

@@ -1,5 +1,4 @@
 """Coverage for backend/routers/stock.py – entries, summaries, sub-resources."""
-import pytest
 
 
 # ── create / read / update / delete ────────────────────────────────────────
@@ -114,9 +113,8 @@ def test_list_entries_filter_by_vault_and_product(client, make_product, make_vau
 
 
 def test_list_entries_pagination(client, make_stock_entry):
-    pid = None
     for _ in range(4):
-        pid = make_stock_entry()["product_id"]
+        make_stock_entry()
     page = client.get("/api/stock/entries", params={"skip": 1, "limit": 2}).json()
     assert len(page) == 2
 

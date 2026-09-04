@@ -2,7 +2,7 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { t, locale } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.js';
   import ToastContainer from '$lib/components/ToastContainer.svelte';
   import { getOpenApiSpec } from '$lib/api.js';
   import { onMount } from 'svelte';

@@ -124,7 +124,7 @@
     try {
       await printStockEntryLabel(entry.id);
       showToast(t('stock.toast_label_printed'), 'success');
-    } catch (e) {
+    } catch {
       showToast(t('stock.toast_label_print_failed'), 'error');
     } finally {
       printingId = null;

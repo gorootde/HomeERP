@@ -1,18 +1,24 @@
-import uuid
 import urllib.request
+import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Product, EanCode, Tag, ProductUnitConversion
+from ..models import EanCode, Product, ProductUnitConversion, Tag
 from ..schemas import (
-    ProductCreate, ProductRead, ProductUpdate,
-    EanCodeCreate, EanCodeRead,
-    TagCreate, TagRead,
-    ProductUnitConversionCreate, ProductUnitConversionRead,
+    EanCodeCreate,
+    EanCodeRead,
+    ProductCreate,
+    ProductRead,
+    ProductUnitConversionCreate,
+    ProductUnitConversionRead,
+    ProductUpdate,
+    TagCreate,
+    TagRead,
 )
 
 UPLOADS_DIR = Path(__file__).parent.parent.parent / "uploads"

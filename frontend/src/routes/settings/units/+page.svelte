@@ -3,7 +3,6 @@
   import { t } from '$lib/i18n.js';
   import { showToast } from '$lib/toast.js';
   import { getUnits, createUnit, updateUnit, deleteUnit, addUnitConversion, deleteUnitConversion } from '$lib/api.js';
-  import { fmtFactor } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';

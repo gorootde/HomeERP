@@ -10,7 +10,6 @@
   let includeImages = $state(true);
   let exporting = $state(false);
 
-  let importFile = $state(null);
   let importPreview = $state(null);
   let importId = $state(null);
   let loadingPreview = $state(false);
@@ -61,7 +60,6 @@
   async function handleImportFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    importFile = file;
     importPreview = null;
     importId = null;
     loadingPreview = true;
@@ -86,7 +84,6 @@
       showToast(t('data_transfer.toast_import_done'), 'success');
       importPreview = null;
       importId = null;
-      importFile = null;
     } catch (e) {
       showToast(String(e), 'error');
     } finally {

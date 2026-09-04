@@ -3,7 +3,6 @@
 Exercises the ``_apply_generated_stock_id`` / ``_apply_webhook_stock_id`` /
 ``_maybe_print_label`` helpers through the public create-entry endpoint.
 """
-import pytest
 
 
 def _set(client, key, value):

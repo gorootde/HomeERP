@@ -3,8 +3,6 @@ import io
 import json
 import zipfile
 
-import pytest
-
 
 def _read_zip(content: bytes):
     zf = zipfile.ZipFile(io.BytesIO(content))
@@ -33,7 +31,7 @@ def test_export_produces_zip_with_selected_tables(client, make_product, make_vau
     members = _read_zip(resp.content)
     assert set(members) == {"products.json", "vaults.json", "ean_codes.json"}
 
-    products = [json.loads(l) for l in members["products.json"].decode().splitlines() if l.strip()]
+    products = [json.loads(line) for line in members["products.json"].decode().splitlines() if line.strip()]
     assert products[0]["name"] == "Exported"
 
 
@@ -47,6 +45,7 @@ def test_export_ignores_unknown_tables(client, make_product):
 def test_export_bundles_product_images(client, make_product):
     pid = make_product()["id"]
     import io as _io
+
     from PIL import Image
 
     buf = _io.BytesIO()

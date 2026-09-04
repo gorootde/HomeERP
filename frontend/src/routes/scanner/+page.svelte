@@ -1,5 +1,5 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { t } from '$lib/i18n.js';
   import { showToast } from '$lib/toast.js';
   import {

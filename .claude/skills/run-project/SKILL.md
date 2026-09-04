@@ -36,4 +36,13 @@ There are two suites, no more:
   make test-e2e          # == cd frontend && npm run test:e2e
   ```
 
-Run both before pushing to `main` — CI only builds/publishes the Docker image, it does not run tests.
+## Linting
+
+```bash
+poetry run ruff check .    # backend + tests
+cd frontend && npm run lint  # ESLint
+```
+
+Run lint and both test suites before pushing — CI (`.github/workflows/docker-publish.yml`)
+now runs all four as required checks on every push/PR, and only builds/publishes the Docker
+image after they pass.

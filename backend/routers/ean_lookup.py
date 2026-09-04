@@ -1,4 +1,5 @@
 from typing import Optional
+
 import httpx
 from fastapi import APIRouter
 from pydantic import BaseModel

@@ -1,10 +1,22 @@
 import os
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
-from .routers import products, vaults, stock, tags, units, categories, app_settings, ean_lookup, data_transfer, label_printing
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from .routers import (
+    app_settings,
+    categories,
+    data_transfer,
+    ean_lookup,
+    label_printing,
+    products,
+    stock,
+    tags,
+    units,
+    vaults,
+)
 
 app = FastAPI(title="HomeERP", version="1.0.0")
 

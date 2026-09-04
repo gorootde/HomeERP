@@ -5,8 +5,8 @@
   import {
     getProducts, getProduct, createProduct, updateProduct, deleteProduct,
     addEan, removeEan, getEanInfo, setImageFromUrl, uploadProductImage, deleteProductImage,
-    getUnits, getCategories, getTags, addTagToProduct, removeTagFromProduct,
-    getProductUnitConversions, addProductUnitConversion, deleteProductUnitConversion
+    getUnits, getCategories, addTagToProduct, removeTagFromProduct,
+    addProductUnitConversion, deleteProductUnitConversion
   } from '$lib/api.js';
   import { parseSizeString } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
@@ -19,7 +19,6 @@
   let products = $state([]);
   let units = $state([]);
   let categories = $state([]);
-  let allTags = $state([]);
   let loading = $state(true);
   let search = $state('');
 
@@ -70,8 +69,8 @@
   async function reload() {
     loading = true;
     try {
-      [products, units, categories, allTags] = await Promise.all([
-        getProducts('', 500), getUnits(), getCategories(), getTags()
+      [products, units, categories] = await Promise.all([
+        getProducts('', 500), getUnits(), getCategories()
       ]);
     } finally {
       loading = false;

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Vault, Tag
-from ..schemas import VaultCreate, VaultRead, VaultUpdate, TagCreate, TagRead
+from ..models import Tag, Vault
+from ..schemas import TagCreate, TagRead, VaultCreate, VaultRead, VaultUpdate
 
 router = APIRouter()
 

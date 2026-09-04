@@ -1,7 +1,6 @@
 """Coverage for backend/routers/products.py."""
 import io
 
-import pytest
 from PIL import Image
 
 
@@ -143,7 +142,7 @@ def test_add_ean_to_missing_product(client):
 
 
 def test_add_duplicate_ean_conflicts(client, make_product):
-    p1 = make_product(name="A", ean_codes=["dup"])
+    make_product(name="A", ean_codes=["dup"])
     p2 = make_product(name="B")
     resp = client.post(f"/api/products/{p2['id']}/ean", json={"code": "dup"})
     assert resp.status_code == 409

@@ -1,5 +1,4 @@
 """App-level wiring: OpenAPI, SPA fallback, uploads mount, CRUD smoke path."""
-import pytest
 
 
 def test_openapi_schema_served(client):

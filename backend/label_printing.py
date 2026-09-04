@@ -524,9 +524,9 @@ def _print_brother_ql(png_bytes: bytes, printer_ip: str, width_mm: float, model:
     speak their own raster protocol. ``brother_ql`` builds it; we push it over
     the JetDirect port, bypassing the IPP spool entirely.
     """
+    from brother_ql.backends.helpers import send
     from brother_ql.conversion import convert
     from brother_ql.raster import BrotherQLRaster
-    from brother_ql.backends.helpers import send
 
     label_id, dots = _brother_label_id(width_mm)
     im = Image.open(io.BytesIO(png_bytes)).convert("RGB")
