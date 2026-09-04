@@ -263,6 +263,9 @@
                 <tr class="hover:bg-gray-50">
                   <td class="px-4 py-2.5">
                     <p class="font-medium text-gray-900">{e.product?.name || '—'}</p>
+                    {#if e.product?.vendor}
+                      <p class="text-xs text-gray-500">{e.product.vendor}</p>
+                    {/if}
                     <p class="text-xs text-gray-500 sm:hidden">{e.vault?.description || ''}</p>
                   </td>
                   <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{e.vault?.description || '—'}</td>
