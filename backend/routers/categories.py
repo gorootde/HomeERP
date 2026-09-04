@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..helpers import get_or_404, raise_if_exists
 from ..models import ProductCategory
 from ..schemas import ProductCategoryCreate, ProductCategoryRead, ProductCategoryUpdate
 
@@ -15,9 +16,9 @@ def list_categories(db: Session = Depends(get_db)):
 
 @router.post("", response_model=ProductCategoryRead, status_code=201)
 def create_category(data: ProductCategoryCreate, db: Session = Depends(get_db)):
-    existing = db.query(ProductCategory).filter(ProductCategory.name == data.name).first()
-    if existing:
-        raise HTTPException(status_code=409, detail=f"Kategorie '{data.name}' existiert bereits")
+    raise_if_exists(
+        db, ProductCategory, f"Kategorie '{data.name}' existiert bereits", name=data.name
+    )
     category = ProductCategory(**data.model_dump())
     db.add(category)
     db.commit()
@@ -27,17 +28,12 @@ def create_category(data: ProductCategoryCreate, db: Session = Depends(get_db)):
 
 @router.get("/{category_id}", response_model=ProductCategoryRead)
 def get_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.get(ProductCategory, category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Kategorie nicht gefunden")
-    return category
+    return get_or_404(db, ProductCategory, category_id, "Kategorie nicht gefunden")
 
 
 @router.put("/{category_id}", response_model=ProductCategoryRead)
 def update_category(category_id: int, data: ProductCategoryUpdate, db: Session = Depends(get_db)):
-    category = db.get(ProductCategory, category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Kategorie nicht gefunden")
+    category = get_or_404(db, ProductCategory, category_id, "Kategorie nicht gefunden")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(category, field, value)
     db.commit()
@@ -47,8 +43,6 @@ def update_category(category_id: int, data: ProductCategoryUpdate, db: Session =
 
 @router.delete("/{category_id}", status_code=204)
 def delete_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.get(ProductCategory, category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Kategorie nicht gefunden")
+    category = get_or_404(db, ProductCategory, category_id, "Kategorie nicht gefunden")
     db.delete(category)
     db.commit()

@@ -3,8 +3,10 @@
   import { t } from '$lib/i18n.js';
   import { showToast } from '$lib/toast.js';
   import { getVaults, createVault, updateVault, deleteVault, addTagToVault, removeTagFromVault } from '$lib/api.js';
+  import { useTags } from '$lib/useTags.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import TagChips from '$lib/components/TagChips.svelte';
   import { Plus, Pencil, Trash2, ChevronLeft } from 'lucide-svelte';
 
@@ -54,19 +56,12 @@
     } catch (e) { showToast(String(e), 'error'); }
   }
 
-  async function addTag(name) {
-    if (!editModal?.vault) { form.tags = [...form.tags, { id: Date.now(), name }]; return; }
-    await addTagToVault(editModal.vault.id, name);
-    const updated = (await getVaults()).find(v => v.id === editModal.vault.id);
-    form.tags = [...(updated?.tags || [])];
-  }
-
-  async function removeTag(name) {
-    if (!editModal?.vault) { form.tags = form.tags.filter(t => t.name !== name); return; }
-    await removeTagFromVault(editModal.vault.id, name);
-    const updated = (await getVaults()).find(v => v.id === editModal.vault.id);
-    form.tags = [...(updated?.tags || [])];
-  }
+  const { addTag, removeTag } = useTags(() => form, {
+    getEntityId: () => editModal?.vault?.id,
+    addFn: addTagToVault,
+    removeFn: removeTagFromVault,
+    fetchTags: async (id) => (await getVaults()).find(v => v.id === id)?.tags || [],
+  });
 </script>
 
 <div class="px-4 md:px-6 py-5 max-w-2xl">
@@ -84,43 +79,36 @@
   {:else if vaults.length === 0}
     <p class="text-center text-gray-400 py-12">{t('vaults.empty')}</p>
   {:else}
+    {#snippet idCell(v)}<span class="text-gray-500 font-mono text-xs">{v.id}</span>{/snippet}
+    {#snippet descCell(v)}<span class="font-medium text-gray-900">{v.description}</span>{/snippet}
+    {#snippet tagsCell(v)}
+      <div class="flex flex-wrap gap-1">
+        {#each v.tags || [] as tag}
+          <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{tag.name}</span>
+        {/each}
+      </div>
+    {/snippet}
+    {#snippet actionsCell(v)}
+      <div class="flex gap-1 justify-end">
+        <button onclick={() => openEdit(v)} class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+          <Pencil size={15} />
+        </button>
+        <button onclick={() => confirmDelete = { id: v.id }}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+          <Trash2 size={15} />
+        </button>
+      </div>
+    {/snippet}
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-200 bg-gray-50">
-            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('vaults.col_id')}</th>
-            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('vaults.col_description')}</th>
-            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('vaults.col_tags')}</th>
-            <th class="px-4 py-2.5"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {#each vaults as v}
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-2.5 text-gray-500 font-mono text-xs">{v.id}</td>
-              <td class="px-4 py-2.5 font-medium text-gray-900">{v.description}</td>
-              <td class="px-4 py-2.5 hidden sm:table-cell">
-                <div class="flex flex-wrap gap-1">
-                  {#each v.tags || [] as tag}
-                    <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{tag.name}</span>
-                  {/each}
-                </div>
-              </td>
-              <td class="px-4 py-2.5">
-                <div class="flex gap-1 justify-end">
-                  <button onclick={() => openEdit(v)} class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                    <Pencil size={15} />
-                  </button>
-                  <button onclick={() => confirmDelete = { id: v.id }}
-                    class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={vaults}
+        rowKey={(v) => v.id}
+        columns={[
+          { label: t('vaults.col_id'), cell: idCell },
+          { label: t('vaults.col_description'), cell: descCell },
+          { label: t('vaults.col_tags'), hideBelow: 'sm', cell: tagsCell },
+          { cell: actionsCell },
+        ]} />
     </div>
   {/if}
 </div>

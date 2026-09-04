@@ -1,7 +1,7 @@
 <script>
   import { t } from '$lib/i18n.js';
   import Modal from './Modal.svelte';
-  import BarcodeScanner from './BarcodeScanner.svelte';
+  import ScannableCodeList from './ScannableCodeList.svelte';
   import { ScanLine } from 'lucide-svelte';
   import { fmtProductLabel } from '$lib/utils.js';
 
@@ -54,11 +54,8 @@
     print_label:      true
   });
 
-  let stockIdScannerActive = $state(false);
-
   function handleStockIdScan(code) {
     form.stock_id = code;
-    stockIdScannerActive = false;
   }
 
   // When product changes (only in unlocked mode), reset entry_unit_id to that product's default
@@ -182,22 +179,12 @@
         {t('stock.label_stock_id')}
         <span class="text-gray-400 font-normal ml-1">({t('common.optional')})</span>
       </label>
-      {#if stockIdScannerActive}
-        <BarcodeScanner active={true} onscan={handleStockIdScan} />
-        <button type="button" onclick={() => stockIdScannerActive = false}
-          class="w-full mt-1 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          {t('stock.stockid_btn_stop')}
-        </button>
-      {:else}
-        <div class="flex gap-2">
-          <input bind:value={form.stock_id} placeholder={t('stock.placeholder_stock_id')}
-            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
-          <button type="button" onclick={() => stockIdScannerActive = true}
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5">
-            <ScanLine size={15} />
-          </button>
-        </div>
-      {/if}
+      <ScannableCodeList
+        bind:value={form.stock_id}
+        placeholder={t('stock.placeholder_stock_id')}
+        onscan={handleStockIdScan}>
+        <ScanLine size={15} />
+      </ScannableCodeList>
     </div>
     {/if}
 

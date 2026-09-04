@@ -122,7 +122,6 @@ export const deleteUnitConversion = (id, convId) => del(`/units/${id}/conversion
 
 // Data Transfer
 export const getExportModels = () => get('/export/models');
-export const exportData = (tables) => req('POST', '/export', { tables }, false);
 export const previewImport = (formData) => postForm('/import/preview', formData);
 export const applyImport = (importId) => post(`/import/apply/${importId}`);
 

@@ -10,10 +10,12 @@
   import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
+  import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
+  import FilterSelect from '$lib/components/FilterSelect.svelte';
+  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import MovementList from '$lib/components/MovementList.svelte';
-  import { Plus, Pencil, Trash2, QrCode, X, History, Printer } from 'lucide-svelte';
+  import { Plus, Pencil, Trash2, QrCode, History, Printer } from 'lucide-svelte';
 
   let entries = $state([]);
   let vaults = $state([]);
@@ -36,7 +38,6 @@
   let printingId = $state(null);
 
   let stockIdInput = $state('');
-  let stockIdScannerActive = $state(false);
   let stockIdList = $state([]);
 
   // editModal.initial holds the pre-filled form values passed into StockEntryModal
@@ -135,7 +136,6 @@
   function openStockIdModal(entry) {
     stockIdList = [...(entry.stock_ids || [])];
     stockIdInput = '';
-    stockIdScannerActive = false;
     stockIdModal = { entry };
   }
 
@@ -169,7 +169,6 @@
 
   function handleSidScan(code) {
     stockIdInput = code;
-    stockIdScannerActive = false;
     addSid();
   }
 
@@ -225,27 +224,16 @@
 
   <!-- Filters -->
   <div class="flex flex-wrap gap-2 mb-4">
-    <select bind:value={filterVault}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('stock.filter_all_vaults')}</option>
-      {#each vaults as v}
-        <option value={v.id}>{v.description}</option>
-      {/each}
-    </select>
-    <select bind:value={filterProduct}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('stock.filter_all_products')}</option>
-      {#each products as p}
-        <option value={p.id}>{fmtProductLabel(p)}</option>
-      {/each}
-    </select>
-    <select bind:value={filterExpiry}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('stock.filter_expiry_all')}</option>
-      <option value="7">{t('stock.filter_expiry_7d')}</option>
-      <option value="30">{t('stock.filter_expiry_30d')}</option>
-      <option value="180">{t('stock.filter_expiry_6m')}</option>
-    </select>
+    <FilterSelect bind:value={filterVault} placeholder={t('stock.filter_all_vaults')}
+      options={vaults.map(v => ({ value: v.id, label: v.description }))} />
+    <FilterSelect bind:value={filterProduct} placeholder={t('stock.filter_all_products')}
+      options={products.map(p => ({ value: p.id, label: fmtProductLabel(p) }))} />
+    <FilterSelect bind:value={filterExpiry} placeholder={t('stock.filter_expiry_all')}
+      options={[
+        { value: '7', label: t('stock.filter_expiry_7d') },
+        { value: '30', label: t('stock.filter_expiry_30d') },
+        { value: '180', label: t('stock.filter_expiry_6m') },
+      ]} />
   </div>
 
   {#if loading}
@@ -257,75 +245,64 @@
         {filterVault || filterProduct || filterExpiry ? t('stock.empty_filter') : t('stock.empty')}
       </p>
     {:else}
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-200 bg-gray-50">
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('stock.col_product')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('stock.col_vault')}</th>
-                <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">{t('stock.col_qty')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden md:table-cell">{t('stock.col_bbd')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden lg:table-cell">{t('stock.col_comment')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden lg:table-cell">{t('stock.col_stockids')}</th>
-                <th class="px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              {#each rows as e}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2.5">
-                    <p class="font-medium text-gray-900">{e.product?.name || '—'}</p>
-                    {#if e.product?.vendor}
-                      <p class="text-xs text-gray-500">{e.product.vendor}</p>
-                    {/if}
-                    <p class="text-xs text-gray-500 sm:hidden">{e.vault?.description || ''}</p>
-                  </td>
-                  <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{e.vault?.description || '—'}</td>
-                  <td class="px-4 py-2.5 text-right font-semibold text-gray-900">
-                    {fmtQty(e.quantity)} {e.product?.unit?.abbreviation || ''}
-                  </td>
-                  <td class="px-4 py-2.5 hidden md:table-cell">
-                    <span class={bbdClass(e.best_before_date)}>{fmtDate(e.best_before_date)}</span>
-                  </td>
-                  <td class="px-4 py-2.5 text-gray-500 hidden lg:table-cell">{e.comment || '—'}</td>
-                  <td class="px-4 py-2.5 hidden lg:table-cell">
-                    <div class="flex flex-wrap gap-1">
-                      {#each e.stock_ids || [] as sid}
-                        <span class="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{sid.code}</span>
-                      {/each}
-                    </div>
-                  </td>
-                  <td class="px-4 py-2.5">
-                    <div class="flex items-center gap-1 justify-end">
-                      <button onclick={() => openHistory(e)} aria-label={t('stock.col_history')} title={t('stock.col_history')}
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                        <History size={15} />
-                      </button>
-                      <button onclick={() => openStockIdModal(e)} aria-label={t('stock.col_stockids')} title={t('stock.col_stockids')}
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                        <QrCode size={15} />
-                      </button>
-                      <button onclick={() => reprintLabel(e)} disabled={printingId === e.id}
-                        aria-label={t('stock.btn_reprint_label')} title={t('stock.btn_reprint_label')}
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50">
-                        <Printer size={15} />
-                      </button>
-                      <button onclick={() => openEdit(e)} aria-label={t('common.edit')} title={t('common.edit')}
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                        <Pencil size={15} />
-                      </button>
-                      <button onclick={() => confirmDelete = { id: e.id }} aria-label={t('common.delete')} title={t('common.delete')}
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+      {#snippet productCell(e)}
+        <p class="font-medium text-gray-900">{e.product?.name || '—'}</p>
+        {#if e.product?.vendor}
+          <p class="text-xs text-gray-500">{e.product.vendor}</p>
+        {/if}
+        <p class="text-xs text-gray-500 sm:hidden">{e.vault?.description || ''}</p>
+      {/snippet}
+      {#snippet vaultCell(e)}<span class="text-gray-600">{e.vault?.description || '—'}</span>{/snippet}
+      {#snippet qtyCell(e)}
+        <span class="font-semibold text-gray-900">{fmtQty(e.quantity)} {e.product?.unit?.abbreviation || ''}</span>
+      {/snippet}
+      {#snippet bbdCell(e)}<span class={bbdClass(e.best_before_date)}>{fmtDate(e.best_before_date)}</span>{/snippet}
+      {#snippet commentCell(e)}<span class="text-gray-500">{e.comment || '—'}</span>{/snippet}
+      {#snippet stockIdsCell(e)}
+        <div class="flex flex-wrap gap-1">
+          {#each e.stock_ids || [] as sid}
+            <span class="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{sid.code}</span>
+          {/each}
         </div>
+      {/snippet}
+      {#snippet actionsCell(e)}
+        <div class="flex items-center gap-1 justify-end">
+          <button onclick={() => openHistory(e)} aria-label={t('stock.col_history')} title={t('stock.col_history')}
+            class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+            <History size={15} />
+          </button>
+          <button onclick={() => openStockIdModal(e)} aria-label={t('stock.col_stockids')} title={t('stock.col_stockids')}
+            class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+            <QrCode size={15} />
+          </button>
+          <button onclick={() => reprintLabel(e)} disabled={printingId === e.id}
+            aria-label={t('stock.btn_reprint_label')} title={t('stock.btn_reprint_label')}
+            class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+            <Printer size={15} />
+          </button>
+          <button onclick={() => openEdit(e)} aria-label={t('common.edit')} title={t('common.edit')}
+            class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+            <Pencil size={15} />
+          </button>
+          <button onclick={() => confirmDelete = { id: e.id }} aria-label={t('common.delete')} title={t('common.delete')}
+            class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+            <Trash2 size={15} />
+          </button>
+        </div>
+      {/snippet}
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <ResponsiveTable
+          rows={rows}
+          rowKey={(e) => e.id}
+          columns={[
+            { label: t('stock.col_product'), cell: productCell },
+            { label: t('stock.col_vault'), hideBelow: 'sm', cell: vaultCell },
+            { label: t('stock.col_qty'), align: 'right', cell: qtyCell },
+            { label: t('stock.col_bbd'), hideBelow: 'md', cell: bbdCell },
+            { label: t('stock.col_comment'), hideBelow: 'lg', cell: commentCell },
+            { label: t('stock.col_stockids'), hideBelow: 'lg', cell: stockIdsCell },
+            { cell: actionsCell },
+          ]} />
       </div>
     {/if}
   {/if}
@@ -346,42 +323,20 @@
 
 <!-- Stock ID Modal -->
 {#if stockIdModal}
-  <Modal title={t('stock.stockid_modal_title')} onclose={() => { stockIdModal = null; stockIdScannerActive = false; }}>
+  <Modal title={t('stock.stockid_modal_title')} onclose={() => { stockIdModal = null; }}>
     <div class="space-y-4">
-      <p class="text-sm text-gray-500">{t('stock.stockid_modal_hint')}</p>
-      {#if stockIdList.length > 0}
-        <div class="flex flex-wrap gap-2">
-          {#each stockIdList as sid}
-            <span class="inline-flex items-center gap-1.5 font-mono text-xs bg-gray-100 rounded-md px-2.5 py-1">
-              {sid.code}
-              <button onclick={() => removeSid(sid.id)} class="text-gray-400 hover:text-red-600"><X size={12} /></button>
-            </span>
-          {/each}
-        </div>
-      {/if}
-      {#if stockIdScannerActive}
-        <BarcodeScanner active={true} onscan={handleSidScan} />
-        <button onclick={() => stockIdScannerActive = false}
-          class="w-full py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          {t('stock.stockid_btn_stop')}
-        </button>
-      {:else}
-        <div class="flex gap-2">
-          <input bind:value={stockIdInput} placeholder={t('stock.stockid_placeholder')}
-            onkeydown={(e) => e.key === 'Enter' && addSid()}
-            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <button onclick={addSid}
-            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            {t('common.add')}
-          </button>
-          <button onclick={() => stockIdScannerActive = true}
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            {t('stock.stockid_btn_scan')}
-          </button>
-        </div>
-      {/if}
+      <ScannableCodeList
+        codes={stockIdList}
+        bind:value={stockIdInput}
+        hint={t('stock.stockid_modal_hint')}
+        placeholder={t('stock.stockid_placeholder')}
+        onadd={addSid}
+        onremove={removeSid}
+        onscan={handleSidScan}>
+        {t('stock.stockid_btn_scan')}
+      </ScannableCodeList>
       <div class="flex justify-end pt-1">
-        <button onclick={() => { stockIdModal = null; stockIdScannerActive = false; }}
+        <button onclick={() => { stockIdModal = null; }}
           class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">
           {t('stock.stockid_btn_done')}
         </button>

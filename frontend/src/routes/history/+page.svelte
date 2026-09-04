@@ -9,6 +9,7 @@
   import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import MovementList from '$lib/components/MovementList.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import FilterSelect from '$lib/components/FilterSelect.svelte';
   import { History, TrendingDown } from 'lucide-svelte';
 
   let movements = $state([]);
@@ -121,21 +122,12 @@
 
   <!-- Filters -->
   <div class="flex flex-wrap gap-2 mb-4">
-    <select bind:value={filterProduct} onchange={reload}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('history.filter_all_products')}</option>
-      {#each products as p}<option value={p.id}>{fmtProductLabel(p)}</option>{/each}
-    </select>
-    <select bind:value={filterVault} onchange={reload}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('history.filter_all_vaults')}</option>
-      {#each vaults as v}<option value={v.id}>{v.description}</option>{/each}
-    </select>
-    <select bind:value={filterReason} onchange={reload}
-      class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">{t('history.filter_all_reasons')}</option>
-      {#each reasons as r}<option value={r}>{t(`history.reason_${r}`)}</option>{/each}
-    </select>
+    <FilterSelect bind:value={filterProduct} onchange={reload} placeholder={t('history.filter_all_products')}
+      options={products.map(p => ({ value: p.id, label: fmtProductLabel(p) }))} />
+    <FilterSelect bind:value={filterVault} onchange={reload} placeholder={t('history.filter_all_vaults')}
+      options={vaults.map(v => ({ value: v.id, label: v.description }))} />
+    <FilterSelect bind:value={filterReason} onchange={reload} placeholder={t('history.filter_all_reasons')}
+      options={reasons.map(r => ({ value: r, label: t(`history.reason_${r}`) }))} />
     <label class="flex items-center gap-2 text-sm text-gray-600 px-2">
       <input type="checkbox" bind:checked={showUndone} onchange={reload} />
       {t('history.show_undone')}

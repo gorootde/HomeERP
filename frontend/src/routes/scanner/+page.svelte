@@ -7,7 +7,7 @@
     createProduct, createStockEntry, updateStockEntry, deleteStockEntry,
     getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
-  import { fmtDate, fmtQty, parseSizeString } from '$lib/utils.js';
+  import { fmtDate, fmtQty, isStockId, parseSizeString } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
@@ -44,12 +44,6 @@
 
   function getSetting(key) {
     return settings.find(s => s.key === key)?.value || '';
-  }
-
-  function isStockId(code) {
-    // Simple heuristic, independent of stock_id_mode: a pure-digit code is an
-    // EAN/barcode, anything else (e.g. "INV0033") is a stock ID.
-    return !/^\d+$/.test(code.trim());
   }
 
   async function handleScan(code) {

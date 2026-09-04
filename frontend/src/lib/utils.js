@@ -57,6 +57,12 @@ export function parseSizeString(sizeStr) {
   return { numeric: sizeStr, unitAbbr: '' };
 }
 
+export function isStockId(code) {
+  // A pure-digit code is an EAN/barcode, anything else (e.g. "INV0033") is a
+  // stock ID — independent of the configured stock_id_mode.
+  return !/^\d+$/.test(code.trim());
+}
+
 export function isExpiringSoon(dateStr, days) {
   if (!dateStr) return false;
   const now = new Date();

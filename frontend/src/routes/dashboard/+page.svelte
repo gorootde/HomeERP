@@ -3,6 +3,7 @@
   import { t } from '$lib/i18n.js';
   import { getStockSummary, getCategoryStockSummary, getConsumptionForecast } from '$lib/api.js';
   import { fmtQty, fmtDate, trafficStatus } from '$lib/utils.js';
+  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import { Package, BarChart3, Warehouse, AlertTriangle, TrendingDown } from 'lucide-svelte';
 
   let summary = $state([]);
@@ -133,41 +134,32 @@
     {#if summary.length === 0}
       <p class="text-gray-400 text-sm text-center py-8">{t('dashboard.empty')}</p>
     {:else}
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-200 bg-gray-50">
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('dashboard.col_product')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('dashboard.col_vendor')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('dashboard.col_size')}</th>
-                <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">{t('dashboard.col_total_qty')}</th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden md:table-cell">{t('dashboard.col_by_vault')}</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              {#each summary as row}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2.5 font-medium text-gray-900">{row.product_name}</td>
-                  <td class="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{row.vendor || '—'}</td>
-                  <td class="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{row.size || '—'}</td>
-                  <td class="px-4 py-2.5 text-right font-semibold text-gray-900">
-                    {fmtQty(row.total_quantity)} {row.unit?.abbreviation || ''}
-                  </td>
-                  <td class="px-4 py-2.5 hidden md:table-cell">
-                    <div class="flex flex-wrap gap-1">
-                      {#each row.by_vault || [] as bv}
-                        <span class="text-xs bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5">
-                          {bv.vault_description}: {fmtQty(bv.total_quantity)}
-                        </span>
-                      {/each}
-                    </div>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+      {#snippet nameCell(row)}<span class="font-medium text-gray-900">{row.product_name}</span>{/snippet}
+      {#snippet vendorCell(row)}<span class="text-gray-500">{row.vendor || '—'}</span>{/snippet}
+      {#snippet sizeCell(row)}<span class="text-gray-500">{row.size || '—'}</span>{/snippet}
+      {#snippet qtyCell(row)}
+        <span class="font-semibold text-gray-900">{fmtQty(row.total_quantity)} {row.unit?.abbreviation || ''}</span>
+      {/snippet}
+      {#snippet byVaultCell(row)}
+        <div class="flex flex-wrap gap-1">
+          {#each row.by_vault || [] as bv}
+            <span class="text-xs bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5">
+              {bv.vault_description}: {fmtQty(bv.total_quantity)}
+            </span>
+          {/each}
         </div>
+      {/snippet}
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <ResponsiveTable
+          rows={summary}
+          rowKey={(row) => row.product_id}
+          columns={[
+            { label: t('dashboard.col_product'), cell: nameCell },
+            { label: t('dashboard.col_vendor'), hideBelow: 'sm', cell: vendorCell },
+            { label: t('dashboard.col_size'), hideBelow: 'sm', cell: sizeCell },
+            { label: t('dashboard.col_total_qty'), align: 'right', cell: qtyCell },
+            { label: t('dashboard.col_by_vault'), hideBelow: 'md', cell: byVaultCell },
+          ]} />
       </div>
     {/if}
   {/if}

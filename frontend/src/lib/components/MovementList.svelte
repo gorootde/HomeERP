@@ -1,6 +1,7 @@
 <script>
   import { t } from '$lib/i18n.js';
   import { fmtQty, fmtDateTime } from '$lib/utils.js';
+  import ResponsiveTable from './ResponsiveTable.svelte';
   import { Undo2 } from 'lucide-svelte';
 
   /**
@@ -27,57 +28,51 @@
   }
 </script>
 
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
-    <thead>
-      <tr class="border-b border-gray-200 bg-gray-50">
-        <th class="text-left px-3 py-2 text-xs font-semibold text-gray-500">{t('history.col_time')}</th>
-        {#if showContext}
-          <th class="text-left px-3 py-2 text-xs font-semibold text-gray-500">{t('history.col_product')}</th>
-          <th class="text-left px-3 py-2 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('history.col_vault')}</th>
-        {/if}
-        <th class="text-right px-3 py-2 text-xs font-semibold text-gray-500">{t('history.col_change')}</th>
-        <th class="text-right px-3 py-2 text-xs font-semibold text-gray-500 hidden md:table-cell">{t('history.col_result')}</th>
-        <th class="text-left px-3 py-2 text-xs font-semibold text-gray-500">{t('history.col_reason')}</th>
-        <th class="text-left px-3 py-2 text-xs font-semibold text-gray-500 hidden lg:table-cell">{t('history.col_note')}</th>
-        <th class="px-3 py-2"></th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100">
-      {#each movements as m}
-        <tr class="hover:bg-gray-50 {m.undone ? 'opacity-50' : ''}">
-          <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{fmtDateTime(m.created_at)}</td>
-          {#if showContext}
-            <td class="px-3 py-2 font-medium text-gray-900">{m.product_name || '—'}</td>
-            <td class="px-3 py-2 text-gray-600 hidden sm:table-cell">{m.vault_description || '—'}</td>
-          {/if}
-          <td class="px-3 py-2 text-right font-semibold tabular-nums {m.delta < 0 ? 'text-red-600' : 'text-green-600'}">
-            {m.delta > 0 ? '+' : ''}{fmtQty(m.delta)} {m.unit?.abbreviation || ''}
-          </td>
-          <td class="px-3 py-2 text-right text-gray-500 tabular-nums hidden md:table-cell">
-            {fmtQty(m.quantity_before)} → {fmtQty(m.quantity_after)}
-          </td>
-          <td class="px-3 py-2">
-            <span class="text-xs font-medium rounded-full px-2 py-0.5 {reasonStyles[m.reason] || 'bg-gray-100 text-gray-600'}">
-              {reasonLabel(m.reason)}
-            </span>
-            {#if m.undone}
-              <span class="block text-[10px] text-gray-400 mt-0.5">{t('history.undone_badge')}</span>
-            {/if}
-          </td>
-          <td class="px-3 py-2 text-gray-500 hidden lg:table-cell">{m.note || '—'}</td>
-          <td class="px-3 py-2 text-right">
-            {#if m.can_undo && onundo}
-              <button onclick={() => onundo(m.id)} disabled={busyId === m.id}
-                title={t('history.btn_undo')}
-                class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-gray-300
-                  text-gray-600 hover:bg-gray-100 disabled:opacity-50">
-                <Undo2 size={13} /> {t('history.btn_undo')}
-              </button>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</div>
+{#snippet timeCell(m)}<span class="text-gray-500 whitespace-nowrap">{fmtDateTime(m.created_at)}</span>{/snippet}
+{#snippet productCell(m)}<span class="font-medium text-gray-900">{m.product_name || '—'}</span>{/snippet}
+{#snippet vaultCell(m)}<span class="text-gray-600">{m.vault_description || '—'}</span>{/snippet}
+{#snippet changeCell(m)}
+  <span class="font-semibold tabular-nums {m.delta < 0 ? 'text-red-600' : 'text-green-600'}">
+    {m.delta > 0 ? '+' : ''}{fmtQty(m.delta)} {m.unit?.abbreviation || ''}
+  </span>
+{/snippet}
+{#snippet resultCell(m)}
+  <span class="text-gray-500 tabular-nums">{fmtQty(m.quantity_before)} → {fmtQty(m.quantity_after)}</span>
+{/snippet}
+{#snippet reasonCell(m)}
+  <span class="text-xs font-medium rounded-full px-2 py-0.5 {reasonStyles[m.reason] || 'bg-gray-100 text-gray-600'}">
+    {reasonLabel(m.reason)}
+  </span>
+  {#if m.undone}
+    <span class="block text-[10px] text-gray-400 mt-0.5">{t('history.undone_badge')}</span>
+  {/if}
+{/snippet}
+{#snippet noteCell(m)}<span class="text-gray-500">{m.note || '—'}</span>{/snippet}
+{#snippet actionsCell(m)}
+  {#if m.can_undo && onundo}
+    <button onclick={() => onundo(m.id)} disabled={busyId === m.id}
+      title={t('history.btn_undo')}
+      class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-gray-300
+        text-gray-600 hover:bg-gray-100 disabled:opacity-50">
+      <Undo2 size={13} /> {t('history.btn_undo')}
+    </button>
+  {/if}
+{/snippet}
+
+<ResponsiveTable
+  dense
+  rows={movements}
+  rowKey={(m) => m.id}
+  rowClass={(m) => m.undone ? 'opacity-50' : ''}
+  columns={[
+    { label: t('history.col_time'), cell: timeCell },
+    ...(showContext ? [
+      { label: t('history.col_product'), cell: productCell },
+      { label: t('history.col_vault'), hideBelow: 'sm', cell: vaultCell },
+    ] : []),
+    { label: t('history.col_change'), align: 'right', cell: changeCell },
+    { label: t('history.col_result'), align: 'right', hideBelow: 'md', cell: resultCell },
+    { label: t('history.col_reason'), cell: reasonCell },
+    { label: t('history.col_note'), hideBelow: 'lg', cell: noteCell },
+    { align: 'right', cell: actionsCell },
+  ]} />

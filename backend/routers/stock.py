@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..helpers import add_tag, get_or_404, remove_tag
 from ..label_printing import print_label, render_label_png
 from ..models import (
     Product,
@@ -15,7 +16,6 @@ from ..models import (
     StockEntry,
     StockEntryId,
     StockMovement,
-    Tag,
     Vault,
 )
 from ..schemas import (
@@ -31,6 +31,22 @@ from ..schemas import (
     StockSummaryVaultQty,
     TagCreate,
     TagRead,
+)
+from ..settings_helpers import float_setting, get_setting
+from .app_settings import (
+    LABEL_AUTO_PRINT,
+    LABEL_LENGTH_MM,
+    LABEL_LENGTH_MODE,
+    LABEL_ORIENTATION,
+    LABEL_PRINTER_IP,
+    LABEL_PRINTER_MODEL,
+    LABEL_PRINTER_PROTOCOL,
+    LABEL_WIDTH_MM,
+    STOCK_ID_COUNTER,
+    STOCK_ID_MODE,
+    STOCK_ID_PAD_LENGTH,
+    STOCK_ID_PREFIX,
+    STOCK_ID_WEBHOOK_URL,
 )
 
 router = APIRouter()
@@ -165,11 +181,6 @@ def list_stock_entries(
     return q.offset(skip).limit(limit).all()
 
 
-def _get_setting(db: Session, key: str, default: str = "") -> str:
-    s = db.get(Setting, key)
-    return s.value if s else default
-
-
 # ── Stock-movement audit log ─────────────────────────────────────────────────
 
 _MOVEMENT_REASONS = {"create", "edit", "consume", "adjust", "delete", "undo", "import"}
@@ -257,22 +268,22 @@ def _serialize_movements(db: Session, rows: list[StockMovement]) -> list[StockMo
 
 def _apply_generated_stock_id(entry: StockEntry, db: Session) -> None:
     """If mode is 'generated', build an incremental ID and attach it to the entry."""
-    if _get_setting(db, "stock_id_mode") != "generated":
+    if get_setting(db, STOCK_ID_MODE) != "generated":
         return
-    prefix     = _get_setting(db, "stock_id_prefix", "")
-    counter    = int(_get_setting(db, "stock_id_counter", "0") or "0")
-    pad_length = int(_get_setting(db, "stock_id_pad_length", "0") or "0")
+    prefix     = get_setting(db, STOCK_ID_PREFIX, "")
+    counter    = int(get_setting(db, STOCK_ID_COUNTER, "0") or "0")
+    pad_length = int(get_setting(db, STOCK_ID_PAD_LENGTH, "0") or "0")
 
     next_counter = counter + 1
     num_str = str(next_counter).zfill(pad_length) if pad_length > 0 else str(next_counter)
     code = f"{prefix}{num_str}"
 
     # Persist incremented counter
-    setting = db.get(Setting, "stock_id_counter")
+    setting = db.get(Setting, STOCK_ID_COUNTER)
     if setting:
         setting.value = str(next_counter)
     else:
-        db.add(Setting(key="stock_id_counter", value=str(next_counter)))
+        db.add(Setting(key=STOCK_ID_COUNTER, value=str(next_counter)))
 
     db.add(StockEntryId(code=code, stock_entry_id=entry.id))
     db.commit()
@@ -281,9 +292,9 @@ def _apply_generated_stock_id(entry: StockEntry, db: Session) -> None:
 
 def _apply_webhook_stock_id(entry: StockEntry, db: Session) -> None:
     """If mode is 'extern', call the configured webhook and attach the returned ID."""
-    if _get_setting(db, "stock_id_mode") != "extern":
+    if get_setting(db, STOCK_ID_MODE) != "extern":
         return
-    url_template = _get_setting(db, "stock_id_webhook_url")
+    url_template = get_setting(db, STOCK_ID_WEBHOOK_URL)
     if not url_template:
         return
 
@@ -333,13 +344,6 @@ def _render_and_print(product_name: str, vendor: str, best_before: Optional[str]
         # background auto-print: a printer failure must not affect stock-entry creation
 
 
-def _float_setting(db: Session, key: str, default: float) -> float:
-    try:
-        return float(_get_setting(db, key, str(default)) or default)
-    except (TypeError, ValueError):
-        return default
-
-
 def _label_kwargs_for_entry(entry: StockEntry, db: Session) -> dict:
     """Build the ``_render_and_print`` kwargs for one stock entry from settings."""
     unit = ""
@@ -351,15 +355,15 @@ def _label_kwargs_for_entry(entry: StockEntry, db: Session) -> dict:
         vendor=entry.product.vendor,
         best_before=entry.best_before_date.isoformat() if entry.best_before_date else None,
         code=entry.stock_ids[0].code if entry.stock_ids else None,
-        printer_ip=_get_setting(db, "label_printer_ip"),
-        width_mm=_float_setting(db, "label_width_mm", 62),
-        length_mm=_float_setting(db, "label_length_mm", 90),
-        orientation=_get_setting(db, "label_orientation", "landscape"),
-        length_mode=_get_setting(db, "label_length_mode", "auto"),
+        printer_ip=get_setting(db, LABEL_PRINTER_IP),
+        width_mm=float_setting(db, LABEL_WIDTH_MM, 62),
+        length_mm=float_setting(db, LABEL_LENGTH_MM, 90),
+        orientation=get_setting(db, LABEL_ORIENTATION, "landscape"),
+        length_mode=get_setting(db, LABEL_LENGTH_MODE, "auto"),
         quantity=entry.quantity,
         unit=unit,
-        protocol=_get_setting(db, "label_printer_protocol", "ipp"),
-        model=_get_setting(db, "label_printer_model", "QL-710W"),
+        protocol=get_setting(db, LABEL_PRINTER_PROTOCOL, "ipp"),
+        model=get_setting(db, LABEL_PRINTER_MODEL, "QL-710W"),
     )
 
 
@@ -373,7 +377,7 @@ def _maybe_print_label(entry: StockEntry, db: Session, requested: Optional[bool]
     """
     if requested is False:
         return
-    if _get_setting(db, "label_auto_print") != "1":
+    if get_setting(db, LABEL_AUTO_PRINT) != "1":
         return
     kwargs = _label_kwargs_for_entry(entry, db)
     if not kwargs["printer_ip"]:
@@ -384,10 +388,8 @@ def _maybe_print_label(entry: StockEntry, db: Session, requested: Optional[bool]
 @router.post("/entries", response_model=StockEntryRead, status_code=201)
 def create_stock_entry(data: StockEntryCreate, background_tasks: BackgroundTasks,
                        db: Session = Depends(get_db)):
-    if not db.get(Product, data.product_id):
-        raise HTTPException(status_code=404, detail="Product not found")
-    if not db.get(Vault, data.vault_id):
-        raise HTTPException(status_code=404, detail="Vault not found")
+    get_or_404(db, Product, data.product_id, "Product not found")
+    get_or_404(db, Vault, data.vault_id, "Vault not found")
     entry = StockEntry(**data.model_dump(exclude={"stock_id", "print_label"}))
     db.add(entry)
     db.commit()
@@ -411,18 +413,13 @@ def create_stock_entry(data: StockEntryCreate, background_tasks: BackgroundTasks
 
 @router.get("/entries/{entry_id}", response_model=StockEntryRead)
 def get_stock_entry(entry_id: int, db: Session = Depends(get_db)):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
-    return entry
+    return get_or_404(db, StockEntry, entry_id, "Stock entry not found")
 
 
 @router.post("/entries/{entry_id}/print-label")
 def print_stock_entry_label(entry_id: int, db: Session = Depends(get_db)):
     """Reprint the label for an existing stock entry on the configured printer."""
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
+    entry = get_or_404(db, StockEntry, entry_id, "Stock entry not found")
     kwargs = _label_kwargs_for_entry(entry, db)
     if not kwargs["printer_ip"]:
         raise HTTPException(status_code=400, detail="No printer IP configured")
@@ -435,9 +432,7 @@ def print_stock_entry_label(entry_id: int, db: Session = Depends(get_db)):
 
 @router.put("/entries/{entry_id}", response_model=StockEntryRead)
 def update_stock_entry(entry_id: int, data: StockEntryUpdate, db: Session = Depends(get_db)):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
+    entry = get_or_404(db, StockEntry, entry_id, "Stock entry not found")
 
     changes = data.model_dump(exclude_unset=True)
     reason = changes.pop("reason", None) or "edit"
@@ -465,9 +460,7 @@ def delete_stock_entry(
     reason: str = Query("delete", description="Audit-log reason: delete | consume | adjust"),
     db: Session = Depends(get_db),
 ):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
+    entry = get_or_404(db, StockEntry, entry_id, "Stock entry not found")
     _record_movement(
         db, stock_entry_id=None, product_id=entry.product_id, vault_id=entry.vault_id,
         before=entry.quantity, after=0.0, reason=reason, note=entry.comment,
@@ -479,37 +472,19 @@ def delete_stock_entry(
 
 @router.post("/entries/{entry_id}/tags", response_model=TagRead, status_code=201)
 def add_tag_to_stock_entry(entry_id: int, data: TagCreate, db: Session = Depends(get_db)):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
-    tag = db.query(Tag).filter(Tag.name == data.name).first()
-    if not tag:
-        tag = Tag(name=data.name)
-        db.add(tag)
-        db.flush()
-    if tag not in entry.tags:
-        entry.tags.append(tag)
-    db.commit()
-    db.refresh(tag)
-    return tag
+    entry = get_or_404(db, StockEntry, entry_id, "Stock entry not found")
+    return add_tag(db, entry, data.name)
 
 
 @router.delete("/entries/{entry_id}/tags/{tag_name}", status_code=204)
 def remove_tag_from_stock_entry(entry_id: int, tag_name: str, db: Session = Depends(get_db)):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
-    tag = db.query(Tag).filter(Tag.name == tag_name).first()
-    if tag and tag in entry.tags:
-        entry.tags.remove(tag)
-        db.commit()
+    entry = get_or_404(db, StockEntry, entry_id, "Stock entry not found")
+    remove_tag(db, entry, tag_name)
 
 
 @router.post("/entries/{entry_id}/stockids", response_model=StockEntryIdRead, status_code=201)
 def add_stock_id(entry_id: int, data: StockEntryIdCreate, db: Session = Depends(get_db)):
-    entry = db.get(StockEntry, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Stock entry not found")
+    get_or_404(db, StockEntry, entry_id, "Stock entry not found")
     sid = StockEntryId(code=data.code, stock_entry_id=entry_id)
     db.add(sid)
     db.commit()
@@ -654,9 +629,7 @@ def undo_movement(movement_id: int, db: Session = Depends(get_db)):
 
     A compensating ``undo`` movement is appended and the original is flagged.
     """
-    mv = db.get(StockMovement, movement_id)
-    if not mv:
-        raise HTTPException(status_code=404, detail="Movement not found")
+    mv = get_or_404(db, StockMovement, movement_id, "Movement not found")
     if mv.undone:
         raise HTTPException(status_code=409, detail="Movement already undone")
     if mv.reason == "undo":

@@ -9,12 +9,15 @@
     addProductUnitConversion, deleteProductUnitConversion
   } from '$lib/api.js';
   import { parseSizeString } from '$lib/utils.js';
+  import { useTags } from '$lib/useTags.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import TagChips from '$lib/components/TagChips.svelte';
-  import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
+  import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
+  import SearchInput from '$lib/components/SearchInput.svelte';
+  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';
-  import { Plus, Pencil, Barcode, Trash2, Image, X, Search } from 'lucide-svelte';
+  import { Plus, Pencil, Barcode, Trash2, Image } from 'lucide-svelte';
 
   let products = $state([]);
   let units = $state([]);
@@ -36,7 +39,6 @@
   // EAN modal state
   let eanList = $state([]);
   let eanInput = $state('');
-  let eanScannerActive = $state(false);
 
   // Available entry units for the currently edited product (base + product conversions + global units with conversion)
   let entryUnitOptions = $derived(() => {
@@ -160,7 +162,6 @@
     const p = await getProduct(productId);
     eanList = [...(p.ean_codes || [])];
     eanInput = '';
-    eanScannerActive = false;
     eanModal = { product: p };
   }
 
@@ -195,7 +196,6 @@
 
   function handleEanScan(code) {
     eanInput = code;
-    eanScannerActive = false;
     addEanCode();
   }
 
@@ -225,25 +225,12 @@
   }
 
   // Tags
-  async function addTag(name) {
-    if (!editModal?.product) {
-      form.tags = [...form.tags, { id: Date.now(), name }];
-      return;
-    }
-    await addTagToProduct(editModal.product.id, name);
-    const p = await getProduct(editModal.product.id);
-    form.tags = [...(p.tags || [])];
-  }
-
-  async function removeTag(name) {
-    if (!editModal?.product) {
-      form.tags = form.tags.filter(t => t.name !== name);
-      return;
-    }
-    await removeTagFromProduct(editModal.product.id, name);
-    const p = await getProduct(editModal.product.id);
-    form.tags = [...(p.tags || [])];
-  }
+  const { addTag, removeTag } = useTags(() => form, {
+    getEntityId: () => editModal?.product?.id,
+    addFn: addTagToProduct,
+    removeFn: removeTagFromProduct,
+    fetchTags: async (id) => (await getProduct(id)).tags || [],
+  });
 
   // API returns { unit_name, base_unit, factor } — normalize to { name, to_unit, factor }
   // so UnitConversionEditor can use generic field names
@@ -309,10 +296,8 @@
   </div>
 
   <!-- Search -->
-  <div class="relative mb-4">
-    <Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-    <input bind:value={search} placeholder={t('products.search_placeholder')}
-      class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  <div class="mb-4">
+    <SearchInput bind:value={search} placeholder={t('products.search_placeholder')} />
   </div>
 
   {#if loading}
@@ -320,73 +305,66 @@
   {:else if filtered.length === 0}
     <p class="text-center text-gray-400 py-12">{t('products.empty')}</p>
   {:else}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-gray-200 bg-gray-50">
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('products.col_product')}</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('products.col_size')}</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden md:table-cell">{t('products.col_eans')}</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 hidden lg:table-cell">{t('products.col_tags')}</th>
-              <th class="px-4 py-2.5"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {#each filtered as p}
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2.5">
-                  <div class="flex items-center gap-3">
-                    {#if p.image_path}
-                      <img src={p.image_path} alt={p.name}
-                        class="w-9 h-9 rounded-lg object-cover shrink-0 bg-gray-100" />
-                    {:else}
-                      <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                        <Image size={16} class="text-gray-400" />
-                      </div>
-                    {/if}
-                    <div class="min-w-0">
-                      <p class="font-medium text-gray-900 truncate">{p.name}</p>
-                      {#if p.vendor}<p class="text-xs text-gray-500 truncate">{p.vendor}</p>{/if}
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{p.size ? `${p.size}${p.unit?.abbreviation ? ' ' + p.unit.abbreviation : ''}` : '—'}</td>
-                <td class="px-4 py-2.5 hidden md:table-cell">
-                  <div class="flex flex-wrap gap-1">
-                    {#each p.ean_codes || [] as ean}
-                      <span class="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{ean.code}</span>
-                    {/each}
-                  </div>
-                </td>
-                <td class="px-4 py-2.5 hidden lg:table-cell">
-                  <div class="flex flex-wrap gap-1">
-                    {#each p.tags || [] as tag}
-                      <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{tag.name}</span>
-                    {/each}
-                  </div>
-                </td>
-                <td class="px-4 py-2.5">
-                  <div class="flex items-center gap-1 justify-end">
-                    <button onclick={() => openEanModal(p.id)} title={t('products.btn_eans')}
-                      class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                      <Barcode size={16} />
-                    </button>
-                    <button onclick={() => openEdit(p.id)} title={t('products.btn_edit')}
-                      class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                      <Pencil size={16} />
-                    </button>
-                    <button onclick={() => confirmDelete = { id: p.id, name: p.name }}
-                      class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+    {#snippet productCell(p)}
+      <div class="flex items-center gap-3">
+        {#if p.image_path}
+          <img src={p.image_path} alt={p.name}
+            class="w-9 h-9 rounded-lg object-cover shrink-0 bg-gray-100" />
+        {:else}
+          <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+            <Image size={16} class="text-gray-400" />
+          </div>
+        {/if}
+        <div class="min-w-0">
+          <p class="font-medium text-gray-900 truncate">{p.name}</p>
+          {#if p.vendor}<p class="text-xs text-gray-500 truncate">{p.vendor}</p>{/if}
+        </div>
       </div>
+    {/snippet}
+    {#snippet sizeCell(p)}
+      <span class="text-gray-500">{p.size ? `${p.size}${p.unit?.abbreviation ? ' ' + p.unit.abbreviation : ''}` : '—'}</span>
+    {/snippet}
+    {#snippet eansCell(p)}
+      <div class="flex flex-wrap gap-1">
+        {#each p.ean_codes || [] as ean}
+          <span class="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{ean.code}</span>
+        {/each}
+      </div>
+    {/snippet}
+    {#snippet tagsCell(p)}
+      <div class="flex flex-wrap gap-1">
+        {#each p.tags || [] as tag}
+          <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{tag.name}</span>
+        {/each}
+      </div>
+    {/snippet}
+    {#snippet actionsCell(p)}
+      <div class="flex items-center gap-1 justify-end">
+        <button onclick={() => openEanModal(p.id)} title={t('products.btn_eans')}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+          <Barcode size={16} />
+        </button>
+        <button onclick={() => openEdit(p.id)} title={t('products.btn_edit')}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+          <Pencil size={16} />
+        </button>
+        <button onclick={() => confirmDelete = { id: p.id, name: p.name }}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+          <Trash2 size={16} />
+        </button>
+      </div>
+    {/snippet}
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <ResponsiveTable
+        rows={filtered}
+        rowKey={(p) => p.id}
+        columns={[
+          { label: t('products.col_product'), cell: productCell },
+          { label: t('products.col_size'), hideBelow: 'sm', cell: sizeCell },
+          { label: t('products.col_eans'), hideBelow: 'md', cell: eansCell },
+          { label: t('products.col_tags'), hideBelow: 'lg', cell: tagsCell },
+          { cell: actionsCell },
+        ]} />
     </div>
   {/if}
 </div>
@@ -516,45 +494,20 @@
 
 <!-- EAN Modal -->
 {#if eanModal}
-  <Modal title={t('products.ean_modal_title')} onclose={() => { eanModal = null; eanScannerActive = false; }}>
+  <Modal title={t('products.ean_modal_title')} onclose={() => { eanModal = null; }}>
     <div class="space-y-4">
-      <p class="text-sm text-gray-500">{t('products.ean_modal_hint')}</p>
-      <!-- Existing EANs -->
-      {#if eanList.length > 0}
-        <div class="flex flex-wrap gap-2">
-          {#each eanList as ean}
-            <span class="inline-flex items-center gap-1.5 font-mono text-xs bg-gray-100 rounded-md px-2.5 py-1">
-              {ean.code}
-              <button onclick={() => removeEanCode(ean.id)} class="text-gray-400 hover:text-red-600">
-                <X size={12} />
-              </button>
-            </span>
-          {/each}
-        </div>
-      {/if}
-      <!-- Scanner -->
-      {#if eanScannerActive}
-        <BarcodeScanner active={true} onscan={handleEanScan} />
-        <button onclick={() => eanScannerActive = false}
-          class="w-full py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          {t('products.ean_btn_stop')}
-        </button>
-      {:else}
-        <div class="flex gap-2">
-          <input bind:value={eanInput} placeholder={t('products.ean_placeholder')}
-            onkeydown={(e) => e.key === 'Enter' && addEanCode()}
-            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <button onclick={addEanCode} class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            {t('common.add')}
-          </button>
-          <button onclick={() => eanScannerActive = true}
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Barcode size={16} />
-          </button>
-        </div>
-      {/if}
+      <ScannableCodeList
+        codes={eanList}
+        bind:value={eanInput}
+        hint={t('products.ean_modal_hint')}
+        placeholder={t('products.ean_placeholder')}
+        onadd={addEanCode}
+        onremove={removeEanCode}
+        onscan={handleEanScan}>
+        <Barcode size={16} />
+      </ScannableCodeList>
       <div class="flex justify-end pt-1">
-        <button onclick={() => { eanModal = null; eanScannerActive = false; reload(); }}
+        <button onclick={() => { eanModal = null; reload(); }}
           class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">
           {t('products.ean_btn_done')}
         </button>

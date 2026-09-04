@@ -8,7 +8,7 @@ const de = {
     confirm_cancel: 'Abbrechen', unit_placeholder: 'Einheit wählen…', no_category: 'Keine Kategorie',
     tags_label: 'Tags', tag_input_placeholder: 'Tag eingeben…', tag_add: 'Hinzufügen',
     error_load_page: 'Seite konnte nicht geladen werden', camera_unavailable: 'Kamera nicht verfügbar',
-    scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional'
+    scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional', stop_scan: 'Scanner stoppen'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produkte', stock: 'Lager', scanner: 'Scanner',
@@ -34,7 +34,7 @@ const de = {
     placeholder_name: 'Produktname', label_photo: 'Foto', photo_placeholder: 'Kein Foto',
     btn_remove_photo: 'Foto entfernen', toast_photo_removed: 'Foto entfernt',
     ean_modal_title: 'EAN-Codes verwalten', ean_modal_hint: 'Scanne oder gib EAN-Codes ein',
-    ean_placeholder: 'EAN-Code', ean_btn_stop: 'Scanner stoppen', ean_btn_done: 'Fertig',
+    ean_placeholder: 'EAN-Code', ean_btn_done: 'Fertig',
     ean_toast_removed: 'EAN entfernt', ean_toast_added: 'EAN hinzugefügt',
     off_loading: 'Lade Produktinfos…', off_found: 'Produkt gefunden',
     off_replace_q: 'Produktdaten ersetzen?', off_use_q: 'Gefundene Daten verwenden?',
@@ -68,7 +68,7 @@ const de = {
     select_product: 'Produkt wählen…', select_vault: 'Lagerort wählen…', placeholder_comment: 'Kommentar',
     stockid_modal_title: 'Stock IDs verwalten', stockid_modal_hint: 'Scanne oder gib Stock IDs ein',
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scannen', stockid_btn_add: 'Hinzufügen',
-    stockid_btn_stop: 'Scanner stoppen', stockid_btn_done: 'Fertig',
+    stockid_btn_done: 'Fertig',
     stockid_toast_removed: 'Stock ID entfernt', stockid_toast_added: 'Stock ID hinzugefügt',
     col_history: 'Historie', history_modal_title: 'Bewegungshistorie',
     btn_reprint_label: 'Label neu drucken', toast_label_printed: 'Label gedruckt',
@@ -237,7 +237,7 @@ const en = {
     confirm_delete: 'Really delete?', confirm_cancel: 'Cancel', unit_placeholder: 'Choose unit…',
     no_category: 'No category', tags_label: 'Tags', tag_input_placeholder: 'Enter tag…', tag_add: 'Add',
     error_load_page: 'Could not load page', camera_unavailable: 'Camera not available',
-    scanner_unavailable: 'Scanner not available', optional: 'optional'
+    scanner_unavailable: 'Scanner not available', optional: 'optional', stop_scan: 'Stop scanner'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', stock: 'Stock', scanner: 'Scanner',
@@ -263,7 +263,7 @@ const en = {
     placeholder_name: 'Product name', label_photo: 'Photo', photo_placeholder: 'No photo',
     btn_remove_photo: 'Remove photo', toast_photo_removed: 'Photo removed',
     ean_modal_title: 'Manage EAN Codes', ean_modal_hint: 'Scan or enter EAN codes',
-    ean_placeholder: 'EAN code', ean_btn_stop: 'Stop scanner', ean_btn_done: 'Done',
+    ean_placeholder: 'EAN code', ean_btn_done: 'Done',
     ean_toast_removed: 'EAN removed', ean_toast_added: 'EAN added',
     off_loading: 'Loading product info…', off_found: 'Product found',
     off_replace_q: 'Replace product data?', off_use_q: 'Use found data?',
@@ -297,7 +297,7 @@ const en = {
     select_product: 'Choose product…', select_vault: 'Choose vault…', placeholder_comment: 'Comment',
     stockid_modal_title: 'Manage Stock IDs', stockid_modal_hint: 'Scan or enter Stock IDs',
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scan', stockid_btn_add: 'Add',
-    stockid_btn_stop: 'Stop scanner', stockid_btn_done: 'Done',
+    stockid_btn_done: 'Done',
     stockid_toast_removed: 'Stock ID removed', stockid_toast_added: 'Stock ID added',
     col_history: 'History', history_modal_title: 'Movement history',
     btn_reprint_label: 'Reprint label', toast_label_printed: 'Label printed',

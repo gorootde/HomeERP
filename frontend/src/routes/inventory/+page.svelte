@@ -6,7 +6,7 @@
     getVaults, getStockEntries, updateStockEntry, getByEan,
     getStockEntryByStockId, createStockEntry, getProducts, getUnits
   } from '$lib/api.js';
-  import { fmtQty } from '$lib/utils.js';
+  import { fmtQty, isStockId } from '$lib/utils.js';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
 
@@ -37,12 +37,6 @@
       getVaults(), getProducts('', 500), getUnits()
     ]);
   });
-
-  function isStockId(code) {
-    // Same heuristic as the scanner page: a pure-digit code is an EAN/barcode,
-    // anything else (e.g. "INV0033") is a stock ID.
-    return !/^\d+$/.test(code.trim());
-  }
 
   async function startInventory() {
     if (!selectedVaultId) return;

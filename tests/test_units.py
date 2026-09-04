@@ -31,13 +31,13 @@ def test_units_sorted_by_name(client, make_unit):
 def test_create_unit_duplicate_name(client, make_unit):
     make_unit(name="Litre", abbreviation="l")
     resp = client.post("/api/units", json={"name": "Litre", "abbreviation": "L2"})
-    assert resp.status_code == 400
+    assert resp.status_code == 409
 
 
 def test_create_unit_duplicate_abbreviation(client, make_unit):
     make_unit(name="Litre", abbreviation="l")
     resp = client.post("/api/units", json={"name": "Liter2", "abbreviation": "l"})
-    assert resp.status_code == 400
+    assert resp.status_code == 409
 
 
 def test_unit_missing_404(client):

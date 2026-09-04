@@ -21,7 +21,16 @@ from ..label_printing import (
     print_label,
     render_label_png,
 )
-from ..models import Setting
+from ..settings_helpers import float_setting, get_setting
+from .app_settings import (
+    LABEL_LENGTH_MM,
+    LABEL_LENGTH_MODE,
+    LABEL_ORIENTATION,
+    LABEL_PRINTER_IP,
+    LABEL_PRINTER_MODEL,
+    LABEL_PRINTER_PROTOCOL,
+    LABEL_WIDTH_MM,
+)
 
 router = APIRouter()
 
@@ -33,18 +42,6 @@ _SAMPLE = dict(
     quantity=2,
     unit="Stk.",
 )
-
-
-def _get_setting(db: Session, key: str, default: str = "") -> str:
-    s = db.get(Setting, key)
-    return s.value if s else default
-
-
-def _float_setting(db: Session, key: str, default: float) -> float:
-    try:
-        return float(_get_setting(db, key, str(default)) or default)
-    except (TypeError, ValueError):
-        return default
 
 
 def _sample_png(width_mm: float, length_mm: float, orientation: str, length_mode: str) -> bytes:
@@ -84,25 +81,25 @@ def label_preview(
 
     Query params override the stored settings for a live preview.
     """
-    w = width_mm if width_mm is not None else _float_setting(db, "label_width_mm", DEFAULT_WIDTH_MM)
-    length = length_mm if length_mm is not None else _float_setting(db, "label_length_mm", DEFAULT_LENGTH_MM)
-    orient = orientation or _get_setting(db, "label_orientation", DEFAULT_ORIENTATION)
-    mode = length_mode or _get_setting(db, "label_length_mode", DEFAULT_LENGTH_MODE)
+    w = width_mm if width_mm is not None else float_setting(db, LABEL_WIDTH_MM, DEFAULT_WIDTH_MM)
+    length = length_mm if length_mm is not None else float_setting(db, LABEL_LENGTH_MM, DEFAULT_LENGTH_MM)
+    orient = orientation or get_setting(db, LABEL_ORIENTATION, DEFAULT_ORIENTATION)
+    mode = length_mode or get_setting(db, LABEL_LENGTH_MODE, DEFAULT_LENGTH_MODE)
     return Response(content=_sample_png(w, length, orient, mode), media_type="image/png")
 
 
 @router.post("/test-print")
 def label_test_print(db: Session = Depends(get_db)):
     """Render the sample label and send it to the configured printer."""
-    printer_ip = _get_setting(db, "label_printer_ip")
+    printer_ip = get_setting(db, LABEL_PRINTER_IP)
     if not printer_ip:
         raise HTTPException(status_code=400, detail="No printer IP configured")
-    w = _float_setting(db, "label_width_mm", DEFAULT_WIDTH_MM)
-    length = _float_setting(db, "label_length_mm", DEFAULT_LENGTH_MM)
-    orient = _get_setting(db, "label_orientation", DEFAULT_ORIENTATION)
-    mode = _get_setting(db, "label_length_mode", DEFAULT_LENGTH_MODE)
-    protocol = _get_setting(db, "label_printer_protocol", DEFAULT_PROTOCOL)
-    model = _get_setting(db, "label_printer_model", DEFAULT_BROTHER_MODEL)
+    w = float_setting(db, LABEL_WIDTH_MM, DEFAULT_WIDTH_MM)
+    length = float_setting(db, LABEL_LENGTH_MM, DEFAULT_LENGTH_MM)
+    orient = get_setting(db, LABEL_ORIENTATION, DEFAULT_ORIENTATION)
+    mode = get_setting(db, LABEL_LENGTH_MODE, DEFAULT_LENGTH_MODE)
+    protocol = get_setting(db, LABEL_PRINTER_PROTOCOL, DEFAULT_PROTOCOL)
+    model = get_setting(db, LABEL_PRINTER_MODEL, DEFAULT_BROTHER_MODEL)
     try:
         print_label(_sample_png(w, length, orient, mode), printer_ip,
                     protocol=protocol, width_mm=w, model=model)
@@ -114,7 +111,7 @@ def label_test_print(db: Session = Depends(get_db)):
 @router.post("/clear-queue")
 def label_clear_queue(db: Session = Depends(get_db)):
     """Tell the printer to drop all pending IPP jobs (unstick a full spool)."""
-    printer_ip = _get_setting(db, "label_printer_ip")
+    printer_ip = get_setting(db, LABEL_PRINTER_IP)
     if not printer_ip:
         raise HTTPException(status_code=400, detail="No printer IP configured")
     try:

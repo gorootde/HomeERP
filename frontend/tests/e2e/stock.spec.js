@@ -21,7 +21,7 @@ test('add a stock entry through the modal', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Eintrag hinzufügen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Neuer Eintrag' });
-    await dialog.getByRole('combobox').first().selectOption({ label: product.name });
+    await dialog.getByRole('combobox').first().selectOption(String(product.id));
     await dialog.getByRole('combobox').nth(1).selectOption({ label: vault.description });
     await dialog.getByRole('spinbutton').first().fill('4');
     await dialog.getByRole('button', { name: 'Erstellen' }).click();

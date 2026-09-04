@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..helpers import get_or_404, raise_if_exists
 from ..models import Unit, UnitConversion
 from ..schemas import (
     UnitConversionCreate,
@@ -21,10 +22,8 @@ def list_units(db: Session = Depends(get_db)):
 
 @router.post("", response_model=UnitRead, status_code=201)
 def create_unit(data: UnitCreate, db: Session = Depends(get_db)):
-    if db.query(Unit).filter(Unit.name == data.name).first():
-        raise HTTPException(400, "Unit name already exists")
-    if db.query(Unit).filter(Unit.abbreviation == data.abbreviation).first():
-        raise HTTPException(400, "Unit abbreviation already exists")
+    raise_if_exists(db, Unit, "Unit name already exists", name=data.name)
+    raise_if_exists(db, Unit, "Unit abbreviation already exists", abbreviation=data.abbreviation)
     unit = Unit(**data.model_dump())
     db.add(unit)
     db.commit()
@@ -34,17 +33,12 @@ def create_unit(data: UnitCreate, db: Session = Depends(get_db)):
 
 @router.get("/{unit_id}", response_model=UnitRead)
 def get_unit(unit_id: int, db: Session = Depends(get_db)):
-    unit = db.get(Unit, unit_id)
-    if not unit:
-        raise HTTPException(404, "Unit not found")
-    return unit
+    return get_or_404(db, Unit, unit_id, "Unit not found")
 
 
 @router.put("/{unit_id}", response_model=UnitRead)
 def update_unit(unit_id: int, data: UnitUpdate, db: Session = Depends(get_db)):
-    unit = db.get(Unit, unit_id)
-    if not unit:
-        raise HTTPException(404, "Unit not found")
+    unit = get_or_404(db, Unit, unit_id, "Unit not found")
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(unit, field, value)
     db.commit()
@@ -54,19 +48,15 @@ def update_unit(unit_id: int, data: UnitUpdate, db: Session = Depends(get_db)):
 
 @router.delete("/{unit_id}", status_code=204)
 def delete_unit(unit_id: int, db: Session = Depends(get_db)):
-    unit = db.get(Unit, unit_id)
-    if not unit:
-        raise HTTPException(404, "Unit not found")
+    unit = get_or_404(db, Unit, unit_id, "Unit not found")
     db.delete(unit)
     db.commit()
 
 
 @router.post("/{unit_id}/conversions", response_model=UnitConversionRead, status_code=201)
 def add_conversion(unit_id: int, data: UnitConversionCreate, db: Session = Depends(get_db)):
-    if not db.get(Unit, unit_id):
-        raise HTTPException(404, "Unit not found")
-    if not db.get(Unit, data.to_unit_id):
-        raise HTTPException(404, "Target unit not found")
+    get_or_404(db, Unit, unit_id, "Unit not found")
+    get_or_404(db, Unit, data.to_unit_id, "Target unit not found")
     if unit_id == data.to_unit_id:
         raise HTTPException(400, "Cannot convert a unit to itself")
     def _upsert(from_id: int, to_id: int, factor: float):
