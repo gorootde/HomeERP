@@ -1,5 +1,5 @@
 <script>
-  import { t, locale, setLocale } from '$lib/i18n.js';
+  import { t, getLocale, setLocale } from '$lib/i18n.svelte.js';
   import { Tag, Layers, Ruler, LayoutList, ArrowLeftRight, Languages, Printer } from 'lucide-svelte';
 
   const cards = [
@@ -41,12 +41,12 @@
     <div class="flex gap-2">
       <button onclick={() => setLocale('de')}
         class="flex-1 py-2 text-sm font-medium rounded-lg border transition-colors
-          {$locale === 'de' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
+          {getLocale() === 'de' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
         {t('settings.lang_de')}
       </button>
       <button onclick={() => setLocale('en')}
         class="flex-1 py-2 text-sm font-medium rounded-lg border transition-colors
-          {$locale === 'en' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
+          {getLocale() === 'en' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
         {t('settings.lang_en')}
       </button>
     </div>

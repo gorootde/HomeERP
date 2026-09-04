@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { getStockSummary, getCategoryStockSummary, getConsumptionForecast } from '$lib/api.js';
   import { fmtQty, fmtDate, trafficStatus } from '$lib/utils.js';
   import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
@@ -47,7 +47,7 @@
   <h1 class="text-xl font-bold text-gray-900 mb-5">{t('dashboard.title')}</h1>
 
   {#if loading}
-    <div class="flex justify-center py-16 text-gray-400">Loading…</div>
+    <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
   {:else}
     <!-- Stats row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -95,7 +95,7 @@
             <p class="text-lg font-bold text-gray-900">{fmtQty(cat.total_quantity)} {cat.min_stock_unit?.abbreviation || ''}</p>
             {#if cat.min_stock_quantity}
               <p class="text-xs {statusTextColors[st]}">
-                Min: {fmtQty(cat.min_stock_quantity)} {cat.min_stock_unit?.abbreviation || ''}
+                {t('dashboard.min_prefix')} {fmtQty(cat.min_stock_quantity)} {cat.min_stock_unit?.abbreviation || ''}
               </p>
             {/if}
           </div>

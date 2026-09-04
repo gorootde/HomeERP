@@ -2,7 +2,7 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import ToastContainer from '$lib/components/ToastContainer.svelte';
   import { getOpenApiSpec } from '$lib/api.js';
   import { onMount } from 'svelte';
@@ -15,28 +15,25 @@
   let version = $state('');
   let moreMenuOpen = $state(false);
 
-  const navItems = [
-    { href: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-    { href: '/products', icon: Boxes, labelKey: 'nav.products' },
-    { href: '/stock', icon: Layers, labelKey: 'nav.stock' },
-    { href: '/scanner', icon: ScanBarcode, labelKey: 'nav.scanner' },
-    { href: '/inventory', icon: ClipboardCheck, labelKey: 'nav.inventory' },
-    { href: '/history', icon: History, labelKey: 'nav.history' },
+  // Single source of truth for every nav surface below: the desktop sidebar
+  // (main list + footer), the mobile bottom bar, and the mobile "more" sheet.
+  // `mobileLabelKey` overrides `labelKey` only where that surface uses
+  // different wording (e.g. "Home" instead of "Dashboard").
+  const NAV = [
+    { href: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard', mobileLabelKey: 'nav.home', desktop: 'main', mobileTab: true },
+    { href: '/products', icon: Boxes, labelKey: 'nav.products', desktop: 'main', mobileTab: true },
+    { href: '/stock', icon: Layers, labelKey: 'nav.stock', desktop: 'main', mobileTab: true },
+    { href: '/scanner', icon: ScanBarcode, labelKey: 'nav.scanner', mobileLabelKey: 'nav.scan', desktop: 'main', mobileTab: true },
+    { href: '/inventory', icon: ClipboardCheck, labelKey: 'nav.inventory', desktop: 'main', more: true },
+    { href: '/history', icon: History, labelKey: 'nav.history', desktop: 'main', more: true },
+    { href: '/settings', icon: Settings, labelKey: 'nav.settings', desktop: 'footer', more: true },
+    { href: '/apidocs', icon: Code2, labelKey: 'nav.apidocs', desktop: 'footer', more: true },
   ];
 
-  const bottomPrimary = [
-    { href: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.home' },
-    { href: '/products', icon: Boxes, labelKey: 'nav.products' },
-    { href: '/stock', icon: Layers, labelKey: 'nav.stock' },
-    { href: '/scanner', icon: ScanBarcode, labelKey: 'nav.scan' },
-  ];
-
-  const moreItems = [
-    { href: '/inventory', icon: ClipboardCheck, labelKey: 'nav.inventory' },
-    { href: '/history', icon: History, labelKey: 'nav.history' },
-    { href: '/settings', icon: Settings, labelKey: 'nav.settings' },
-    { href: '/apidocs', icon: Code2, labelKey: 'nav.apidocs' },
-  ];
+  const navItems = NAV.filter((i) => i.desktop === 'main');
+  const navFooterItems = NAV.filter((i) => i.desktop === 'footer');
+  const bottomPrimary = NAV.filter((i) => i.mobileTab);
+  const moreItems = NAV.filter((i) => i.more);
 
   onMount(async () => {
     try {
@@ -79,18 +76,14 @@
       {/each}
     </ul>
     <div class="border-t border-gray-200 py-3 px-2 space-y-0.5">
-      <a href="/settings"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-          {isActive('/settings') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
-        <Settings size={18} />
-        {t('nav.settings')}
-      </a>
-      <a href="/apidocs"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-          {isActive('/apidocs') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
-        <Code2 size={18} />
-        {t('nav.apidocs')}
-      </a>
+      {#each navFooterItems as item}
+        <a href={item.href}
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+            {isActive(item.href) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
+          <svelte:component this={item.icon} size={18} />
+          {t(item.labelKey)}
+        </a>
+      {/each}
       {#if version}
         <p class="px-3 text-xs text-gray-400 pt-1">v{version}</p>
       {/if}
@@ -110,7 +103,7 @@
         class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors
           {isActive(item.href) ? 'text-blue-600' : 'text-gray-500'}">
         <svelte:component this={item.icon} size={20} />
-        {t(item.labelKey)}
+        {t(item.mobileLabelKey || item.labelKey)}
       </a>
     {/each}
     <button onclick={() => moreMenuOpen = true}

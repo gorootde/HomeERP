@@ -1,6 +1,6 @@
 <script>
   import { X, Plus } from 'lucide-svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
 
   let { tags = [], onadd, onremove, readonly = false } = $props();
   let input = $state('');

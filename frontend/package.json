@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "node scripts/check-i18n-parity.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test:e2e": "npm run build && playwright test",

@@ -1,5 +1,5 @@
 <script>
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { fmtQty, fmtDateTime } from '$lib/utils.js';
   import ResponsiveTable from './ResponsiveTable.svelte';
   import { Undo2 } from 'lucide-svelte';

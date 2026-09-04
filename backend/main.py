@@ -13,6 +13,7 @@ from .routers import (
     label_printing,
     products,
     stock,
+    stock_movements,
     tags,
     units,
     vaults,
@@ -23,6 +24,7 @@ app = FastAPI(title="HomeERP", version="1.0.0")
 app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(vaults.router, prefix="/api/vaults", tags=["vaults"])
 app.include_router(stock.router, prefix="/api/stock", tags=["stock"])
+app.include_router(stock_movements.router, prefix="/api/stock", tags=["stock"])
 app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
 app.include_router(units.router, prefix="/api/units", tags=["units"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])

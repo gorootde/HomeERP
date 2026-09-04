@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import {
     getStockMovements, undoStockMovement, getConsumptionForecast,
@@ -135,7 +135,7 @@
   </div>
 
   {#if loading}
-    <div class="flex justify-center py-16 text-gray-400">Loading…</div>
+    <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
   {:else if movements.length === 0}
     <p class="text-center text-gray-400 py-12">{t('history.empty')}</p>
   {:else}

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import { getSettings, putSetting } from '$lib/api.js';
   import { ChevronLeft } from 'lucide-svelte';
@@ -51,7 +51,7 @@
   </div>
 
   {#if loading}
-    <div class="flex justify-center py-16 text-gray-400">Loading…</div>
+    <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
   {:else}
     <div class="space-y-4">
       <!-- Mode selection -->

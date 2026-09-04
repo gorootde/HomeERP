@@ -1,8 +1,11 @@
+import logging
 from typing import Optional
 
 import httpx
 from fastapi import APIRouter
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -38,6 +41,9 @@ async def _query_openfoodfacts(barcode: str) -> Optional[EanInfoResult]:
             source="openfoodfacts",
         )
     except Exception:
+        # Must fail soft (see CLAUDE.md) — but still log it so a broken
+        # provider integration doesn't fail silently forever.
+        logger.warning("OpenFoodFacts lookup failed for barcode %s", barcode, exc_info=True)
         return None
 
 

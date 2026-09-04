@@ -19,6 +19,23 @@ test('switching to English relabels the UI after navigation', async ({ page }) =
   await expect(nav.getByRole('link', { name: 'Stock' })).toBeVisible();
 });
 
+test('switching language updates the current page immediately, without navigating', async ({ page }) => {
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { name: 'Einstellungen' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'English' }).click();
+
+  // No navigation happened — this proves `t()` is reactive to the locale
+  // change itself, not just re-evaluated on the next page mount.
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  const nav = page.locator('nav').first();
+  await expect(nav.getByRole('link', { name: 'Products' })).toBeVisible();
+
+  // switch back so later specs see the German default
+  await page.getByRole('button', { name: 'Deutsch' }).click();
+  await expect(page.getByRole('heading', { name: 'Einstellungen' })).toBeVisible();
+});
+
 test('the chosen language survives a reload', async ({ page }) => {
   await page.goto('/settings');
   await page.getByRole('button', { name: 'English' }).click();

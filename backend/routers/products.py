@@ -163,8 +163,10 @@ def image_from_url(product_id: int, body: _ImageUrlBody, db: Session = Depends(g
         with urllib.request.urlopen(req, timeout=10) as resp:
             content_type = resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
             image_data = resp.read(MAX_SIZE + 1)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Bild konnte nicht heruntergeladen werden: {exc}")
+    except (OSError, ValueError):
+        # OSError covers urllib.error.URLError/HTTPError, timeouts and connection
+        # failures; don't leak the raw exception (may contain internal detail).
+        raise HTTPException(status_code=400, detail="Bild konnte nicht heruntergeladen werden")
     if len(image_data) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="Image must be smaller than 10 MB")
     if content_type not in ALLOWED_TYPES:

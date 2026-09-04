@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import { getExportModels, previewImport, applyImport } from '$lib/api.js';
   import { ChevronLeft, Download, Upload } from 'lucide-svelte';
@@ -112,7 +112,7 @@
     <p class="text-xs text-gray-500 mb-4">{t('data_transfer.export_desc')}</p>
 
     <div class="flex justify-between items-center mb-2">
-      <p class="text-xs font-medium text-gray-700">Tables</p>
+      <p class="text-xs font-medium text-gray-700">{t('data_transfer.tables_label')}</p>
       <button onclick={selectAll} class="text-xs text-blue-600 hover:underline">{t('data_transfer.select_all')}</button>
     </div>
     <div class="grid grid-cols-2 gap-1.5 mb-3">

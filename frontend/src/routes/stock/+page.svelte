@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import {
     getStockEntries, createStockEntry, updateStockEntry, deleteStockEntry,
@@ -237,7 +237,7 @@
   </div>
 
   {#if loading}
-    <div class="flex justify-center py-16 text-gray-400">Loading…</div>
+    <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
   {:else}
     {@const rows = filtered()}
     {#if rows.length === 0}
@@ -351,7 +351,7 @@
         {historyModal.entry.product?.name || '—'} · {historyModal.entry.vault?.description || '—'}
       </p>
       {#if historyLoading}
-        <div class="py-8 text-center text-gray-400">Loading…</div>
+        <div class="py-8 text-center text-gray-400">{t('common.loading')}</div>
       {:else if historyRows.length === 0}
         <p class="py-8 text-center text-gray-400">{t('history.empty')}</p>
       {:else}

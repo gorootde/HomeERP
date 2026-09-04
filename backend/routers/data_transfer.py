@@ -25,7 +25,11 @@ import_router = APIRouter()
 UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(Path(__file__).parent.parent.parent / "uploads")))
 IMAGES_ZIP_FOLDER = "images"
 
-# In-memory map of pending import sessions: {import_id: temp_file_path}
+# In-memory map of pending import sessions: {import_id: temp_file_path}.
+# Known limitation: no TTL/cleanup for abandoned previews (a temp file + map
+# entry leaks until the process restarts) and it isn't shared across workers.
+# Fine for the current single-worker deployment; if that changes, switch to a
+# TTL cache or track pending imports as tagged tempfiles on disk instead.
 _pending_imports: dict[str, str] = {}
 
 

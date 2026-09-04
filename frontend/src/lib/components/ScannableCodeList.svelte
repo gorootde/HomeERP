@@ -1,5 +1,5 @@
 <script>
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import BarcodeScanner from './BarcodeScanner.svelte';
   import { X, ScanLine } from 'lucide-svelte';
 

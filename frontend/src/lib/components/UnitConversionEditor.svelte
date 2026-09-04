@@ -15,7 +15,7 @@
    *                    to_unit_id is either a number (global unit) or "puc_<id>" (product conv.)
    *   onremove(id)   — Called with conversion id when user clicks ✕
    */
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { fmtFactor } from '$lib/utils.js';
   import { X, Plus } from 'lucide-svelte';
 
@@ -101,7 +101,7 @@
         <option value="">{t('common.unit_placeholder')}</option>
         {#if units.length > 0}
           {#if pucUnits.length > 0}
-            <optgroup label="Einheiten">
+            <optgroup label={t('units.optgroup_units')}>
               {#each units as u}
                 <option value={u.id}>{u.name} ({u.abbreviation})</option>
               {/each}
@@ -113,7 +113,7 @@
           {/if}
         {/if}
         {#if pucUnits.length > 0}
-          <optgroup label="Produkteinheiten">
+          <optgroup label={t('units.optgroup_product_units')}>
             {#each pucUnits as puc}
               <option value={'puc_' + puc.id}>{puc.name}</option>
             {/each}

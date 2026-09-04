@@ -1,7 +1,8 @@
 """Stock-ID assignment strategies and per-entry label auto-print.
 
-Exercises the ``_apply_generated_stock_id`` / ``_apply_webhook_stock_id`` /
-``_maybe_print_label`` helpers through the public create-entry endpoint.
+Exercises ``services.stock_id.apply_generated_stock_id`` /
+``apply_webhook_stock_id`` and ``routers.stock._maybe_print_label`` through
+the public create-entry endpoint.
 """
 
 
@@ -95,7 +96,7 @@ def test_webhook_stock_id_uses_response_body(client, make_product, make_vault, m
         calls["url"] = url
         return _Resp()
 
-    monkeypatch.setattr("backend.routers.stock.httpx.get", _fake_get)
+    monkeypatch.setattr("backend.services.stock_id.httpx.get", _fake_get)
 
     pid, vid = make_product()["id"], make_vault()["id"]
     entry = client.post(
@@ -113,7 +114,7 @@ def test_webhook_failure_does_not_break_entry_creation(client, make_product, mak
     def _boom(*_a, **_k):
         raise RuntimeError("connection refused")
 
-    monkeypatch.setattr("backend.routers.stock.httpx.get", _boom)
+    monkeypatch.setattr("backend.services.stock_id.httpx.get", _boom)
 
     pid, vid = make_product()["id"], make_vault()["id"]
     resp = client.post(
@@ -133,7 +134,7 @@ def test_webhook_empty_response_yields_no_stock_id(client, make_product, make_va
         def raise_for_status(self):
             return None
 
-    monkeypatch.setattr("backend.routers.stock.httpx.get", lambda *a, **k: _Resp())
+    monkeypatch.setattr("backend.services.stock_id.httpx.get", lambda *a, **k: _Resp())
 
     pid, vid = make_product()["id"], make_vault()["id"]
     entry = client.post(

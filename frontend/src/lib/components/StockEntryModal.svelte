@@ -1,5 +1,5 @@
 <script>
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import Modal from './Modal.svelte';
   import ScannableCodeList from './ScannableCodeList.svelte';
   import BarcodeScanner from './BarcodeScanner.svelte';
@@ -90,7 +90,7 @@
     const baseUnitId = product.unit.id;
     const result = [{ id: 'base', label: product.unit.name, abbreviation: product.unit.abbreviation, factor: 1 }];
     if (product.size) {
-      result.push({ id: 'stueck', label: 'Stück', abbreviation: 'Stk.', factor: product.size });
+      result.push({ id: 'stueck', label: t('common.unit_piece_label'), abbreviation: t('common.unit_piece_abbr'), factor: product.size });
     }
     for (const puc of product.unit_conversions || []) {
       result.push({ id: 'puc_' + puc.id, label: puc.unit_name, abbreviation: puc.unit_name, factor: puc.factor });

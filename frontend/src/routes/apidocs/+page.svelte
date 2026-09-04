@@ -1,5 +1,5 @@
 <script>
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
 </script>
 
 <div class="flex flex-col h-[calc(100dvh-4rem)] md:h-dvh">

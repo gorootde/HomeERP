@@ -91,7 +91,7 @@ def no_external_side_effects(monkeypatch):
             "outbound httpx.get called – stub the webhook in the test"
         )
 
-    monkeypatch.setattr("backend.routers.stock.httpx.get", _no_webhook)
+    monkeypatch.setattr("backend.services.stock_id.httpx.get", _no_webhook)
 
     # Label-printing settings endpoints.
     monkeypatch.setattr(

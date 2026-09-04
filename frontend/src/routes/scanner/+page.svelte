@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n.js';
+  import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import {
     getByEan, getEanInfo, getStockEntryByStockId,
