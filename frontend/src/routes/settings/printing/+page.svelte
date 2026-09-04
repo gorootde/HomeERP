@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
-  import { getSettings, putSetting, getLabelOptions, getLabelPreviewUrl, testPrintLabel, clearPrintQueue } from '$lib/api.js';
+  import { getSettings, saveSettings, getLabelOptions, getLabelPreviewUrl, testPrintLabel, clearPrintQueue } from '$lib/api.js';
   import { ChevronLeft } from 'lucide-svelte';
 
   let loading = $state(true);
@@ -42,16 +42,16 @@
   });
 
   async function persist() {
-    await Promise.all([
-      putSetting('label_printer_ip', printerIp),
-      putSetting('label_printer_protocol', protocol),
-      putSetting('label_printer_model', model),
-      putSetting('label_auto_print', autoPrint ? '1' : '0'),
-      putSetting('label_width_mm', String(widthMm)),
-      putSetting('label_length_mm', String(lengthMm)),
-      putSetting('label_length_mode', lengthMode),
-      putSetting('label_orientation', orientation)
-    ]);
+    await saveSettings({
+      label_printer_ip: printerIp,
+      label_printer_protocol: protocol,
+      label_printer_model: model,
+      label_auto_print: autoPrint ? '1' : '0',
+      label_width_mm: String(widthMm),
+      label_length_mm: String(lengthMm),
+      label_length_mode: lengthMode,
+      label_orientation: orientation,
+    });
   }
 
   async function clearQueue() {

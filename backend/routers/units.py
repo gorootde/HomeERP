@@ -39,7 +39,7 @@ def get_unit(unit_id: int, db: Session = Depends(get_db)):
 @router.put("/{unit_id}", response_model=UnitRead)
 def update_unit(unit_id: int, data: UnitUpdate, db: Session = Depends(get_db)):
     unit = get_or_404(db, Unit, unit_id, "Unit not found")
-    for field, value in data.model_dump(exclude_none=True).items():
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(unit, field, value)
     db.commit()
     db.refresh(unit)
@@ -58,7 +58,7 @@ def add_conversion(unit_id: int, data: UnitConversionCreate, db: Session = Depen
     get_or_404(db, Unit, unit_id, "Unit not found")
     get_or_404(db, Unit, data.to_unit_id, "Target unit not found")
     if unit_id == data.to_unit_id:
-        raise HTTPException(400, "Cannot convert a unit to itself")
+        raise HTTPException(status_code=400, detail="Cannot convert a unit to itself")
     def _upsert(from_id: int, to_id: int, factor: float):
         row = (
             db.query(UnitConversion)
@@ -86,7 +86,7 @@ def delete_conversion(unit_id: int, conversion_id: int, db: Session = Depends(ge
         UnitConversion.from_unit_id == unit_id,
     ).first()
     if not conv:
-        raise HTTPException(404, "Conversion not found")
+        raise HTTPException(status_code=404, detail="Conversion not found")
     reverse = db.query(UnitConversion).filter(
         UnitConversion.from_unit_id == conv.to_unit_id,
         UnitConversion.to_unit_id == unit_id,

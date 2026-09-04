@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
-  import { getSettings, putSetting } from '$lib/api.js';
+  import { getSettings, saveSettings } from '$lib/api.js';
   import { ChevronLeft } from 'lucide-svelte';
 
   let loading = $state(true);
@@ -25,14 +25,14 @@
 
   async function save() {
     try {
-      await Promise.all([
-        putSetting('stock_id_mode', mode),
-        putSetting('stock_id_prefix', prefix),
+      await saveSettings({
+        stock_id_mode: mode,
+        stock_id_prefix: prefix,
         // number inputs make bind:value numeric – settings are stored as strings
-        putSetting('stock_id_counter', String(counter)),
-        putSetting('stock_id_pad_length', String(padLength)),
-        putSetting('stock_id_webhook_url', webhookUrl)
-      ]);
+        stock_id_counter: String(counter),
+        stock_id_pad_length: String(padLength),
+        stock_id_webhook_url: webhookUrl,
+      });
       showToast(t('stockid.toast_saved'), 'success');
     } catch (e) { showToast(String(e), 'error'); }
   }

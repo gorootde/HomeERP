@@ -92,6 +92,11 @@ export const getEanInfo = (ean) => get(`/ean-info/${ean}`);
 export const getSettings = () => get('/settings');
 export const getSetting = (key) => get(`/settings/${key}`);
 export const putSetting = (key, value) => put(`/settings/${key}`, { value });
+// Save several settings at once. There's no bulk endpoint on the backend —
+// this just batches the per-key PUTs — but it keeps that fan-out in one
+// place instead of every settings page hand-rolling its own Promise.all.
+export const saveSettings = (values) =>
+  Promise.all(Object.entries(values).map(([key, value]) => putSetting(key, value)));
 
 // Printing
 export const getLabelOptions = () => get('/settings/printing/options');
