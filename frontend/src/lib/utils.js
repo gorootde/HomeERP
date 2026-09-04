@@ -23,15 +23,48 @@ export function fmtProductLabel(p) {
   if (!p) return '';
   let label = p.name;
   if (p.vendor) label += ` - ${p.vendor}`;
-  if (p.size != null && p.unit?.abbreviation) {
-    label += ` (${fmtQty(p.size)} ${p.unit.abbreviation})`;
-  }
   return label;
 }
 
 export function fmtFactor(n) {
   if (n == null) return '';
   return Number.isInteger(n) ? String(n) : Number(n).toFixed(4).replace(/\.?0+$/, '');
+}
+
+// Resolves a UnitConversionEditor onadd() payload into a { factor, base_unit_id, base_unit }
+// triple, following the to_unit_id chain through another product-specific conversion
+// (to_unit_id === "puc_<id>") down to a real global unit — same math regardless of
+// whether the referenced puc row is already persisted or still staged client-side.
+export function resolveUnitConversion({ factor, to_unit_id, units, pucUnits }) {
+  let resolvedFactor = factor;
+  let resolvedBaseUnitId = Number(to_unit_id);
+  let resolvedBaseUnit = units.find(u => u.id === resolvedBaseUnitId);
+
+  if (String(to_unit_id).startsWith('puc_')) {
+    const pucKey = String(to_unit_id).slice(4);
+    const ref = pucUnits.find(c => String(c.id) === pucKey);
+    if (!ref) return null;
+    resolvedFactor = factor * ref.factor;
+    resolvedBaseUnitId = ref.base_unit.id;
+    resolvedBaseUnit = ref.base_unit;
+  }
+  return { factor: resolvedFactor, base_unit_id: resolvedBaseUnitId, base_unit: resolvedBaseUnit };
+}
+
+// Builds a not-yet-persisted product-unit-conversion row (client-side temp id) for staging
+// in a "New Product" form, before the product itself has an id to POST conversions against.
+export function stagePucConversion({ factor, to_unit_id, name, units, pucUnits }) {
+  const resolved = resolveUnitConversion({ factor, to_unit_id, units, pucUnits });
+  if (!resolved) return null;
+  return {
+    id: 'staged-' + crypto.randomUUID(),
+    unit_name: name,
+    name,
+    factor: resolved.factor,
+    base_unit_id: resolved.base_unit_id,
+    base_unit: resolved.base_unit,
+    to_unit: resolved.base_unit
+  };
 }
 
 export function escHtml(str) {

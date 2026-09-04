@@ -81,7 +81,7 @@
   $effect(() => {
     if (productLocked) return;
     const product = products.find(p => p.id === Number(form.product_id));
-    form.entry_unit_id = product?.entry_unit_key || (product?.size ? 'stueck' : 'base');
+    form.entry_unit_id = product?.entry_unit_key || 'base';
   });
 
   let entryUnits = $derived(() => {
@@ -89,9 +89,6 @@
     if (!product?.unit) return [];
     const baseUnitId = product.unit.id;
     const result = [{ id: 'base', label: product.unit.name, abbreviation: product.unit.abbreviation, factor: 1 }];
-    if (product.size) {
-      result.push({ id: 'stueck', label: t('common.unit_piece_label'), abbreviation: t('common.unit_piece_abbr'), factor: product.size });
-    }
     for (const puc of product.unit_conversions || []) {
       result.push({ id: 'puc_' + puc.id, label: puc.unit_name, abbreviation: puc.unit_name, factor: puc.factor });
     }

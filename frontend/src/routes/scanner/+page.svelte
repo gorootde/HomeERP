@@ -3,14 +3,15 @@
   import { t } from '$lib/i18n.svelte.js';
   import { showToast } from '$lib/toast.js';
   import {
-    getByEan, getEanInfo, getStockEntryByStockId,
-    createProduct, createStockEntry, updateStockEntry, deleteStockEntry,
+    getByEan, getEanInfo, getStockEntryByStockId, getProduct,
+    createProduct, createStockEntry, updateStockEntry, deleteStockEntry, addProductUnitConversion,
     getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
-  import { fmtDate, fmtQty, isStockId, parseSizeString } from '$lib/utils.js';
+  import { fmtDate, fmtQty, isStockId, parseSizeString, stagePucConversion } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
+  import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';
   import { ScanBarcode, QrCode, Package, Minus, Sliders } from 'lucide-svelte';
 
   let scannerActive = $state(true);
@@ -30,7 +31,7 @@
   let addEntryModal = $state(null);
 
   let adjustQty = $state('');
-  let newProd = $state({ name: '', vendor: '', size: '', unit_id: '', category_id: '' });
+  let newProd = $state({ name: '', vendor: '', unit_id: '', category_id: '', puc: [] });
 
   // Pause the camera/scan loop while any modal is open — keeping it running
   // in the background is heavy and makes the browser noticeably sluggish.
@@ -120,24 +121,49 @@
     newProd = {
       name: offData?.name || '',
       vendor: offData?.vendor || '',
-      size: numeric || offData?.size || '',
       unit_id: matchedUnit ? String(matchedUnit.id) : '',
       category_id: '',
-      ean: code
+      ean: code,
+      puc: []
     };
+    // Stage the OpenFoodFacts package size as a first named packaging unit
+    // instead of a bare number, so it doesn't collide with a real Unit later.
+    if (numeric && matchedUnit) {
+      addNewProdPuc({ factor: parseFloat(numeric), to_unit_id: matchedUnit.id, name: t('common.unit_piece_label') });
+    }
     newProductModal = { code, offData };
+  }
+
+  function addNewProdPuc({ factor, to_unit_id, name }) {
+    if (!name?.trim()) { showToast(t('products.puc_err_name'), 'error'); return; }
+    const staged = stagePucConversion({ factor, to_unit_id, name, units, pucUnits: newProd.puc });
+    if (!staged) { showToast(t('products.puc_err_unit'), 'error'); return; }
+    newProd.puc = [...newProd.puc, staged];
+  }
+
+  function removeNewProdPuc(convId) {
+    newProd.puc = newProd.puc.filter(c => c.id !== convId);
   }
 
   async function createNewProduct() {
     try {
-      const p = await createProduct({
+      let p = await createProduct({
         name: newProd.name,
         vendor: newProd.vendor || null,
-        size: newProd.size ? parseFloat(newProd.size) : null,
         unit_id: newProd.unit_id ? Number(newProd.unit_id) : null,
         category_id: newProd.category_id ? Number(newProd.category_id) : null,
         ean_codes: newProd.ean ? [newProd.ean] : []
       });
+      if (newProd.puc.length > 0) {
+        for (const puc of newProd.puc) {
+          await addProductUnitConversion(p.id, {
+            unit_name: puc.unit_name,
+            base_unit_id: puc.base_unit_id,
+            factor: puc.factor
+          });
+        }
+        p = await getProduct(p.id);
+      }
       products = [...products, p];
       showToast(t('scanner.toast_product_created'), 'success');
       newProductModal = null;
@@ -318,17 +344,10 @@
         <input bind:value={newProd.name} placeholder={t('scanner.placeholder_name')}
           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_vendor')}</label>
-          <input bind:value={newProd.vendor} placeholder={t('scanner.placeholder_vendor')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_size')}</label>
-          <input bind:value={newProd.size} type="number" step="any" min="0" placeholder={t('scanner.placeholder_size')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_vendor')}</label>
+        <input bind:value={newProd.vendor} placeholder={t('scanner.placeholder_vendor')}
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -352,6 +371,18 @@
           </select>
         </div>
       </div>
+      {#if newProd.unit_id}
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-2">{t('products.puc_label')}</label>
+          <UnitConversionEditor
+            conversions={newProd.puc}
+            units={units}
+            pucUnits={newProd.puc}
+            withName={true}
+            onadd={addNewProdPuc}
+            onremove={removeNewProdPuc} />
+        </div>
+      {/if}
       <div class="flex justify-end gap-2">
         <button onclick={() => newProductModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
@@ -371,7 +402,7 @@
     {vaults}
     {units}
     initial={addEntryModal.product
-      ? { product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || (addEntryModal.product.size ? 'stueck' : 'base') }
+      ? { product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || 'base' }
       : { stock_id: addEntryModal.stockId }}
     productLocked={!!addEntryModal.product}
     isNew={true}

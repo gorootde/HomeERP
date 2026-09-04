@@ -71,7 +71,7 @@ def list_products(
 
 @router.post("", response_model=ProductRead, status_code=201)
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
-    product = Product(vendor=data.vendor, name=data.name, size=data.size, unit_id=data.unit_id, category_id=data.category_id)
+    product = Product(vendor=data.vendor, name=data.name, unit_id=data.unit_id, category_id=data.category_id)
     db.add(product)
     db.flush()
     for code in data.ean_codes:

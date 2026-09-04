@@ -7,7 +7,7 @@ export default {
     error_load_page: 'Could not load page', camera_unavailable: 'Camera not available',
     scanner_unavailable: 'Scanner not available', optional: 'optional', stop_scan: 'Stop scanner',
     start_scan: 'Scan', loading: 'Loading…',
-    unit_piece_label: 'piece', unit_piece_abbr: 'pc.'
+    unit_piece_label: 'piece'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', stock: 'Stock', scanner: 'Scanner',
@@ -18,19 +18,19 @@ export default {
     title: 'Dashboard', products_in_stock: 'Products in Stock', total_stock: 'Total Stock',
     storage_locations: 'Storage Locations', critical: 'Critical', low: 'Low', cat_suffix: '',
     section_by_category: 'By Category', section_all_products: 'All Products',
-    col_product: 'Product', col_vendor: 'Vendor', col_size: 'Size',
+    col_product: 'Product', col_vendor: 'Vendor',
     col_total_qty: 'Total', col_by_vault: 'By Vault', empty: 'No stock entries',
     status_ok: 'OK', status_low: 'Low', status_critical: 'Critical', status_none: 'No minimum stock',
     min_prefix: 'Min:'
   },
   products: {
     title: 'Products', btn_add: 'Add Product', search_placeholder: 'Search by name or vendor…',
-    col_product: 'Product', col_size: 'Size', col_eans: 'EAN Codes', col_tags: 'Tags', empty: 'No products',
+    col_product: 'Product', col_unit: 'Unit', col_eans: 'EAN Codes', col_tags: 'Tags', empty: 'No products',
     btn_edit: 'Edit', btn_eans: 'EAN Codes', confirm_delete: 'Really delete product?',
     toast_deleted: 'Product deleted', toast_updated: 'Product saved', toast_created: 'Product created',
     modal_edit: 'Edit Product', modal_add: 'New Product',
-    label_vendor: 'Vendor', label_size: 'Default Qty per Piece', label_unit: 'Stock Unit', label_entry_unit: 'Entry Unit', label_entry_unit_hint: 'Default unit when adding stock entries', label_category: 'Category',
-    label_name: 'Name', placeholder_vendor: 'Vendor', placeholder_size: 'e.g. 160',
+    label_vendor: 'Vendor', label_unit: 'Stock Unit', label_entry_unit: 'Entry Unit', label_entry_unit_hint: 'Default unit when adding stock entries', label_category: 'Category',
+    label_name: 'Name', placeholder_vendor: 'Vendor',
     placeholder_name: 'Product name', label_photo: 'Photo', photo_placeholder: 'No photo',
     btn_remove_photo: 'Remove photo', toast_photo_removed: 'Photo removed',
     ean_modal_title: 'Manage EAN Codes', ean_modal_hint: 'Scan or enter EAN codes',
@@ -149,7 +149,7 @@ export default {
     ean_unknown_status: 'Unknown product', ean_unknown_heading: 'Unknown EAN',
     ean_unknown_hint: 'EAN not in database', btn_new_product: 'New Product',
     new_product_modal: 'Create New Product', label_name: 'Name', placeholder_name: 'Product name',
-    label_vendor: 'Vendor', placeholder_vendor: 'Vendor', label_size: 'Default Qty per Piece', placeholder_size: 'e.g. 160',
+    label_vendor: 'Vendor', placeholder_vendor: 'Vendor',
     label_unit: 'Unit', unit_placeholder: 'Choose unit…', label_category: 'Category',
     label_ean: 'EAN', placeholder_ean: 'EAN code', ean_hint: 'EAN will be assigned automatically',
     btn_create_product: 'Create Product', toast_product_created: 'Product created',

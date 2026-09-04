@@ -72,7 +72,6 @@ def get_stock_summary(db: Session = Depends(get_db)):
                 "product_id": pid,
                 "vendor": p.vendor,
                 "product_name": p.name,
-                "size": p.size,
                 "unit": p.unit,
                 "total_quantity": 0.0,
                 "by_vault": [],

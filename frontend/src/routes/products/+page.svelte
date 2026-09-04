@@ -8,7 +8,7 @@
     getUnits, getCategories, addTagToProduct, removeTagFromProduct,
     addProductUnitConversion, deleteProductUnitConversion
   } from '$lib/api.js';
-  import { parseSizeString } from '$lib/utils.js';
+  import { parseSizeString, resolveUnitConversion, stagePucConversion } from '$lib/utils.js';
   import { useTags } from '$lib/useTags.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -31,7 +31,7 @@
   let confirmDelete = $state(null); // null | { id, name }
 
   // Edit form state
-  let form = $state({ name: '', vendor: '', size: '', unit_id: '', entry_unit_key: '', category_id: '', tags: [], puc: [] });
+  let form = $state({ name: '', vendor: '', unit_id: '', entry_unit_key: '', category_id: '', tags: [], puc: [] });
   let formPhotoFile = $state(null);
   let formPhotoPreview = $state('');
   let offBanner = $state(null);
@@ -80,7 +80,7 @@
   }
 
   function openAdd() {
-    form = { name: '', vendor: '', size: '', unit_id: '', entry_unit_key: '', category_id: '', tags: [], puc: [] };
+    form = { name: '', vendor: '', unit_id: '', entry_unit_key: '', category_id: '', tags: [], puc: [] };
     formPhotoFile = null;
     formPhotoPreview = '';
     offBanner = null;
@@ -92,7 +92,6 @@
     form = {
       name: p.name || '',
       vendor: p.vendor || '',
-      size: p.size != null ? String(p.size) : '',
       unit_id: p.unit_id || '',
       entry_unit_key: p.entry_unit_key || '',
       category_id: p.category_id || '',
@@ -106,18 +105,35 @@
   }
 
   async function saveProduct() {
+    // A staged puc row's id (e.g. 'staged-...') isn't a real conversion id yet, so an
+    // entry_unit_key referencing one via 'puc_<id>' can't be sent until that row is
+    // persisted below — remember it and resolve it afterwards instead.
+    const stagedEntryKey = editModal.isNew && form.entry_unit_key?.startsWith('puc_')
+      && form.puc.some(c => String(c.id) === form.entry_unit_key.slice(4))
+      ? form.entry_unit_key
+      : null;
+
     const data = {
       name: form.name,
       vendor: form.vendor || null,
-      size: form.size ? parseFloat(form.size) : null,
       unit_id: form.unit_id ? Number(form.unit_id) : null,
-      entry_unit_key: form.entry_unit_key || null,
+      entry_unit_key: stagedEntryKey ? null : (form.entry_unit_key || null),
       category_id: form.category_id ? Number(form.category_id) : null
     };
     try {
       let saved;
       if (editModal.isNew) {
         saved = await createProduct(data);
+        for (const puc of form.puc) {
+          const created = await addProductUnitConversion(saved.id, {
+            unit_name: puc.unit_name,
+            base_unit_id: puc.base_unit_id,
+            factor: puc.factor
+          });
+          if (stagedEntryKey && String(puc.id) === stagedEntryKey.slice(4)) {
+            await updateProduct(saved.id, { entry_unit_key: 'puc_' + created.id });
+          }
+        }
         showToast(t('products.toast_created'), 'success');
       } else {
         saved = await updateProduct(editModal.product.id, data);
@@ -207,10 +223,16 @@
       form.name = info.name || form.name;
       form.vendor = info.vendor || form.vendor;
       const { numeric, unitAbbr } = parseSizeString(info.size);
-      form.size = numeric || info.size || form.size;
+      let matchedUnit = null;
       if (unitAbbr) {
-        const matchedUnit = units.find(u => u.abbreviation.toLowerCase() === unitAbbr);
+        matchedUnit = units.find(u => u.abbreviation.toLowerCase() === unitAbbr);
         if (matchedUnit) form.unit_id = String(matchedUnit.id);
+      }
+      // Stage the OpenFoodFacts package size as a first named packaging unit
+      // instead of a bare number, so it doesn't collide with a real Unit later.
+      const baseUnitId = matchedUnit?.id ?? (form.unit_id ? Number(form.unit_id) : null);
+      if (numeric && baseUnitId) {
+        await addPuc({ factor: parseFloat(numeric), to_unit_id: baseUnitId, name: t('common.unit_piece_label') });
       }
     }
     if (info.image_url && editModal?.product) {
@@ -238,28 +260,28 @@
     return raw.map(c => ({ ...c, name: c.unit_name, to_unit: c.base_unit }));
   }
 
-  // Unit conversions
+  // Unit conversions — while creating a new product there's no product id yet to
+  // POST conversions against, so they're staged locally (stagePucConversion) and
+  // persisted in saveProduct() once the product itself has been created.
   async function addPuc({ factor, to_unit_id, name }) {
     if (!name?.trim()) { showToast(t('products.puc_err_name'), 'error'); return; }
+
+    if (editModal?.isNew) {
+      const staged = stagePucConversion({ factor, to_unit_id, name, units, pucUnits: form.puc });
+      if (!staged) { showToast(t('products.puc_err_unit'), 'error'); return; }
+      form.puc = [...form.puc, staged];
+      return;
+    }
+
     if (!editModal?.product) return;
     try {
-      let resolvedFactor = factor;
-      let resolvedBaseUnitId = Number(to_unit_id);
-
-      // If the target is a product-specific conversion (puc_<id>), resolve the chain:
-      // e.g. Pack = 6 × Flasche(1.5L) → Pack = 9L, base_unit = L
-      if (String(to_unit_id).startsWith('puc_')) {
-        const pucId = parseInt(String(to_unit_id).slice(4));
-        const ref = form.puc.find(c => c.id === pucId);
-        if (!ref) { showToast(t('products.puc_err_unit'), 'error'); return; }
-        resolvedFactor = factor * ref.factor;
-        resolvedBaseUnitId = ref.base_unit.id;
-      }
+      const resolved = resolveUnitConversion({ factor, to_unit_id, units, pucUnits: form.puc });
+      if (!resolved) { showToast(t('products.puc_err_unit'), 'error'); return; }
 
       await addProductUnitConversion(editModal.product.id, {
         unit_name: name,
-        base_unit_id: resolvedBaseUnitId,
-        factor: resolvedFactor
+        base_unit_id: resolved.base_unit_id,
+        factor: resolved.factor
       });
       showToast(t('products.puc_toast_added'), 'success');
       const p = await getProduct(editModal.product.id);
@@ -268,6 +290,10 @@
   }
 
   async function removePuc(convId) {
+    if (editModal?.isNew) {
+      form.puc = form.puc.filter(c => c.id !== convId);
+      return;
+    }
     if (!editModal?.product) return;
     try {
       await deleteProductUnitConversion(editModal.product.id, convId);
@@ -321,8 +347,8 @@
         </div>
       </div>
     {/snippet}
-    {#snippet sizeCell(p)}
-      <span class="text-gray-500">{p.size ? `${p.size}${p.unit?.abbreviation ? ' ' + p.unit.abbreviation : ''}` : '—'}</span>
+    {#snippet unitCell(p)}
+      <span class="text-gray-500">{p.unit ? `${p.unit.name} (${p.unit.abbreviation})` : '—'}</span>
     {/snippet}
     {#snippet eansCell(p)}
       <div class="flex flex-wrap gap-1">
@@ -360,7 +386,7 @@
         rowKey={(p) => p.id}
         columns={[
           { label: t('products.col_product'), cell: productCell },
-          { label: t('products.col_size'), hideBelow: 'sm', cell: sizeCell },
+          { label: t('products.col_unit'), hideBelow: 'sm', cell: unitCell },
           { label: t('products.col_eans'), hideBelow: 'md', cell: eansCell },
           { label: t('products.col_tags'), hideBelow: 'lg', cell: tagsCell },
           { cell: actionsCell },
@@ -380,18 +406,11 @@
         <input bind:value={form.name} placeholder={t('products.placeholder_name')}
           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      <!-- Vendor + Size -->
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_vendor')}</label>
-          <input bind:value={form.vendor} placeholder={t('products.placeholder_vendor')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_size')}</label>
-          <input bind:value={form.size} type="number" step="any" min="0" placeholder={t('products.placeholder_size')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+      <!-- Vendor -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_vendor')}</label>
+        <input bind:value={form.vendor} placeholder={t('products.placeholder_vendor')}
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <!-- Unit + Category -->
       <div class="grid grid-cols-2 gap-3">
@@ -465,7 +484,7 @@
         <TagChips tags={form.tags} onadd={addTag} onremove={removeTag} />
       </div>
       <!-- Unit Conversions -->
-      {#if !editModal.isNew && editModal.product}
+      {#if form.unit_id}
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-2">{t('products.puc_label')}</label>
           <UnitConversionEditor

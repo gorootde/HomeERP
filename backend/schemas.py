@@ -98,7 +98,6 @@ class EanCodeRead(EanCodeBase):
 class ProductBase(BaseModel):
     vendor: str = Field(..., min_length=1, max_length=255)
     name: str = Field(..., min_length=1, max_length=255)
-    size: Optional[float] = None
     unit_id: Optional[int] = None
     entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
@@ -109,7 +108,6 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     vendor: Optional[str] = Field(None, min_length=1, max_length=255)
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    size: Optional[float] = None
     unit_id: Optional[int] = None
     entry_unit_key: Optional[str] = Field(None, max_length=64)
     category_id: Optional[int] = None
@@ -214,7 +212,6 @@ class StockSummaryItem(BaseModel):
     product_id: int
     vendor: str
     product_name: str
-    size: Optional[float] = None
     unit: Optional[UnitSimple] = None
     total_quantity: float
     by_vault: list[StockSummaryVaultQty]

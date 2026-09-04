@@ -8,7 +8,7 @@ export default {
     error_load_page: 'Seite konnte nicht geladen werden', camera_unavailable: 'Kamera nicht verfügbar',
     scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional', stop_scan: 'Scanner stoppen',
     start_scan: 'Scannen', loading: 'Lade…',
-    unit_piece_label: 'Stück', unit_piece_abbr: 'Stk.'
+    unit_piece_label: 'Stück'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produkte', stock: 'Lager', scanner: 'Scanner',
@@ -19,19 +19,19 @@ export default {
     title: 'Dashboard', products_in_stock: 'Produkte im Lager', total_stock: 'Gesamtbestand',
     storage_locations: 'Lagerorte', critical: 'Kritisch', low: 'Gering', cat_suffix: '',
     section_by_category: 'Nach Kategorie', section_all_products: 'Alle Produkte',
-    col_product: 'Produkt', col_vendor: 'Hersteller', col_size: 'Größe',
+    col_product: 'Produkt', col_vendor: 'Hersteller',
     col_total_qty: 'Gesamt', col_by_vault: 'Nach Lagerort', empty: 'Kein Bestand vorhanden',
     status_ok: 'OK', status_low: 'Gering', status_critical: 'Kritisch', status_none: 'Kein Mindestbestand',
     min_prefix: 'Min:'
   },
   products: {
     title: 'Produkte', btn_add: 'Produkt hinzufügen', search_placeholder: 'Suche nach Name oder Hersteller…',
-    col_product: 'Produkt', col_size: 'Größe', col_eans: 'EAN-Codes', col_tags: 'Tags', empty: 'Keine Produkte',
+    col_product: 'Produkt', col_unit: 'Einheit', col_eans: 'EAN-Codes', col_tags: 'Tags', empty: 'Keine Produkte',
     btn_edit: 'Bearbeiten', btn_eans: 'EAN-Codes', confirm_delete: 'Produkt wirklich löschen?',
     toast_deleted: 'Produkt gelöscht', toast_updated: 'Produkt gespeichert', toast_created: 'Produkt erstellt',
     modal_edit: 'Produkt bearbeiten', modal_add: 'Neues Produkt',
-    label_vendor: 'Hersteller', label_size: 'Standardmenge pro Stück', label_unit: 'Bestandseinheit', label_entry_unit: 'Erfassen Einheit', label_entry_unit_hint: 'Standard-Einheit beim Erfassen von Beständen', label_category: 'Kategorie',
-    label_name: 'Name', placeholder_vendor: 'Hersteller', placeholder_size: 'z.B. 160',
+    label_vendor: 'Hersteller', label_unit: 'Bestandseinheit', label_entry_unit: 'Erfassen Einheit', label_entry_unit_hint: 'Standard-Einheit beim Erfassen von Beständen', label_category: 'Kategorie',
+    label_name: 'Name', placeholder_vendor: 'Hersteller',
     placeholder_name: 'Produktname', label_photo: 'Foto', photo_placeholder: 'Kein Foto',
     btn_remove_photo: 'Foto entfernen', toast_photo_removed: 'Foto entfernt',
     ean_modal_title: 'EAN-Codes verwalten', ean_modal_hint: 'Scanne oder gib EAN-Codes ein',
@@ -153,7 +153,7 @@ export default {
     ean_unknown_hint: 'EAN nicht in der Datenbank',
     btn_new_product: 'Neues Produkt', new_product_modal: 'Neues Produkt erstellen',
     label_name: 'Name', placeholder_name: 'Produktname', label_vendor: 'Hersteller',
-    placeholder_vendor: 'Hersteller', label_size: 'Standardmenge pro Stück', placeholder_size: 'z.B. 160',
+    placeholder_vendor: 'Hersteller',
     label_unit: 'Einheit', unit_placeholder: 'Einheit wählen…', label_category: 'Kategorie',
     label_ean: 'EAN', placeholder_ean: 'EAN-Code', ean_hint: 'EAN wird automatisch zugeordnet',
     btn_create_product: 'Produkt erstellen', toast_product_created: 'Produkt erstellt',

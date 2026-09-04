@@ -38,7 +38,6 @@ def test_create_product_with_full_payload(client, make_unit, make_category):
         json={
             "vendor": "ACME",
             "name": "Widget",
-            "size": 1.5,
             "unit_id": unit["id"],
             "category_id": cat["id"],
             "entry_unit_key": "base",
@@ -47,7 +46,7 @@ def test_create_product_with_full_payload(client, make_unit, make_category):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["size"] == 1.5
+    assert "size" not in body
     assert body["unit"]["id"] == unit["id"]
     assert body["category"]["id"] == cat["id"]
     assert {e["code"] for e in body["ean_codes"]} == {"4001234567890", "4009876543210"}

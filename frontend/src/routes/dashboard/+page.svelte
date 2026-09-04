@@ -136,7 +136,6 @@
     {:else}
       {#snippet nameCell(row)}<span class="font-medium text-gray-900">{row.product_name}</span>{/snippet}
       {#snippet vendorCell(row)}<span class="text-gray-500">{row.vendor || '—'}</span>{/snippet}
-      {#snippet sizeCell(row)}<span class="text-gray-500">{row.size || '—'}</span>{/snippet}
       {#snippet qtyCell(row)}
         <span class="font-semibold text-gray-900">{fmtQty(row.total_quantity)} {row.unit?.abbreviation || ''}</span>
       {/snippet}
@@ -156,7 +155,6 @@
           columns={[
             { label: t('dashboard.col_product'), cell: nameCell },
             { label: t('dashboard.col_vendor'), hideBelow: 'sm', cell: vendorCell },
-            { label: t('dashboard.col_size'), hideBelow: 'sm', cell: sizeCell },
             { label: t('dashboard.col_total_qty'), align: 'right', cell: qtyCell },
             { label: t('dashboard.col_by_vault'), hideBelow: 'md', cell: byVaultCell },
           ]} />
