@@ -32,6 +32,10 @@
   let adjustQty = $state('');
   let newProd = $state({ name: '', vendor: '', size: '', unit_id: '', category_id: '' });
 
+  // Pause the camera/scan loop while any modal is open — keeping it running
+  // in the background is heavy and makes the browser noticeably sluggish.
+  let scannerRunning = $derived(scannerActive && !adjustModal && !newProductModal && !addEntryModal);
+
   onMount(async () => {
     [vaults, products, units, categories, settings] = await Promise.all([
       getVaults(), getProducts('', 500), getUnits(), getCategories(), getSettings()
@@ -183,7 +187,7 @@
 
   <!-- Scanner -->
   <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-    <BarcodeScanner active={scannerActive} onscan={handleScan} />
+    <BarcodeScanner active={scannerRunning} onscan={handleScan} />
     <button
       onclick={() => { scannerActive = !scannerActive; if (!scannerActive) { result = null; lastCode = ''; } }}
       class="mt-3 w-full py-2.5 text-sm font-medium rounded-lg border transition-colors
