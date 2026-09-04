@@ -10,7 +10,7 @@
    *   vaults        — vault list
    *   units         — global units list (for entry-unit conversion options)
    *   initial       — initial form values { product_id, vault_id, quantity, entry_unit_id,
-   *                   best_before_date, comment }
+   *                   best_before_date, comment, stock_id }
    *   productLocked — when true, product field is shown as readonly text (pre-selected)
    *   isNew         — controls modal title and save button label
    *   autoPrintEnabled — when true (and isNew), show the per-entry "print label" opt-out
@@ -49,7 +49,7 @@
     entry_unit_id:    initial.entry_unit_id    ?? 'base',
     best_before_date: initial.best_before_date ?? '',
     comment:          initial.comment          ?? '',
-    stock_id:         '',
+    stock_id:         initial.stock_id          ?? '',
     print_label:      true
   });
 

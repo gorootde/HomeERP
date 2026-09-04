@@ -2,13 +2,19 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n.js';
   import { showToast } from '$lib/toast.js';
-  import { getVaults, getStockEntries, updateStockEntry, getByEan } from '$lib/api.js';
+  import {
+    getVaults, getStockEntries, updateStockEntry, getByEan,
+    getStockEntryByStockId, createStockEntry, getProducts, getUnits
+  } from '$lib/api.js';
   import { fmtQty } from '$lib/utils.js';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
+  import StockEntryModal from '$lib/components/StockEntryModal.svelte';
 
   // Steps: select | counting | result
   let step = $state('select');
   let vaults = $state([]);
+  let products = $state([]);
+  let units = $state([]);
   let selectedVaultId = $state('');
   let entries = $state([]); // expected entries for vault
   let scannerActive = $state(false);
@@ -17,28 +23,56 @@
   // Counting state
   let scanned = $state({}); // productId -> count
   let unknownEans = $state([]);
+  let unmatchedStockIds = $state([]);
   let scanCount = $state(0);
 
   // Result
   let results = $state([]);
 
+  // "Create stock entry" modal for an unmatched stock ID
+  let addEntryModal = $state(null); // { code }
+
   onMount(async () => {
-    vaults = await getVaults();
+    [vaults, products, units] = await Promise.all([
+      getVaults(), getProducts('', 500), getUnits()
+    ]);
   });
+
+  function isStockId(code) {
+    // Same heuristic as the scanner page: a pure-digit code is an EAN/barcode,
+    // anything else (e.g. "INV0033") is a stock ID.
+    return !/^\d+$/.test(code.trim());
+  }
 
   async function startInventory() {
     if (!selectedVaultId) return;
     entries = await getStockEntries({ vault_id: selectedVaultId });
     scanned = {};
     unknownEans = [];
+    unmatchedStockIds = [];
     scanCount = 0;
     feedback = t('inventory.feedback_initial');
     step = 'counting';
   }
 
   async function handleScan(code) {
+    code = code.trim();
     scanCount++;
     feedback = t('inventory.status_searching');
+
+    if (isStockId(code)) {
+      try {
+        const entry = await getStockEntryByStockId(code);
+        const productId = entry.product_id;
+        scanned[productId] = (scanned[productId] || 0) + 1;
+        feedback = t('inventory.feedback_scanned', { name: entry.product?.name });
+      } catch {
+        if (!unmatchedStockIds.includes(code)) unmatchedStockIds = [...unmatchedStockIds, code];
+        feedback = t('inventory.feedback_unmatched_stockid', { code });
+      }
+      return;
+    }
+
     try {
       const product = await getByEan(code);
       const productId = product.id;
@@ -47,6 +81,22 @@
     } catch {
       if (!unknownEans.includes(code)) unknownEans = [...unknownEans, code];
       feedback = t('inventory.feedback_unknown_ean', { ean: code });
+    }
+  }
+
+  function openCreateEntry(code) {
+    addEntryModal = { code };
+  }
+
+  async function createEntryFromScan(data) {
+    try {
+      await createStockEntry(data);
+      unmatchedStockIds = unmatchedStockIds.filter(c => c !== addEntryModal.code);
+      scanned[data.product_id] = (scanned[data.product_id] || 0) + 1;
+      showToast(t('inventory.toast_entry_created'), 'success');
+      addEntryModal = null;
+    } catch (e) {
+      showToast(String(e), 'error');
     }
   }
 
@@ -212,6 +262,24 @@
           </div>
         </div>
       {/if}
+
+      <!-- Unmatched Stock IDs -->
+      {#if unmatchedStockIds.length > 0}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm space-y-2">
+          <p class="font-medium text-amber-800">{t('inventory.unmatched_stockids_prefix')}</p>
+          <div class="space-y-1.5">
+            {#each unmatchedStockIds as code}
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-mono text-xs bg-amber-100 text-amber-700 rounded px-1.5 py-0.5">{code}</span>
+                <button onclick={() => openCreateEntry(code)}
+                  class="text-xs px-2.5 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  {t('inventory.btn_create_entry')}
+                </button>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -292,3 +360,15 @@
     </div>
   {/if}
 </div>
+
+<!-- Create Stock Entry for unmatched Stock ID -->
+{#if addEntryModal}
+  <StockEntryModal
+    {products}
+    {vaults}
+    {units}
+    initial={{ stock_id: addEntryModal.code, vault_id: selectedVaultId }}
+    isNew={true}
+    onsave={createEntryFromScan}
+    onclose={() => addEntryModal = null} />
+{/if}

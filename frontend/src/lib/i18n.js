@@ -122,11 +122,14 @@ const de = {
     feedback_stopped: 'Scanner gestoppt', feedback_scanning: 'Scanne…',
     feedback_camera_unavailable: 'Kamera nicht verfügbar', feedback_camera_fallback: 'Kamera-Fallback aktiv',
     feedback_scanned: 'Gescannt: {name}', feedback_unknown_ean: 'Unbekannte EAN: {ean}',
+    feedback_unmatched_stockid: 'Stock ID nicht im Bestand: {code}',
     result_title: 'Ergebnis', col_product: 'Produkt', col_expected: 'Erwartet', col_scanned: 'Gescannt',
     col_diff: 'Diff', col_status: 'Status', empty: 'Kein Ergebnis', btn_update_db: 'In DB speichern',
     btn_apply_all: 'Alle übernehmen', btn_new: 'Neue Inventur', status_ok: 'OK',
     status_missing: 'Fehlend', status_extra: 'Überschuss', status_unexpected: 'Unbekannt',
-    unknown_eans_prefix: 'Unbekannte EANs: ', toast_applied: 'Gespeichert', toast_updated: 'Aktualisiert'
+    unknown_eans_prefix: 'Unbekannte EANs: ', toast_applied: 'Gespeichert', toast_updated: 'Aktualisiert',
+    unmatched_stockids_prefix: 'Nicht zugeordnete Stock IDs:', btn_create_entry: 'Bestandseintrag anlegen',
+    toast_entry_created: 'Bestandseintrag erstellt'
   },
   scanner: {
     title: 'Scanner', status_starting: 'Starte…', status_active: 'Aktiv', status_searching: 'Suche…',
@@ -343,11 +346,14 @@ const en = {
     feedback_stopped: 'Scanner stopped', feedback_scanning: 'Scanning…',
     feedback_camera_unavailable: 'Camera not available', feedback_camera_fallback: 'Camera fallback active',
     feedback_scanned: 'Scanned: {name}', feedback_unknown_ean: 'Unknown EAN: {ean}',
+    feedback_unmatched_stockid: 'Stock ID not in stock: {code}',
     result_title: 'Result', col_product: 'Product', col_expected: 'Expected', col_scanned: 'Scanned',
     col_diff: 'Diff', col_status: 'Status', empty: 'No results', btn_update_db: 'Save to DB',
     btn_apply_all: 'Apply All', btn_new: 'New Inventory', status_ok: 'OK',
     status_missing: 'Missing', status_extra: 'Extra', status_unexpected: 'Unknown',
-    unknown_eans_prefix: 'Unknown EANs: ', toast_applied: 'Saved', toast_updated: 'Updated'
+    unknown_eans_prefix: 'Unknown EANs: ', toast_applied: 'Saved', toast_updated: 'Updated',
+    unmatched_stockids_prefix: 'Unmatched Stock IDs:', btn_create_entry: 'Create Stock Entry',
+    toast_entry_created: 'Stock entry created'
   },
   scanner: {
     title: 'Scanner', status_starting: 'Starting…', status_active: 'Active', status_searching: 'Searching…',
