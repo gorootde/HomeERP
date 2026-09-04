@@ -161,6 +161,10 @@
     addEntryModal = { product, ean };
   }
 
+  function openCreateEntryForStockId(code) {
+    addEntryModal = { stockId: code };
+  }
+
   async function createEntry(data) {
     try {
       await createStockEntry(data);
@@ -245,6 +249,10 @@
         <p class="font-semibold text-gray-800">{t('scanner.stockid_not_found')}</p>
         <p class="text-sm text-gray-500">{t('scanner.stockid_not_found_hint')}</p>
         <p class="text-xs font-mono text-gray-400">{result.code}</p>
+        <button onclick={() => openCreateEntryForStockId(result.code)}
+          class="w-full py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          {t('scanner.btn_create_entry')}
+        </button>
 
       {:else if result.type === 'ean_found'}
         {@const product = result.data}
@@ -371,8 +379,10 @@
     {products}
     {vaults}
     {units}
-    initial={{ product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || (addEntryModal.product.size ? 'stueck' : 'base') }}
-    productLocked={true}
+    initial={addEntryModal.product
+      ? { product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || (addEntryModal.product.size ? 'stueck' : 'base') }
+      : { stock_id: addEntryModal.stockId }}
+    productLocked={!!addEntryModal.product}
     isNew={true}
     autoPrintEnabled={getSetting('label_auto_print') === '1'}
     onsave={createEntry}
