@@ -8,7 +8,7 @@
     getUnits, getCategories, addTagToProduct, removeTagFromProduct,
     addProductUnitConversion, deleteProductUnitConversion
   } from '$lib/api.js';
-  import { parseSizeString, resolveUnitConversion, stagePucConversion } from '$lib/utils.js';
+  import { matchUnitFromOffSize, resolveUnitConversion, stagePucConversion } from '$lib/utils.js';
   import { useTags } from '$lib/useTags.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -222,12 +222,8 @@
     if (replace) {
       form.name = info.name || form.name;
       form.vendor = info.vendor || form.vendor;
-      const { numeric, unitAbbr } = parseSizeString(info.size);
-      let matchedUnit = null;
-      if (unitAbbr) {
-        matchedUnit = units.find(u => u.abbreviation.toLowerCase() === unitAbbr);
-        if (matchedUnit) form.unit_id = String(matchedUnit.id);
-      }
+      const { numeric, matchedUnit } = matchUnitFromOffSize(units, info.size);
+      if (matchedUnit) form.unit_id = matchedUnit.id;
       // Stage the OpenFoodFacts package size as a first named packaging unit
       // instead of a bare number, so it doesn't collide with a real Unit later.
       const baseUnitId = matchedUnit?.id ?? (form.unit_id ? Number(form.unit_id) : null);

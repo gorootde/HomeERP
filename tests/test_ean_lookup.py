@@ -91,3 +91,35 @@ def test_ean_info_upstream_connection_error_is_swallowed(client, real_off):
 def test_ean_info_default_stub_returns_empty(client):
     """With the conftest stub in place the endpoint still answers 200 / empty."""
     assert client.get("/api/ean-info/12345").json()["source"] is None
+
+
+@respx.mock
+def test_ean_info_uses_generic_product_name_when_no_language_variant(client, real_off):
+    respx.get(url__startswith=OFF_URL).mock(
+        return_value=httpx.Response(
+            200, json={"status": 1, "product": {"product_name": "Cola", "brands": ""}}
+        )
+    )
+    assert client.get("/api/ean-info/1").json()["name"] == "Cola"
+
+
+@respx.mock
+def test_ean_info_falls_back_to_image_url_when_no_front_image(client, real_off):
+    respx.get(url__startswith=OFF_URL).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "status": 1,
+                "product": {"product_name": "Cola", "image_url": "http://img/cola.jpg"},
+            },
+        )
+    )
+    assert client.get("/api/ean-info/1").json()["image_url"] == "http://img/cola.jpg"
+
+
+@respx.mock
+def test_ean_info_malformed_upstream_body_is_swallowed(client, real_off):
+    respx.get(url__startswith=OFF_URL).mock(
+        return_value=httpx.Response(200, content=b"not json")
+    )
+    assert client.get("/api/ean-info/1").json()["source"] is None

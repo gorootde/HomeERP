@@ -85,9 +85,25 @@ export function trafficStatus(total, min) {
 
 export function parseSizeString(sizeStr) {
   if (!sizeStr) return { numeric: '', unitAbbr: '' };
-  const match = sizeStr.trim().match(/^([\d.,]+)\s*([a-zA-Z]+)/);
+  const trimmed = sizeStr.trim();
+  // Multipack strings ("6x50g", "6 x 50 g") should yield the per-item size,
+  // not the pack count with the "x" misread as a unit.
+  const multipack = trimmed.match(/^\d+\s*[xX]\s*([\d.,]+)\s*([a-zA-Z]+)/);
+  if (multipack) return { numeric: multipack[1], unitAbbr: multipack[2].toLowerCase() };
+  const match = trimmed.match(/^([\d.,]+)\s*([a-zA-Z]+)/);
   if (match) return { numeric: match[1], unitAbbr: match[2].toLowerCase() };
   return { numeric: sizeStr, unitAbbr: '' };
+}
+
+/** Parses an OpenFoodFacts quantity string (e.g. "200 g") and looks up the
+ * matching Unit from the given units list (matched by abbreviation,
+ * case-insensitive). Returns the parsed numeric amount and the matched Unit
+ * (or null if no unit has that abbreviation) — callers decide how to apply
+ * them (e.g. as a product's base unit plus a staged packaging conversion). */
+export function matchUnitFromOffSize(units, sizeStr) {
+  const { numeric, unitAbbr } = parseSizeString(sizeStr);
+  const matchedUnit = unitAbbr ? units.find(u => u.abbreviation.toLowerCase() === unitAbbr) : null;
+  return { numeric, matchedUnit: matchedUnit || null };
 }
 
 export function isStockId(code) {

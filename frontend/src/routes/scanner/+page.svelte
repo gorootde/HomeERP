@@ -7,7 +7,7 @@
     createProduct, createStockEntry, updateStockEntry, deleteStockEntry, addProductUnitConversion,
     getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
-  import { fmtDate, fmtQty, isStockId, parseSizeString, stagePucConversion } from '$lib/utils.js';
+  import { fmtDate, fmtQty, isStockId, matchUnitFromOffSize, stagePucConversion } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
@@ -41,6 +41,11 @@
     [vaults, products, units, categories, settings] = await Promise.all([
       getVaults(), getProducts('', 500), getUnits(), getCategories(), getSettings()
     ]);
+    // Test-only hook: lets Playwright inject a scanned code without a real,
+    // decodable barcode image (the fake camera device can't provide one).
+    if (typeof window !== 'undefined' && window.__E2E_TEST_HOOKS__) {
+      window.__scanCode = handleScan;
+    }
   });
 
   function getSetting(key) {
@@ -116,12 +121,11 @@
 
   // New product + entry flow
   function openNewProduct(code, offData) {
-    const { numeric, unitAbbr } = parseSizeString(offData?.size);
-    const matchedUnit = unitAbbr ? units.find(u => u.abbreviation.toLowerCase() === unitAbbr) : null;
+    const { numeric, matchedUnit } = matchUnitFromOffSize(units, offData?.size);
     newProd = {
       name: offData?.name || '',
       vendor: offData?.vendor || '',
-      unit_id: matchedUnit ? String(matchedUnit.id) : '',
+      unit_id: matchedUnit ? matchedUnit.id : '',
       category_id: '',
       ean: code,
       puc: []
