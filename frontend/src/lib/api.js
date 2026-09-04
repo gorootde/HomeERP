@@ -67,6 +67,7 @@ export const deleteStockEntry = (id, reason) =>
 export const getStockSummary = () => get('/stock/summary');
 export const getCategoryStockSummary = () => get('/stock/category-summary');
 export const getStockEntryByStockId = (code) => get(`/stock/entries/by-stockid/${encodeURIComponent(code)}`);
+export const printStockEntryLabel = (id) => post(`/stock/entries/${id}/print-label`);
 
 // Stock Movements (audit log)
 export const getStockMovements = (params = {}) => {

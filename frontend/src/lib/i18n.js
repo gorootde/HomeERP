@@ -70,7 +70,9 @@ const de = {
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scannen', stockid_btn_add: 'Hinzufügen',
     stockid_btn_stop: 'Scanner stoppen', stockid_btn_done: 'Fertig',
     stockid_toast_removed: 'Stock ID entfernt', stockid_toast_added: 'Stock ID hinzugefügt',
-    col_history: 'Historie', history_modal_title: 'Bewegungshistorie'
+    col_history: 'Historie', history_modal_title: 'Bewegungshistorie',
+    btn_reprint_label: 'Label neu drucken', toast_label_printed: 'Label gedruckt',
+    toast_label_print_failed: 'Label konnte nicht gedruckt werden'
   },
   history: {
     title: 'Bestandsbewegungen', subtitle: 'Alle Zu- und Abgänge – mit Rückgängig-Funktion',
@@ -297,7 +299,9 @@ const en = {
     stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scan', stockid_btn_add: 'Add',
     stockid_btn_stop: 'Stop scanner', stockid_btn_done: 'Done',
     stockid_toast_removed: 'Stock ID removed', stockid_toast_added: 'Stock ID added',
-    col_history: 'History', history_modal_title: 'Movement history'
+    col_history: 'History', history_modal_title: 'Movement history',
+    btn_reprint_label: 'Reprint label', toast_label_printed: 'Label printed',
+    toast_label_print_failed: 'Failed to print label'
   },
   history: {
     title: 'Stock Movements', subtitle: 'Every stock-in and outflow — with undo',

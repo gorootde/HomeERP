@@ -299,7 +299,7 @@ def _render_and_print(product_name: str, vendor: str, best_before: Optional[str]
                       code: Optional[str], printer_ip: str, width_mm: float,
                       length_mm: float, orientation: str, length_mode: str,
                       quantity: Optional[float], unit: str,
-                      protocol: str, model: str) -> None:
+                      protocol: str, model: str, raise_on_error: bool = False) -> None:
     try:
         png = render_label_png(
             product_name=product_name,
@@ -315,7 +315,9 @@ def _render_and_print(product_name: str, vendor: str, best_before: Optional[str]
         )
         print_label(png, printer_ip, protocol=protocol, width_mm=width_mm, model=model)
     except Exception:
-        pass  # Printer failure must not affect stock-entry creation
+        if raise_on_error:  # manual reprint: surface the failure to the caller
+            raise
+        # background auto-print: a printer failure must not affect stock-entry creation
 
 
 def _float_setting(db: Session, key: str, default: float) -> float:
@@ -323,6 +325,29 @@ def _float_setting(db: Session, key: str, default: float) -> float:
         return float(_get_setting(db, key, str(default)) or default)
     except (TypeError, ValueError):
         return default
+
+
+def _label_kwargs_for_entry(entry: StockEntry, db: Session) -> dict:
+    """Build the ``_render_and_print`` kwargs for one stock entry from settings."""
+    unit = ""
+    product_unit = getattr(entry.product, "unit", None)
+    if product_unit is not None:
+        unit = product_unit.abbreviation or product_unit.name or ""
+    return dict(
+        product_name=entry.product.name,
+        vendor=entry.product.vendor,
+        best_before=entry.best_before_date.isoformat() if entry.best_before_date else None,
+        code=entry.stock_ids[0].code if entry.stock_ids else None,
+        printer_ip=_get_setting(db, "label_printer_ip"),
+        width_mm=_float_setting(db, "label_width_mm", 62),
+        length_mm=_float_setting(db, "label_length_mm", 90),
+        orientation=_get_setting(db, "label_orientation", "landscape"),
+        length_mode=_get_setting(db, "label_length_mode", "auto"),
+        quantity=entry.quantity,
+        unit=unit,
+        protocol=_get_setting(db, "label_printer_protocol", "ipp"),
+        model=_get_setting(db, "label_printer_model", "QL-710W"),
+    )
 
 
 def _maybe_print_label(entry: StockEntry, db: Session, requested: Optional[bool],
@@ -337,29 +362,10 @@ def _maybe_print_label(entry: StockEntry, db: Session, requested: Optional[bool]
         return
     if _get_setting(db, "label_auto_print") != "1":
         return
-    printer_ip = _get_setting(db, "label_printer_ip")
-    if not printer_ip:
+    kwargs = _label_kwargs_for_entry(entry, db)
+    if not kwargs["printer_ip"]:
         return
-    unit = ""
-    product_unit = getattr(entry.product, "unit", None)
-    if product_unit is not None:
-        unit = product_unit.abbreviation or product_unit.name or ""
-    background_tasks.add_task(
-        _render_and_print,
-        entry.product.name,
-        entry.product.vendor,
-        entry.best_before_date.isoformat() if entry.best_before_date else None,
-        entry.stock_ids[0].code if entry.stock_ids else None,
-        printer_ip,
-        _float_setting(db, "label_width_mm", 62),
-        _float_setting(db, "label_length_mm", 90),
-        _get_setting(db, "label_orientation", "landscape"),
-        _get_setting(db, "label_length_mode", "auto"),
-        entry.quantity,
-        unit,
-        _get_setting(db, "label_printer_protocol", "ipp"),
-        _get_setting(db, "label_printer_model", "QL-710W"),
-    )
+    background_tasks.add_task(_render_and_print, **kwargs)
 
 
 @router.post("/entries", response_model=StockEntryRead, status_code=201)
@@ -396,6 +402,22 @@ def get_stock_entry(entry_id: int, db: Session = Depends(get_db)):
     if not entry:
         raise HTTPException(status_code=404, detail="Stock entry not found")
     return entry
+
+
+@router.post("/entries/{entry_id}/print-label")
+def print_stock_entry_label(entry_id: int, db: Session = Depends(get_db)):
+    """Reprint the label for an existing stock entry on the configured printer."""
+    entry = db.get(StockEntry, entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Stock entry not found")
+    kwargs = _label_kwargs_for_entry(entry, db)
+    if not kwargs["printer_ip"]:
+        raise HTTPException(status_code=400, detail="No printer IP configured")
+    try:
+        _render_and_print(**kwargs, raise_on_error=True)
+    except Exception as exc:  # noqa: BLE001 – surface the printer error to the user
+        raise HTTPException(status_code=502, detail=f"Print failed: {exc}") from exc
+    return {"status": "ok"}
 
 
 @router.put("/entries/{entry_id}", response_model=StockEntryRead)

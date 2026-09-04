@@ -5,7 +5,7 @@
   import {
     getStockEntries, createStockEntry, updateStockEntry, deleteStockEntry,
     getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
-    getEntryMovements, undoStockMovement
+    getEntryMovements, undoStockMovement, printStockEntryLabel
   } from '$lib/api.js';
   import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
@@ -13,7 +13,7 @@
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import MovementList from '$lib/components/MovementList.svelte';
-  import { Plus, Pencil, Trash2, QrCode, X, History } from 'lucide-svelte';
+  import { Plus, Pencil, Trash2, QrCode, X, History, Printer } from 'lucide-svelte';
 
   let entries = $state([]);
   let vaults = $state([]);
@@ -33,6 +33,7 @@
   let historyRows = $state([]);
   let historyLoading = $state(false);
   let historyBusyId = $state(null);
+  let printingId = $state(null);
 
   let stockIdInput = $state('');
   let stockIdScannerActive = $state(false);
@@ -115,6 +116,18 @@
       await reload();
     } catch (e) {
       showToast(String(e), 'error');
+    }
+  }
+
+  async function reprintLabel(entry) {
+    printingId = entry.id;
+    try {
+      await printStockEntryLabel(entry.id);
+      showToast(t('stock.toast_label_printed'), 'success');
+    } catch (e) {
+      showToast(t('stock.toast_label_print_failed'), 'error');
+    } finally {
+      printingId = null;
     }
   }
 
@@ -292,6 +305,11 @@
                       <button onclick={() => openStockIdModal(e)} aria-label={t('stock.col_stockids')} title={t('stock.col_stockids')}
                         class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
                         <QrCode size={15} />
+                      </button>
+                      <button onclick={() => reprintLabel(e)} disabled={printingId === e.id}
+                        aria-label={t('stock.btn_reprint_label')} title={t('stock.btn_reprint_label')}
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+                        <Printer size={15} />
                       </button>
                       <button onclick={() => openEdit(e)} aria-label={t('common.edit')} title={t('common.edit')}
                         class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">

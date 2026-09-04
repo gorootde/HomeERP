@@ -202,3 +202,54 @@ def test_no_auto_print_when_setting_disabled(client, make_product, make_vault, m
     pid, vid = make_product()["id"], make_vault()["id"]
     client.post("/api/stock/entries", json={"product_id": pid, "vault_id": vid, "quantity": 1})
     assert printed == []
+
+
+# ── manual label reprint ────────────────────────────────────────────────────
+
+def test_reprint_label_sends_entry_data_to_printer(client, make_stock_entry, monkeypatch):
+    _set(client, "label_printer_ip", "192.168.1.50")
+
+    printed = []
+    monkeypatch.setattr(
+        "backend.routers.stock._render_and_print",
+        lambda *a, **k: printed.append(k),
+    )
+
+    entry = make_stock_entry(quantity=3)
+    resp = client.post(f"/api/stock/entries/{entry['id']}/print-label")
+
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok"}
+    assert len(printed) == 1
+    assert printed[0]["printer_ip"] == "192.168.1.50"
+    assert printed[0]["product_name"] == "Cola 0.33"
+    assert printed[0]["quantity"] == 3
+    assert printed[0]["raise_on_error"] is True
+
+
+def test_reprint_label_without_printer_ip_returns_400(client, make_stock_entry, monkeypatch):
+    printed = []
+    monkeypatch.setattr(
+        "backend.routers.stock._render_and_print", lambda *a, **k: printed.append(1)
+    )
+    entry = make_stock_entry()
+    resp = client.post(f"/api/stock/entries/{entry['id']}/print-label")
+    assert resp.status_code == 400
+    assert printed == []
+
+
+def test_reprint_label_missing_entry_returns_404(client):
+    resp = client.post("/api/stock/entries/999999/print-label")
+    assert resp.status_code == 404
+
+
+def test_reprint_label_printer_failure_returns_502(client, make_stock_entry, monkeypatch):
+    _set(client, "label_printer_ip", "192.168.1.50")
+
+    def _boom(*_a, **_k):
+        raise RuntimeError("printer offline")
+
+    monkeypatch.setattr("backend.routers.stock._render_and_print", _boom)
+    entry = make_stock_entry()
+    resp = client.post(f"/api/stock/entries/{entry['id']}/print-label")
+    assert resp.status_code == 502
