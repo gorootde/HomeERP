@@ -7,7 +7,7 @@
     getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
     getEntryMovements, undoStockMovement
   } from '$lib/api.js';
-  import { fmtQty, fmtDate } from '$lib/utils.js';
+  import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
@@ -223,7 +223,7 @@
       class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       <option value="">{t('stock.filter_all_products')}</option>
       {#each products as p}
-        <option value={p.id}>{p.name}</option>
+        <option value={p.id}>{fmtProductLabel(p)}</option>
       {/each}
     </select>
     <select bind:value={filterExpiry}

@@ -3,6 +3,7 @@
   import Modal from './Modal.svelte';
   import BarcodeScanner from './BarcodeScanner.svelte';
   import { ScanLine } from 'lucide-svelte';
+  import { fmtProductLabel } from '$lib/utils.js';
 
   /**
    * Props:
@@ -112,14 +113,14 @@
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_product')}</label>
       {#if productLocked}
         <div class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800">
-          {lockedProduct?.name ?? '—'}
+          {lockedProduct ? fmtProductLabel(lockedProduct) : '—'}
         </div>
       {:else}
         <select bind:value={form.product_id}
           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">{t('stock.select_product')}</option>
           {#each products as p}
-            <option value={p.id}>{p.name}</option>
+            <option value={p.id}>{fmtProductLabel(p)}</option>
           {/each}
         </select>
       {/if}

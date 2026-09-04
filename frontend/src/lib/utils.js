@@ -19,6 +19,16 @@ export function fmtDateTime(d) {
   });
 }
 
+export function fmtProductLabel(p) {
+  if (!p) return '';
+  let label = p.name;
+  if (p.vendor) label += ` - ${p.vendor}`;
+  if (p.size != null && p.unit?.abbreviation) {
+    label += ` (${fmtQty(p.size)} ${p.unit.abbreviation})`;
+  }
+  return label;
+}
+
 export function fmtFactor(n) {
   if (n == null) return '';
   return Number.isInteger(n) ? String(n) : Number(n).toFixed(4).replace(/\.?0+$/, '');

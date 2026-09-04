@@ -6,7 +6,7 @@
     getStockMovements, undoStockMovement, getConsumptionForecast,
     getVaults, getProducts
   } from '$lib/api.js';
-  import { fmtQty, fmtDate } from '$lib/utils.js';
+  import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import MovementList from '$lib/components/MovementList.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { History, TrendingDown } from 'lucide-svelte';
@@ -124,7 +124,7 @@
     <select bind:value={filterProduct} onchange={reload}
       class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       <option value="">{t('history.filter_all_products')}</option>
-      {#each products as p}<option value={p.id}>{p.name}</option>{/each}
+      {#each products as p}<option value={p.id}>{fmtProductLabel(p)}</option>{/each}
     </select>
     <select bind:value={filterVault} onchange={reload}
       class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
