@@ -136,11 +136,13 @@ def _block_bottom(draw: ImageDraw.ImageDraw, top: int, wrapped: str, font, spaci
     return draw.multiline_textbbox((0, top), wrapped, font=font, spacing=spacing)[3]
 
 
-def _draw_text_block(draw, x, top, name_w, vendor_w, mhd_w, tf, bf, mf, spacing, vendor_gap) -> int:
-    """Draw name / vendor / MHD stacked from ``top``; return the y below them.
+def _draw_text_block(draw, x, top, name_w, vendor_w, qty_w, mhd_w, tf, bf, mf, spacing, vendor_gap) -> int:
+    """Draw name / vendor / quantity / MHD stacked from ``top``; return the y below them.
 
-    ``vendor_gap`` is the vertical gap between the name and the vendor (kept
-    tight in the compact layout); ``mf`` is the MHD font (may be larger/bold).
+    ``vendor_gap`` is the vertical gap between the name and the vendor, and
+    between the vendor and the quantity (kept tight in the compact layout);
+    the quantity shares the vendor's font (``bf``) so it reads as part of the
+    same line group. ``mf`` is the MHD font (may be larger/bold).
     """
     y = top
     draw.multiline_text((x, y), name_w, font=tf, fill="black", spacing=spacing)
@@ -149,6 +151,10 @@ def _draw_text_block(draw, x, top, name_w, vendor_w, mhd_w, tf, bf, mf, spacing,
         y += vendor_gap
         draw.multiline_text((x, y), vendor_w, font=bf, fill="black", spacing=spacing)
         y = _block_bottom(draw, y, vendor_w, bf, spacing)
+    if qty_w:
+        y += vendor_gap
+        draw.multiline_text((x, y), qty_w, font=bf, fill="black", spacing=spacing)
+        y = _block_bottom(draw, y, qty_w, bf, spacing)
     if mhd_w:
         y += spacing
         draw.multiline_text((x, y), mhd_w, font=mf, fill="black", spacing=spacing)
@@ -156,29 +162,33 @@ def _draw_text_block(draw, x, top, name_w, vendor_w, mhd_w, tf, bf, mf, spacing,
     return y
 
 
-def _measure(draw, name_w, vendor_w, mhd_w, tf, bf, mf, spacing, vendor_gap) -> int:
-    """Total height of the name / vendor / MHD text block."""
+def _measure(draw, name_w, vendor_w, qty_w, mhd_w, tf, bf, mf, spacing, vendor_gap) -> int:
+    """Total height of the name / vendor / quantity / MHD text block."""
     y = _block_bottom(draw, 0, name_w, tf, spacing)
     if vendor_w:
         y = _block_bottom(draw, y + vendor_gap, vendor_w, bf, spacing)
+    if qty_w:
+        y = _block_bottom(draw, y + vendor_gap, qty_w, bf, spacing)
     if mhd_w:
         y = _block_bottom(draw, y + spacing, mhd_w, mf, spacing)
     return y
 
 
-def _fit_text(draw, name, vendor, mhd_text, col_w, avail_h,
+def _fit_text(draw, name, vendor, qty_text, mhd_text, col_w, avail_h,
               title_size, body_size, spacing, min_title, min_body,
               *, mhd_scale=1.0, mhd_bold=False, vendor_gap=None):
-    """Wrap name/vendor/MHD to ``col_w``; shrink the fonts (proportionally, down
-    to the minimums) until nothing is hyphen-broken and the block fits
-    ``avail_h`` (``None`` = no height limit).
+    """Wrap name/vendor/quantity/MHD to ``col_w``; shrink the fonts
+    (proportionally, down to the minimums) until nothing is hyphen-broken and
+    the block fits ``avail_h`` (``None`` = no height limit).
 
-    ``mhd_scale`` / ``mhd_bold`` size the MHD relative to the body font;
-    ``vendor_gap`` overrides the name→vendor gap (defaults to ``spacing``).
+    The quantity is set in the vendor's own font/size (``bf``) so it visually
+    matches the manufacturer line it sits under. ``mhd_scale`` / ``mhd_bold``
+    size the MHD relative to the body font; ``vendor_gap`` overrides the
+    name→vendor and vendor→quantity gap (defaults to ``spacing``).
 
-    Returns ``(title_font, body_font, mhd_font, name_w, vendor_w, mhd_w,
-    block_height, ok)`` – ``ok`` is False only if even the minimum fonts could
-    not avoid a hyphen-break or an overflow.
+    Returns ``(title_font, body_font, mhd_font, name_w, vendor_w, qty_w,
+    mhd_w, block_height, ok)`` – ``ok`` is False only if even the minimum
+    fonts could not avoid a hyphen-break or an overflow.
     """
     col_w = max(1, col_w)
     vg = spacing if vendor_gap is None else vendor_gap
@@ -189,13 +199,14 @@ def _fit_text(draw, name, vendor, mhd_text, col_w, avail_h,
         mf = _font(max(min_body, round(b * mhd_scale)), bold=mhd_bold)
         name_w, nb = _wrap(draw, name or "", tf, col_w)
         vendor_w, vb = _wrap(draw, vendor or "", bf, col_w)
+        qty_w, qb = _wrap(draw, qty_text or "", bf, col_w)
         mhd_w, mb = _wrap(draw, mhd_text or "", mf, col_w)
-        h = _measure(draw, name_w, vendor_w, mhd_w, tf, bf, mf, spacing, vg)
-        fits = (not nb and not vb and not mb) and (avail_h is None or h <= avail_h)
+        h = _measure(draw, name_w, vendor_w, qty_w, mhd_w, tf, bf, mf, spacing, vg)
+        fits = (not nb and not vb and not qb and not mb) and (avail_h is None or h <= avail_h)
         if fits:
-            return tf, bf, mf, name_w, vendor_w, mhd_w, h, True
+            return tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, h, True
         if t <= min_title and b <= min_body:
-            return tf, bf, mf, name_w, vendor_w, mhd_w, h, False
+            return tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, h, False
         t = max(min_title, int(t * 0.9))
         b = max(min_body, int(b * 0.9))
 
@@ -224,6 +235,26 @@ def _make_qr(data: str, size: int) -> Image.Image:
     return im.resize((size, size), Image.NEAREST)
 
 
+_TINY_CAPTION_MM = 1.3  # deliberately smaller than any other label text
+
+
+def _qr_block(data: str, qr_size: int) -> Image.Image:
+    """The QR code with the inventory number it encodes printed tiny underneath."""
+    qr_img = _make_qr(data, qr_size)
+    font = _font(_mm_to_px(_TINY_CAPTION_MM))
+    probe = ImageDraw.Draw(Image.new("RGB", (4, 4), "white"))
+    wrapped, _ = _wrap(probe, data, font, qr_size)
+    gap = max(1, round(qr_size * 0.02))
+    bbox = probe.multiline_textbbox((0, 0), wrapped, font=font, align="center")
+    text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    block = Image.new("RGB", (qr_size, qr_size + gap + text_h), "white")
+    block.paste(qr_img, (0, 0))
+    bd = ImageDraw.Draw(block)
+    bd.multiline_text(((qr_size - text_w) // 2, qr_size + gap - bbox[1]), wrapped,
+                       font=font, fill="black", align="center")
+    return block
+
+
 def render_label_png(
     product_name: str,
     vendor: str,
@@ -249,10 +280,11 @@ def render_label_png(
     ``orientation="landscape"`` places the product text (name bold, vendor, MHD)
     left-aligned and the QR right-aligned on the same level – this packs a full
     label into very little feed length. ``"compact_qty"`` is identical but also
-    prints ``quantity``/``unit`` at the end of the MHD line. ``"portrait"``
-    stacks the text on top with a larger QR centered below. Long names/vendors
-    wrap at word boundaries; the font is only shrunk when a single word still
-    would not fit. Without a ``stock_id_code`` the QR is dropped.
+    prints ``quantity``/``unit`` on its own line right under the vendor, in the
+    vendor's font size and weight. ``"portrait"`` stacks the text on top with a
+    larger QR centered below. Long names/vendors wrap at word boundaries; the
+    font is only shrunk when a single word still would not fit. Without a
+    ``stock_id_code`` the QR is dropped.
     """
     width_mm = _clamp(width_mm, 10, 210)
     length_mm = _clamp(length_mm, 15, 500)
@@ -271,10 +303,7 @@ def render_label_png(
 
     mhd = _format_mhd(best_before)
     mhd_text = f"MHD: {mhd}" if mhd else ""
-    if with_qty:
-        qty_text = _format_qty(quantity, unit)
-        if qty_text:
-            mhd_text = f"{mhd_text}   ·   {qty_text}" if mhd_text else qty_text
+    qty_text = _format_qty(quantity, unit) if with_qty else ""
 
     probe = ImageDraw.Draw(Image.new("RGB", (4, 4), "white"))
 
@@ -284,22 +313,25 @@ def render_label_png(
         title_base = int(_clamp(round(inner * 0.13), 18, 42))
         body_base = int(_clamp(round(inner * 0.095), 15, 30))
         qr_size = 0
+        qr_img = None
         if has_qr:
             qr_size = min(inner, _mm_to_px(40) if auto else round(fixed_h * 0.55))
-        avail = None if auto else max(1, fixed_h - 2 * my - (gap + qr_size if qr_size else 0))
-        tf, bf, mf, name_w, vendor_w, mhd_w, block_h, _ = _fit_text(
-            probe, product_name, vendor, mhd_text, inner, avail,
+            qr_img = _qr_block(stock_id_code, qr_size)
+        qr_h = qr_img.size[1] if qr_img else 0
+        avail = None if auto else max(1, fixed_h - 2 * my - (gap + qr_h if qr_h else 0))
+        tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, block_h, _ = _fit_text(
+            probe, product_name, vendor, qty_text, mhd_text, inner, avail,
             title_base, body_base, gap, _mm_to_px(2.3), _mm_to_px(1.9),
         )
-        img_h = max(my * 2 + block_h + (gap + qr_size if qr_size else 0), _mm_to_px(10)) if auto else fixed_h
+        img_h = max(my * 2 + block_h + (gap + qr_h if qr_h else 0), _mm_to_px(10)) if auto else fixed_h
 
         img = Image.new("RGB", (img_w, img_h), "white")
         draw = ImageDraw.Draw(img)
-        y = _draw_text_block(draw, mx, my, name_w, vendor_w, mhd_w, tf, bf, mf, gap, gap)
-        if has_qr and qr_size > 0:
+        y = _draw_text_block(draw, mx, my, name_w, vendor_w, qty_w, mhd_w, tf, bf, mf, gap, gap)
+        if qr_img is not None:
             top = y + gap
-            img.paste(_make_qr(stock_id_code, qr_size),
-                      ((img_w - qr_size) // 2, top + max(0, (img_h - my - top - qr_size) // 2)))
+            qw, qh = qr_img.size
+            img.paste(qr_img, ((img_w - qw) // 2, top + max(0, (img_h - my - top - qh) // 2)))
     else:
         # Landscape: text left, QR right, both on the same level. The feed
         # length only needs to cover max(text-block height, QR size).
@@ -312,35 +344,39 @@ def render_label_png(
         vendor_gap = max(2, round(body_base * 0.12))
 
         def fit_left(col_w, avail_h):
-            return _fit_text(probe, product_name, vendor, mhd_text, max(1, col_w), avail_h,
+            return _fit_text(probe, product_name, vendor, qty_text, mhd_text, max(1, col_w), avail_h,
                              title_base, body_base, gap, min_t, min_b,
                              mhd_scale=1.45, mhd_bold=True, vendor_gap=vendor_gap)
 
         if auto:
             qr_size = int(_clamp(round(inner * 0.20), _mm_to_px(10), round(inner * 0.42))) if has_qr else 0
-            tf, bf, mf, name_w, vendor_w, mhd_w, block_h, _ = fit_left(
+            tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, block_h, _ = fit_left(
                 inner - (qr_size + gap if qr_size else 0), None)
             if has_qr:
                 qr_size = int(_clamp(block_h, _mm_to_px(10), round(inner * 0.45)))
-                tf, bf, mf, name_w, vendor_w, mhd_w, block_h, _ = fit_left(inner - qr_size - gap, None)
-            content_h = max(block_h, qr_size)
+                tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, block_h, _ = fit_left(inner - qr_size - gap, None)
+            qr_img = _qr_block(stock_id_code, qr_size) if has_qr else None
+            qr_h = qr_img.size[1] if qr_img else 0
+            content_h = max(block_h, qr_h)
             img_h = max(my * 2 + content_h, _mm_to_px(8))
         else:
             img_h = fixed_h
             qr_size = min(img_h - 2 * my, round(inner * 0.4)) if has_qr else 0
             qr_size = max(qr_size, 0)
-            tf, bf, mf, name_w, vendor_w, mhd_w, block_h, _ = fit_left(
+            qr_img = _qr_block(stock_id_code, qr_size) if has_qr and qr_size > 0 else None
+            qr_h = qr_img.size[1] if qr_img else 0
+            tf, bf, mf, name_w, vendor_w, qty_w, mhd_w, block_h, _ = fit_left(
                 inner - (qr_size + gap if qr_size else 0), img_h - 2 * my)
-            content_h = max(block_h, qr_size, img_h - 2 * my)
+            content_h = max(block_h, qr_h, img_h - 2 * my)
 
         img = Image.new("RGB", (img_w, img_h), "white")
         draw = ImageDraw.Draw(img)
         band_top = my + max(0, (img_h - 2 * my - content_h) // 2)
         _draw_text_block(draw, mx, band_top + max(0, (content_h - block_h) // 2),
-                         name_w, vendor_w, mhd_w, tf, bf, mf, gap, vendor_gap)
-        if has_qr and qr_size > 0:
-            img.paste(_make_qr(stock_id_code, qr_size),
-                      (img_w - mx - qr_size, band_top + max(0, (content_h - qr_size) // 2)))
+                         name_w, vendor_w, qty_w, mhd_w, tf, bf, mf, gap, vendor_gap)
+        if qr_img is not None:
+            qw, qh = qr_img.size
+            img.paste(qr_img, (img_w - mx - qw, band_top + max(0, (content_h - qh) // 2)))
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
