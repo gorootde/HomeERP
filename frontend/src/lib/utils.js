@@ -50,6 +50,13 @@ export function trafficStatus(total, min) {
   return 'ok';
 }
 
+export function parseSizeString(sizeStr) {
+  if (!sizeStr) return { numeric: '', unitAbbr: '' };
+  const match = sizeStr.trim().match(/^([\d.,]+)\s*([a-zA-Z]+)/);
+  if (match) return { numeric: match[1], unitAbbr: match[2].toLowerCase() };
+  return { numeric: sizeStr, unitAbbr: '' };
+}
+
 export function isExpiringSoon(dateStr, days) {
   if (!dateStr) return false;
   const now = new Date();

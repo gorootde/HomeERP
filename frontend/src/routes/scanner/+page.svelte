@@ -7,7 +7,7 @@
     createProduct, createStockEntry, updateStockEntry, deleteStockEntry,
     getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
-  import { fmtDate, fmtQty } from '$lib/utils.js';
+  import { fmtDate, fmtQty, parseSizeString } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
@@ -120,13 +120,6 @@
   }
 
   // New product + entry flow
-  function parseSizeString(sizeStr) {
-    if (!sizeStr) return { numeric: '', unitAbbr: '' };
-    const match = sizeStr.trim().match(/^([\d.,]+)\s*([a-zA-Z]+)/);
-    if (match) return { numeric: match[1], unitAbbr: match[2].toLowerCase() };
-    return { numeric: sizeStr, unitAbbr: '' };
-  }
-
   function openNewProduct(code, offData) {
     const { numeric, unitAbbr } = parseSizeString(offData?.size);
     const matchedUnit = unitAbbr ? units.find(u => u.abbreviation.toLowerCase() === unitAbbr) : null;

@@ -8,6 +8,7 @@
     getUnits, getCategories, getTags, addTagToProduct, removeTagFromProduct,
     getProductUnitConversions, addProductUnitConversion, deleteProductUnitConversion
   } from '$lib/api.js';
+  import { parseSizeString } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import TagChips from '$lib/components/TagChips.svelte';
@@ -206,7 +207,12 @@
     if (replace) {
       form.name = info.name || form.name;
       form.vendor = info.vendor || form.vendor;
-      form.size = info.size || form.size;
+      const { numeric, unitAbbr } = parseSizeString(info.size);
+      form.size = numeric || info.size || form.size;
+      if (unitAbbr) {
+        const matchedUnit = units.find(u => u.abbreviation.toLowerCase() === unitAbbr);
+        if (matchedUnit) form.unit_id = String(matchedUnit.id);
+      }
     }
     if (info.image_url && editModal?.product) {
       try {
