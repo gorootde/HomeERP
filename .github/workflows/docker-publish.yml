@@ -26,7 +26,7 @@ jobs:
         run: pipx install poetry
 
       - name: Install dependencies
-        run: poetry install --no-root
+        run: poetry install
 
       - name: Ruff
         run: poetry run ruff check .
@@ -77,7 +77,7 @@ jobs:
         # poetry.toml pins virtualenvs.in-project=true, so this venv lands
         # at .venv/ — exactly where playwright.config.js expects to find
         # the Python interpreter it boots the backend with.
-        run: poetry install --no-root
+        run: poetry install
 
       - name: Set up Node
         uses: actions/setup-node@v4
