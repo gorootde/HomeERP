@@ -503,9 +503,7 @@
         placeholder={t('products.ean_placeholder')}
         onadd={addEanCode}
         onremove={removeEanCode}
-        onscan={handleEanScan}>
-        <Barcode size={16} />
-      </ScannableCodeList>
+        onscan={handleEanScan} />
       <div class="flex justify-end pt-1">
         <button onclick={() => { eanModal = null; reload(); }}
           class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">

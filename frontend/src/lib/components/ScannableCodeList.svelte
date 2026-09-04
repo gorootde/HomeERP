@@ -1,7 +1,7 @@
 <script>
   import { t } from '$lib/i18n.js';
   import BarcodeScanner from './BarcodeScanner.svelte';
-  import { X } from 'lucide-svelte';
+  import { X, ScanLine } from 'lucide-svelte';
 
   /**
    * Chips + scanner-toggle input for a list of scannable codes (EAN, stock ID, ...).
@@ -13,8 +13,8 @@
    *  - Single-value mode (a form's own stock-ID field): omit `codes`/`onadd`;
    *    `value` is bindable and the scan result is written straight into it.
    *
-   * The scan-toggle button's content (icon and/or text) is the default slot,
-   * since call sites disagree on that (icon-only vs. plain text).
+   * The scan-toggle button always shows the same scan icon, so scannable
+   * fields look and behave the same everywhere in the app.
    *
    * Props:
    *   codes    — [{ id, code }] shown as removable chips (default: none)
@@ -33,7 +33,6 @@
     onadd,
     onremove,
     onscan,
-    children,
   } = $props();
 
   let scannerActive = $state(false);
@@ -78,8 +77,9 @@
       </button>
     {/if}
     <button type="button" onclick={() => scannerActive = true}
+      aria-label={t('common.start_scan')} title={t('common.start_scan')}
       class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5">
-      {@render children?.()}
+      <ScanLine size={16} />
     </button>
   </div>
 {/if}

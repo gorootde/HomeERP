@@ -332,9 +332,7 @@
         placeholder={t('stock.stockid_placeholder')}
         onadd={addSid}
         onremove={removeSid}
-        onscan={handleSidScan}>
-        {t('stock.stockid_btn_scan')}
-      </ScannableCodeList>
+        onscan={handleSidScan} />
       <div class="flex justify-end pt-1">
         <button onclick={() => { stockIdModal = null; }}
           class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700">

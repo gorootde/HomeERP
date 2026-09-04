@@ -2,8 +2,11 @@
   import { t } from '$lib/i18n.js';
   import Modal from './Modal.svelte';
   import ScannableCodeList from './ScannableCodeList.svelte';
-  import { ScanLine } from 'lucide-svelte';
+  import BarcodeScanner from './BarcodeScanner.svelte';
+  import { ScanLine, X } from 'lucide-svelte';
   import { fmtProductLabel } from '$lib/utils.js';
+  import { getByEan } from '$lib/api.js';
+  import { showToast } from '$lib/toast.js';
 
   /**
    * Props:
@@ -56,6 +59,22 @@
 
   function handleStockIdScan(code) {
     form.stock_id = code;
+  }
+
+  let productScannerActive = $state(false);
+
+  async function handleProductScan(code) {
+    productScannerActive = false;
+    try {
+      const product = await getByEan(code);
+      if (products.some(p => p.id === product.id)) {
+        form.product_id = product.id;
+      } else {
+        showToast(t('stock.err_scan_no_product'), 'error');
+      }
+    } catch {
+      showToast(t('stock.err_scan_no_product'), 'error');
+    }
   }
 
   // When product changes (only in unlocked mode), reset entry_unit_id to that product's default
@@ -112,14 +131,27 @@
         <div class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800">
           {lockedProduct ? fmtProductLabel(lockedProduct) : '—'}
         </div>
+      {:else if productScannerActive}
+        <BarcodeScanner active={true} onscan={handleProductScan} />
+        <button type="button" onclick={() => productScannerActive = false}
+          class="w-full mt-2 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          {t('common.stop_scan')}
+        </button>
       {:else}
-        <select bind:value={form.product_id}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">{t('stock.select_product')}</option>
-          {#each products as p}
-            <option value={p.id}>{fmtProductLabel(p)}</option>
-          {/each}
-        </select>
+        <div class="flex gap-2">
+          <select bind:value={form.product_id}
+            class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">{t('stock.select_product')}</option>
+            {#each products as p}
+              <option value={p.id}>{fmtProductLabel(p)}</option>
+            {/each}
+          </select>
+          <button type="button" onclick={() => productScannerActive = true}
+            aria-label={t('common.start_scan')} title={t('common.start_scan')}
+            class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5">
+            <ScanLine size={16} />
+          </button>
+        </div>
       {/if}
     </div>
 
@@ -161,8 +193,20 @@
     <!-- Best before date -->
     <div>
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_bbd')}</label>
-      <input bind:value={form.best_before_date} type="date"
-        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden">
+        <input bind:value={form.best_before_date} type="date"
+          class="flex-1 min-w-0 px-3 py-2 text-sm focus:outline-none" />
+        {#if form.best_before_date}
+          <button type="button" onclick={() => form.best_before_date = ''}
+            aria-label={t('stock.btn_clear_bbd')} title={t('stock.btn_clear_bbd')}
+            class="px-3 text-gray-400 hover:text-gray-700 hover:bg-gray-50 border-l border-gray-300">
+            <X size={14} />
+          </button>
+        {/if}
+      </div>
+      {#if !form.best_before_date}
+        <p class="text-xs text-gray-400 mt-1">{t('stock.hint_no_bbd')}</p>
+      {/if}
     </div>
 
     <!-- Comment -->
@@ -182,9 +226,7 @@
       <ScannableCodeList
         bind:value={form.stock_id}
         placeholder={t('stock.placeholder_stock_id')}
-        onscan={handleStockIdScan}>
-        <ScanLine size={15} />
-      </ScannableCodeList>
+        onscan={handleStockIdScan} />
     </div>
     {/if}
 

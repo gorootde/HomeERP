@@ -8,7 +8,8 @@ const de = {
     confirm_cancel: 'Abbrechen', unit_placeholder: 'Einheit wählen…', no_category: 'Keine Kategorie',
     tags_label: 'Tags', tag_input_placeholder: 'Tag eingeben…', tag_add: 'Hinzufügen',
     error_load_page: 'Seite konnte nicht geladen werden', camera_unavailable: 'Kamera nicht verfügbar',
-    scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional', stop_scan: 'Scanner stoppen'
+    scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional', stop_scan: 'Scanner stoppen',
+    start_scan: 'Scannen'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produkte', stock: 'Lager', scanner: 'Scanner',
@@ -66,8 +67,10 @@ const de = {
     label_stock_id: 'Stock-ID', placeholder_stock_id: 'Stock-ID scannen oder eingeben…',
     label_print_label: 'Label für diesen Eintrag drucken',
     select_product: 'Produkt wählen…', select_vault: 'Lagerort wählen…', placeholder_comment: 'Kommentar',
+    err_scan_no_product: 'Kein Produkt mit diesem EAN-Code gefunden',
+    btn_clear_bbd: 'MHD entfernen', hint_no_bbd: 'Kein Haltbarkeitsdatum gesetzt',
     stockid_modal_title: 'Stock IDs verwalten', stockid_modal_hint: 'Scanne oder gib Stock IDs ein',
-    stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scannen', stockid_btn_add: 'Hinzufügen',
+    stockid_placeholder: 'Stock ID', stockid_btn_add: 'Hinzufügen',
     stockid_btn_done: 'Fertig',
     stockid_toast_removed: 'Stock ID entfernt', stockid_toast_added: 'Stock ID hinzugefügt',
     col_history: 'Historie', history_modal_title: 'Bewegungshistorie',
@@ -237,7 +240,8 @@ const en = {
     confirm_delete: 'Really delete?', confirm_cancel: 'Cancel', unit_placeholder: 'Choose unit…',
     no_category: 'No category', tags_label: 'Tags', tag_input_placeholder: 'Enter tag…', tag_add: 'Add',
     error_load_page: 'Could not load page', camera_unavailable: 'Camera not available',
-    scanner_unavailable: 'Scanner not available', optional: 'optional', stop_scan: 'Stop scanner'
+    scanner_unavailable: 'Scanner not available', optional: 'optional', stop_scan: 'Stop scanner',
+    start_scan: 'Scan'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', stock: 'Stock', scanner: 'Scanner',
@@ -295,8 +299,10 @@ const en = {
     label_stock_id: 'Stock ID', placeholder_stock_id: 'Scan or enter Stock ID…',
     label_print_label: 'Print label for this entry',
     select_product: 'Choose product…', select_vault: 'Choose vault…', placeholder_comment: 'Comment',
+    err_scan_no_product: 'No product found for this EAN code',
+    btn_clear_bbd: 'Clear best-before date', hint_no_bbd: 'No best-before date set',
     stockid_modal_title: 'Manage Stock IDs', stockid_modal_hint: 'Scan or enter Stock IDs',
-    stockid_placeholder: 'Stock ID', stockid_btn_scan: 'Scan', stockid_btn_add: 'Add',
+    stockid_placeholder: 'Stock ID', stockid_btn_add: 'Add',
     stockid_btn_done: 'Done',
     stockid_toast_removed: 'Stock ID removed', stockid_toast_added: 'Stock ID added',
     col_history: 'History', history_modal_title: 'Movement history',
