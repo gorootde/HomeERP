@@ -25,6 +25,7 @@ export default {
   },
   products: {
     title: 'Products', btn_add: 'Add Product', search_placeholder: 'Search by name or vendor…',
+    filter_all_categories: 'All Categories',
     col_product: 'Product', col_unit: 'Unit', col_eans: 'EAN Codes', col_tags: 'Tags', empty: 'No products',
     btn_edit: 'Edit', btn_eans: 'EAN Codes', confirm_delete: 'Really delete product?',
     toast_deleted: 'Product deleted', toast_updated: 'Product saved', toast_created: 'Product created',
@@ -55,6 +56,7 @@ export default {
   },
   stock: {
     title: 'Stock', btn_add: 'Add Entry', filter_all_vaults: 'All Vaults',
+    filter_all_categories: 'All Categories',
     filter_all_products: 'All Products', filter_expiry_all: 'All dates', filter_expiry_7d: 'Next 7 days',
     filter_expiry_30d: 'Next 30 days', filter_expiry_6m: 'Next 6 months',
     col_product: 'Product', col_vault: 'Vault', col_qty: 'Qty', col_bbd: 'Best Before',

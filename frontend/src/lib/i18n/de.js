@@ -26,6 +26,7 @@ export default {
   },
   products: {
     title: 'Produkte', btn_add: 'Produkt hinzufügen', search_placeholder: 'Suche nach Name oder Hersteller…',
+    filter_all_categories: 'Alle Kategorien',
     col_product: 'Produkt', col_unit: 'Einheit', col_eans: 'EAN-Codes', col_tags: 'Tags', empty: 'Keine Produkte',
     btn_edit: 'Bearbeiten', btn_eans: 'EAN-Codes', confirm_delete: 'Produkt wirklich löschen?',
     toast_deleted: 'Produkt gelöscht', toast_updated: 'Produkt gespeichert', toast_created: 'Produkt erstellt',
@@ -56,6 +57,7 @@ export default {
   },
   stock: {
     title: 'Lagerbestand', btn_add: 'Eintrag hinzufügen', filter_all_vaults: 'Alle Lagerorte',
+    filter_all_categories: 'Alle Kategorien',
     filter_all_products: 'Alle Produkte', filter_expiry_all: 'Alle MHDs', filter_expiry_7d: 'Nächste 7 Tage',
     filter_expiry_30d: 'Nächste 30 Tage', filter_expiry_6m: 'Nächste 6 Monate',
     col_product: 'Produkt', col_vault: 'Lagerort', col_qty: 'Menge', col_bbd: 'MHD',

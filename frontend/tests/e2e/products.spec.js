@@ -37,6 +37,28 @@ test('search filters the product list', async ({ page }) => {
   }
 });
 
+test('filter the product list by category', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const cat = await api.createCategory(uid('Beverages'));
+    const inCat = uid('InCat');
+    const noCat = uid('NoCat');
+    await api.createProduct({ name: inCat, category_id: cat.id });
+    await api.createProduct({ name: noCat });
+    await page.reload();
+
+    await page.getByRole('combobox').first().selectOption({ label: cat.name });
+    await expect(page.getByRole('row', { name: new RegExp(inCat) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(noCat) })).toHaveCount(0);
+
+    await page.getByRole('combobox').first().selectOption({ label: 'Keine Kategorie' });
+    await expect(page.getByRole('row', { name: new RegExp(noCat) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(inCat) })).toHaveCount(0);
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('edit a product name', async ({ page }) => {
   const api = await makeApi();
   try {

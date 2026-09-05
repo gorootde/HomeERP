@@ -96,6 +96,30 @@ test('filter entries by vault', async ({ page }) => {
   }
 });
 
+test('filter entries by category', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const unit = await api.createUnit(uid('Piece'), uabbr('pc'));
+    const cat = await api.createCategory(uid('CatFilter'));
+    const vault = await api.createVault(uid('CatVault'));
+    const inCat = await api.createProduct({ name: uid('InCatProduct'), unit_id: unit.id, category_id: cat.id });
+    const noCat = await api.createProduct({ name: uid('NoCatProduct'), unit_id: unit.id });
+    await api.createStockEntry({ product_id: inCat.id, vault_id: vault.id, quantity: 1 });
+    await api.createStockEntry({ product_id: noCat.id, vault_id: vault.id, quantity: 2 });
+
+    await page.goto('/stock');
+    await expect(page.getByRole('row', { name: new RegExp(inCat.name) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(noCat.name) })).toBeVisible();
+
+    // category filter is the second select in the filter bar (after vault)
+    await page.getByRole('combobox').nth(1).selectOption({ label: cat.name });
+    await expect(page.getByRole('row', { name: new RegExp(inCat.name) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(noCat.name) })).toHaveCount(0);
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('edit a stock entry quantity', async ({ page }) => {
   const api = await makeApi();
   try {

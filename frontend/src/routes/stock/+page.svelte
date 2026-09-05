@@ -5,7 +5,7 @@
   import {
     getStockEntries, createStockEntry, updateStockEntry, deleteStockEntry,
     getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
-    getEntryMovements, undoStockMovement, printStockEntryLabel
+    getEntryMovements, undoStockMovement, printStockEntryLabel, getCategories
   } from '$lib/api.js';
   import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
@@ -21,10 +21,12 @@
   let vaults = $state([]);
   let products = $state([]);
   let units = $state([]);
+  let categories = $state([]);
   let autoPrintEnabled = $state(false);
   let loading = $state(true);
 
   let filterVault = $state('');
+  let filterCategory = $state('');
   let filterProduct = $state('');
   let filterExpiry = $state('');
 
@@ -46,6 +48,11 @@
     now.setHours(0, 0, 0, 0);
     return entries.filter(e => {
       if (filterVault && e.vault_id !== Number(filterVault)) return false;
+      if (filterCategory === 'none') {
+        if (e.product?.category_id != null) return false;
+      } else if (filterCategory && e.product?.category_id !== Number(filterCategory)) {
+        return false;
+      }
       if (filterProduct && e.product_id !== Number(filterProduct)) return false;
       if (filterExpiry) {
         if (!e.best_before_date) return false;
@@ -64,8 +71,8 @@
     loading = true;
     try {
       let autoPrintSetting;
-      [entries, vaults, products, units, autoPrintSetting] = await Promise.all([
-        getStockEntries(), getVaults(), getProducts('', 500), getUnits(),
+      [entries, vaults, products, units, categories, autoPrintSetting] = await Promise.all([
+        getStockEntries(), getVaults(), getProducts('', 500), getUnits(), getCategories(),
         getSetting('label_auto_print')
       ]);
       autoPrintEnabled = autoPrintSetting?.value === '1';
@@ -226,6 +233,11 @@
   <div class="flex flex-wrap gap-2 mb-4">
     <FilterSelect bind:value={filterVault} placeholder={t('stock.filter_all_vaults')}
       options={vaults.map(v => ({ value: v.id, label: v.description }))} />
+    <FilterSelect bind:value={filterCategory} placeholder={t('stock.filter_all_categories')}
+      options={[
+        ...categories.map(c => ({ value: c.id, label: c.name })),
+        { value: 'none', label: t('common.no_category') },
+      ]} />
     <FilterSelect bind:value={filterProduct} placeholder={t('stock.filter_all_products')}
       options={products.map(p => ({ value: p.id, label: fmtProductLabel(p) }))} />
     <FilterSelect bind:value={filterExpiry} placeholder={t('stock.filter_expiry_all')}
@@ -242,7 +254,7 @@
     {@const rows = filtered()}
     {#if rows.length === 0}
       <p class="text-center text-gray-400 py-12">
-        {filterVault || filterProduct || filterExpiry ? t('stock.empty_filter') : t('stock.empty')}
+        {filterVault || filterCategory || filterProduct || filterExpiry ? t('stock.empty_filter') : t('stock.empty')}
       </p>
     {:else}
       {#snippet productCell(e)}

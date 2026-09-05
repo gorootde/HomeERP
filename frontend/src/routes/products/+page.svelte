@@ -15,6 +15,7 @@
   import TagChips from '$lib/components/TagChips.svelte';
   import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
   import SearchInput from '$lib/components/SearchInput.svelte';
+  import FilterSelect from '$lib/components/FilterSelect.svelte';
   import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';
   import { Plus, Pencil, Barcode, Trash2, Image } from 'lucide-svelte';
@@ -24,6 +25,7 @@
   let categories = $state([]);
   let loading = $state(true);
   let search = $state('');
+  let filterCategory = $state('');
 
   // Modals
   let editModal = $state(null); // null | { product, isNew }
@@ -57,11 +59,14 @@
   });
 
   let filtered = $derived(
-    products.filter(p =>
-      !search ||
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.vendor?.toLowerCase().includes(search.toLowerCase())
-    )
+    products.filter(p => {
+      if (search &&
+        !p.name?.toLowerCase().includes(search.toLowerCase()) &&
+        !p.vendor?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterCategory === 'none') return p.category_id == null;
+      if (filterCategory) return p.category_id === Number(filterCategory);
+      return true;
+    })
   );
 
   onMount(async () => {
@@ -317,9 +322,16 @@
     </button>
   </div>
 
-  <!-- Search -->
-  <div class="mb-4">
-    <SearchInput bind:value={search} placeholder={t('products.search_placeholder')} />
+  <!-- Search + filters -->
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <div class="flex-1 min-w-48">
+      <SearchInput bind:value={search} placeholder={t('products.search_placeholder')} />
+    </div>
+    <FilterSelect bind:value={filterCategory} placeholder={t('products.filter_all_categories')}
+      options={[
+        ...categories.map(c => ({ value: c.id, label: c.name })),
+        { value: 'none', label: t('common.no_category') },
+      ]} />
   </div>
 
   {#if loading}
