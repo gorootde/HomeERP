@@ -21,7 +21,8 @@ test('add a stock entry through the modal', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Eintrag hinzufügen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Neuer Eintrag' });
-    await dialog.getByRole('combobox').first().selectOption(String(product.id));
+    await dialog.getByRole('combobox').first().fill(product.name);
+    await dialog.getByRole('option', { name: new RegExp(product.name) }).click();
     await dialog.getByRole('combobox').nth(1).selectOption({ label: vault.description });
     await dialog.getByRole('spinbutton').first().fill('4');
     await dialog.getByRole('button', { name: 'Erstellen' }).click();
@@ -30,6 +31,46 @@ test('add a stock entry through the modal', async ({ page }) => {
     const row = page.getByRole('row', { name: new RegExp(product.name) });
     await expect(row).toBeVisible();
     await expect(row).toContainText('4');
+  } finally {
+    await api.dispose();
+  }
+});
+
+test('search products by name, vendor and EAN in the add-entry modal', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const unit = await api.createUnit(uid('Piece'), uabbr('pc'));
+    const vault = await api.createVault(uid('SearchVault'));
+    const alpha = await api.createProduct({
+      name: uid('Alpha'), vendor: uid('Acme'), unit_id: unit.id, ean_codes: ['4011200296908'],
+    });
+    const beta = await api.createProduct({
+      name: uid('Beta'), vendor: uid('Globex'), unit_id: unit.id, ean_codes: ['9002490100070'],
+    });
+
+    await page.goto('/stock');
+    await page.getByRole('button', { name: 'Eintrag hinzufügen' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Neuer Eintrag' });
+    const combo = dialog.getByRole('combobox').first();
+
+    // by vendor
+    await combo.fill(beta.vendor);
+    await expect(dialog.getByRole('option', { name: new RegExp(beta.name) })).toBeVisible();
+    await expect(dialog.getByRole('option', { name: new RegExp(alpha.name) })).toHaveCount(0);
+
+    // by partial EAN
+    await combo.fill('40112002');
+    await expect(dialog.getByRole('option', { name: new RegExp(alpha.name) })).toBeVisible();
+    await expect(dialog.getByRole('option', { name: new RegExp(beta.name) })).toHaveCount(0);
+
+    // pick the EAN match and create the entry
+    await dialog.getByRole('option', { name: new RegExp(alpha.name) }).click();
+    await dialog.getByRole('combobox').nth(1).selectOption({ label: vault.description });
+    await dialog.getByRole('spinbutton').first().fill('2');
+    await dialog.getByRole('button', { name: 'Erstellen' }).click();
+
+    await expect(page.getByText('Eintrag hinzugefügt')).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(alpha.name) })).toBeVisible();
   } finally {
     await api.dispose();
   }

@@ -66,6 +66,8 @@ export default {
     label_stock_id: 'Stock ID', placeholder_stock_id: 'Scan or enter Stock ID…',
     label_print_label: 'Print label for this entry',
     select_product: 'Choose product…', select_vault: 'Choose vault…', placeholder_comment: 'Comment',
+    search_product: 'Search product (name, vendor, EAN)…', no_product_match: 'No matches',
+    clear_product: 'Clear product selection',
     err_scan_no_product: 'No product found for this EAN code',
     btn_clear_bbd: 'Clear best-before date', hint_no_bbd: 'No best-before date set',
     stockid_modal_title: 'Manage Stock IDs', stockid_modal_hint: 'Scan or enter Stock IDs',

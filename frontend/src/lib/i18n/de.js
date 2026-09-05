@@ -67,6 +67,8 @@ export default {
     label_stock_id: 'Stock-ID', placeholder_stock_id: 'Stock-ID scannen oder eingeben…',
     label_print_label: 'Label für diesen Eintrag drucken',
     select_product: 'Produkt wählen…', select_vault: 'Lagerort wählen…', placeholder_comment: 'Kommentar',
+    search_product: 'Produkt suchen (Name, Hersteller, EAN)…', no_product_match: 'Keine Treffer',
+    clear_product: 'Produktauswahl aufheben',
     err_scan_no_product: 'Kein Produkt mit diesem EAN-Code gefunden',
     btn_clear_bbd: 'MHD entfernen', hint_no_bbd: 'Kein Haltbarkeitsdatum gesetzt',
     stockid_modal_title: 'Stock IDs verwalten', stockid_modal_hint: 'Scanne oder gib Stock IDs ein',

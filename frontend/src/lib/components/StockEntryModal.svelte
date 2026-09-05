@@ -3,6 +3,7 @@
   import Modal from './Modal.svelte';
   import ScannableCodeList from './ScannableCodeList.svelte';
   import BarcodeScanner from './BarcodeScanner.svelte';
+  import ProductCombobox from './ProductCombobox.svelte';
   import { ScanLine, X } from 'lucide-svelte';
   import { fmtProductLabel } from '$lib/utils.js';
   import { getByEan } from '$lib/api.js';
@@ -136,13 +137,10 @@
         </button>
       {:else}
         <div class="flex gap-2">
-          <select bind:value={form.product_id}
-            class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">{t('stock.select_product')}</option>
-            {#each products as p}
-              <option value={p.id}>{fmtProductLabel(p)}</option>
-            {/each}
-          </select>
+          <div class="flex-1 min-w-0">
+            <ProductCombobox bind:value={form.product_id} {products}
+              placeholder={t('stock.search_product')} />
+          </div>
           <button type="button" onclick={() => productScannerActive = true}
             aria-label={t('common.start_scan')} title={t('common.start_scan')}
             class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5">
