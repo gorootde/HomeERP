@@ -57,7 +57,15 @@ export async function makeApi() {
         })
         .then((r) => unwrap(r)),
 
+    updateProduct: (id, data) =>
+      ctx.put(`/api/products/${id}`, { data }).then((r) => unwrap(r)),
+
+    createProductUnitConversion: (productId, data) =>
+      ctx.post(`/api/products/${productId}/unit-conversions`, { data }).then((r) => unwrap(r)),
+
     createStockEntry: (data) => ctx.post('/api/stock/entries', { data }).then((r) => unwrap(r)),
+
+    getStockEntry: (id) => ctx.get(`/api/stock/entries/${id}`).then((r) => unwrap(r)),
 
     putSetting: (key, value) =>
       ctx.put(`/api/settings/${key}`, { data: { value } }).then((r) => unwrap(r)),

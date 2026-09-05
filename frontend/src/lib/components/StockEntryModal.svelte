@@ -16,6 +16,8 @@
    *   units         — global units list (for entry-unit conversion options)
    *   initial       — initial form values { product_id, vault_id, quantity, entry_unit_id,
    *                   best_before_date, comment, stock_id }
+   *                   quantity + entry_unit_id are the amount *in that unit* (not base):
+   *                   when editing, pass entry_quantity ?? quantity and entry_unit_key.
    *   productLocked — when true, product field is shown as readonly text (pre-selected)
    *   isNew         — controls modal title and save button label
    *   autoPrintEnabled — when true (and isNew), show the per-entry "print label" opt-out
@@ -80,10 +82,17 @@
     }
   }
 
-  // When product changes (only in unlocked mode), reset entry_unit_id to that product's default
+  // When the user *switches* to a different product (only in unlocked mode), reset
+  // entry_unit_id to that product's default. Must not fire on mount / on the initial
+  // product, otherwise it would clobber initial.entry_unit_id when editing an existing
+  // entry — which, combined with the base-unit `quantity`, double-converts on save.
+  let lastProductId = Number(form.product_id) || null;
   $effect(() => {
     if (productLocked) return;
-    const product = products.find(p => p.id === Number(form.product_id));
+    const pid = Number(form.product_id) || null;
+    if (pid === lastProductId) return;
+    lastProductId = pid;
+    const product = products.find(p => p.id === pid);
     form.entry_unit_id = product?.entry_unit_key || 'base';
   });
 

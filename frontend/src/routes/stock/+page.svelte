@@ -92,8 +92,10 @@
       initial: {
         product_id: e.product_id,
         vault_id: e.vault_id,
-        quantity: e.quantity,
-        entry_unit_id: 'base',
+        // Prefill the amount + unit the user originally entered, so editing only the
+        // unit (or an unrelated field) doesn't re-convert the already-base quantity.
+        quantity: e.entry_quantity ?? e.quantity,
+        entry_unit_id: e.entry_unit_key || 'base',
         best_before_date: e.best_before_date || '',
         comment: e.comment || ''
       }

@@ -242,8 +242,10 @@
       initial: {
         product_id: lastEntry.product_id,
         vault_id: lastEntry.vault_id,
-        quantity: lastEntry.quantity,
-        entry_unit_id: 'base',
+        // Prefill the amount + unit the user originally entered, so editing only the
+        // unit (or an unrelated field) doesn't re-convert the already-base quantity.
+        quantity: lastEntry.entry_quantity ?? lastEntry.quantity,
+        entry_unit_id: lastEntry.entry_unit_key || 'base',
         best_before_date: lastEntry.best_before_date || '',
         comment: lastEntry.comment || ''
       }
@@ -257,8 +259,8 @@
       initial: {
         product_id: lastEntry.product_id,
         vault_id: lastEntry.vault_id,
-        quantity: lastEntry.quantity,
-        entry_unit_id: 'base',
+        quantity: lastEntry.entry_quantity ?? lastEntry.quantity,
+        entry_unit_id: lastEntry.entry_unit_key || 'base',
         best_before_date: lastEntry.best_before_date || '',
         comment: lastEntry.comment || ''
         // deliberately no stock_id — the Inventarnummer must not be copied

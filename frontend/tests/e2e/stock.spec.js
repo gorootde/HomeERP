@@ -140,6 +140,76 @@ test('edit a stock entry quantity', async ({ page }) => {
   }
 });
 
+test('editing only the entry unit re-converts the base quantity', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const gram = await api.createUnit(uid('Gramm'), uabbr('g'));
+    const product = await api.createProduct({ name: uid('CanProduct'), unit_id: gram.id });
+    // 1 Dose = 500 g
+    await api.createProductUnitConversion(product.id, {
+      unit_name: 'Dose', base_unit_id: gram.id, factor: 500,
+    });
+    const vault = await api.createVault(uid('StockVault'));
+    // an entry mistakenly recorded as "1 g" that is really 1 can
+    const entry = await api.createStockEntry({
+      product_id: product.id, vault_id: vault.id, quantity: 1,
+      entry_unit_key: 'base', entry_quantity: 1,
+    });
+    await page.goto('/stock');
+
+    const row = page.getByRole('row', { name: new RegExp(product.name) });
+    await row.getByRole('button', { name: 'Bearbeiten' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Eintrag bearbeiten' });
+    // change nothing but the unit
+    await dialog.getByRole('combobox').last().selectOption({ label: 'Dose' });
+    await dialog.getByRole('button', { name: 'Speichern' }).click();
+
+    await expect(page.getByText('Eintrag gespeichert')).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(product.name) }))
+      .toContainText('1 Dose (500');
+
+    const saved = await api.getStockEntry(entry.id);
+    expect(saved.quantity).toBe(500);
+    expect(saved.entry_quantity).toBe(1);
+  } finally {
+    await api.dispose();
+  }
+});
+
+test('editing an unrelated field keeps the entry-unit quantity intact', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const gram = await api.createUnit(uid('Gramm'), uabbr('g'));
+    const product = await api.createProduct({ name: uid('CanProduct'), unit_id: gram.id });
+    const conv = await api.createProductUnitConversion(product.id, {
+      unit_name: 'Dose', base_unit_id: gram.id, factor: 500,
+    });
+    // product defaults new entries to the "Dose" unit
+    await api.updateProduct(product.id, { entry_unit_key: `puc_${conv.id}` });
+    const vault = await api.createVault(uid('StockVault'));
+    // a correct entry: 1 Dose == 500 g
+    const entry = await api.createStockEntry({
+      product_id: product.id, vault_id: vault.id, quantity: 500,
+      entry_unit_key: `puc_${conv.id}`, entry_quantity: 1,
+    });
+    await page.goto('/stock');
+
+    const row = page.getByRole('row', { name: new RegExp(product.name) });
+    await row.getByRole('button', { name: 'Bearbeiten' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Eintrag bearbeiten' });
+    await dialog.getByPlaceholder('Kommentar').fill('nur ein Kommentar');
+    await dialog.getByRole('button', { name: 'Speichern' }).click();
+
+    await expect(page.getByText('Eintrag gespeichert')).toBeVisible();
+
+    const saved = await api.getStockEntry(entry.id);
+    expect(saved.quantity).toBe(500);
+    expect(saved.entry_quantity).toBe(1);
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('manage stock IDs on an entry', async ({ page }) => {
   const api = await makeApi();
   try {
