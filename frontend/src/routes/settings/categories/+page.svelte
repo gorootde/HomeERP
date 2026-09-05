@@ -33,9 +33,12 @@
   }
 
   async function save() {
+    // Empty <input type="number"> binds to null (not ''), and 0 / negatives are
+    // no valid minimum — all of them mean "no minimum stock".
+    const qty = parseFloat(form.min_stock_quantity);
     const data = {
       name: form.name,
-      min_stock_quantity: form.min_stock_quantity !== '' ? Number(form.min_stock_quantity) : null,
+      min_stock_quantity: Number.isFinite(qty) && qty > 0 ? qty : null,
       min_stock_unit_id: form.min_stock_unit_id ? Number(form.min_stock_unit_id) : null
     };
     try {
