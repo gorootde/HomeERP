@@ -4,7 +4,7 @@
   import { showToast } from '$lib/toast.js';
   import {
     getByEan, getEanInfo, getStockEntryByStockId, getProduct,
-    createProduct, createStockEntry, updateStockEntry, deleteStockEntry, addProductUnitConversion,
+    createProduct, updateProduct, createStockEntry, updateStockEntry, deleteStockEntry, addProductUnitConversion,
     getVaults, getProducts, getUnits, getCategories, getSettings
   } from '$lib/api.js';
   import { fmtDate, fmtQty, isStockId, matchUnitFromOffSize, stagePucConversion } from '$lib/utils.js';
@@ -12,7 +12,7 @@
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';
-  import { ScanBarcode, QrCode, Package, Minus, Sliders } from 'lucide-svelte';
+  import { ScanBarcode, QrCode, Package, Minus, Sliders, Pencil, Copy, Tag } from 'lucide-svelte';
 
   let scannerActive = $state(true);
   let vaults = $state([]);
@@ -25,17 +25,24 @@
   let result = $state(null); // { type: 'stockid'|'ean_found'|'ean_unknown', data }
   let lastCode = $state('');
 
+  // The last stock entry created/updated/duplicated this session (StockEntryRead).
+  // Drives the quick-action button row below the camera. In-memory only.
+  let lastEntry = $state(null);
+
   // Modals
   let adjustModal = $state(null);
-  let newProductModal = $state(null);
+  let productModal = $state(null); // { mode: 'new'|'edit', code?, offData?, productId? }
   let addEntryModal = $state(null);
+  let editEntryModal = $state(null); // { initial } — renders StockEntryModal in edit mode
 
   let adjustQty = $state('');
   let newProd = $state({ name: '', vendor: '', unit_id: '', category_id: '', puc: [] });
 
   // Pause the camera/scan loop while any modal is open — keeping it running
   // in the background is heavy and makes the browser noticeably sluggish.
-  let scannerRunning = $derived(scannerActive && !adjustModal && !newProductModal && !addEntryModal);
+  let scannerRunning = $derived(
+    scannerActive && !adjustModal && !productModal && !addEntryModal && !editEntryModal
+  );
 
   onMount(async () => {
     [vaults, products, units, categories, settings] = await Promise.all([
@@ -57,6 +64,7 @@
     if (code === lastCode) return;
     lastCode = code;
     result = null;
+    lastEntry = null;
 
     if (isStockId(code)) {
       try {
@@ -91,6 +99,7 @@
       }
       result = null;
       lastCode = '';
+      lastEntry = null;
     } catch (e) {
       showToast(String(e), 'error');
     }
@@ -114,6 +123,7 @@
       adjustModal = null;
       result = null;
       lastCode = '';
+      lastEntry = null;
     } catch (e) {
       showToast(String(e), 'error');
     }
@@ -135,7 +145,21 @@
     if (numeric && matchedUnit) {
       addNewProdPuc({ factor: parseFloat(numeric), to_unit_id: matchedUnit.id, name: t('common.unit_piece_label') });
     }
-    newProductModal = { code, offData };
+    productModal = { mode: 'new', code, offData };
+  }
+
+  function openEditLastProduct() {
+    const p = lastEntry?.product;
+    if (!p) return;
+    newProd = {
+      name: p.name || '',
+      vendor: p.vendor || '',
+      unit_id: p.unit_id ?? p.unit?.id ?? '',
+      category_id: p.category_id ?? '',
+      ean: '',
+      puc: []
+    };
+    productModal = { mode: 'edit', productId: p.id };
   }
 
   function addNewProdPuc({ factor, to_unit_id, name }) {
@@ -149,8 +173,22 @@
     newProd.puc = newProd.puc.filter(c => c.id !== convId);
   }
 
-  async function createNewProduct() {
+  async function saveProduct() {
     try {
+      if (productModal.mode === 'edit') {
+        const updated = await updateProduct(productModal.productId, {
+          name: newProd.name,
+          vendor: newProd.vendor || null,
+          unit_id: newProd.unit_id ? Number(newProd.unit_id) : null,
+          category_id: newProd.category_id ? Number(newProd.category_id) : null
+        });
+        products = products.map(p => (p.id === updated.id ? updated : p));
+        if (lastEntry?.product?.id === updated.id) lastEntry = { ...lastEntry, product: updated };
+        showToast(t('scanner.toast_product_updated'), 'success');
+        productModal = null;
+        return;
+      }
+
       let p = await createProduct({
         name: newProd.name,
         vendor: newProd.vendor || null,
@@ -170,7 +208,7 @@
       }
       products = [...products, p];
       showToast(t('scanner.toast_product_created'), 'success');
-      newProductModal = null;
+      productModal = null;
       // Open add entry modal
       openAddEntry(p, newProd.ean);
     } catch (e) {
@@ -188,11 +226,51 @@
 
   async function createEntry(data) {
     try {
-      await createStockEntry(data);
+      lastEntry = await createStockEntry(data);
       showToast(t('scanner.toast_entry_created'), 'success');
       addEntryModal = null;
       result = null;
       lastCode = '';
+    } catch (e) {
+      showToast(String(e), 'error');
+    }
+  }
+
+  function openEditEntry() {
+    if (!lastEntry) return;
+    editEntryModal = {
+      initial: {
+        product_id: lastEntry.product_id,
+        vault_id: lastEntry.vault_id,
+        quantity: lastEntry.quantity,
+        entry_unit_id: 'base',
+        best_before_date: lastEntry.best_before_date || '',
+        comment: lastEntry.comment || ''
+      }
+    };
+  }
+
+  function openDuplicateEntry() {
+    if (!lastEntry) return;
+    addEntryModal = {
+      duplicate: true,
+      initial: {
+        product_id: lastEntry.product_id,
+        vault_id: lastEntry.vault_id,
+        quantity: lastEntry.quantity,
+        entry_unit_id: 'base',
+        best_before_date: lastEntry.best_before_date || '',
+        comment: lastEntry.comment || ''
+        // deliberately no stock_id — the Inventarnummer must not be copied
+      }
+    };
+  }
+
+  async function saveEditEntry(data) {
+    try {
+      lastEntry = await updateStockEntry(lastEntry.id, data);
+      showToast(t('scanner.toast_entry_updated'), 'success');
+      editEntryModal = null;
     } catch (e) {
       showToast(String(e), 'error');
     }
@@ -206,7 +284,7 @@
   <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
     <BarcodeScanner active={scannerRunning} onscan={handleScan} />
     <button
-      onclick={() => { scannerActive = !scannerActive; if (!scannerActive) { result = null; lastCode = ''; } }}
+      onclick={() => { scannerActive = !scannerActive; if (!scannerActive) { result = null; lastCode = ''; lastEntry = null; } }}
       class="mt-3 w-full py-2.5 text-sm font-medium rounded-lg border transition-colors
         {scannerActive ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700'}">
       <span class="flex items-center justify-center gap-2">
@@ -216,8 +294,29 @@
     </button>
   </div>
 
+  <!-- Quick actions for the entry just created this session -->
+  {#if lastEntry}
+    <div class="mb-4 space-y-2">
+      <p class="text-xs text-gray-500">
+        {t('scanner.last_entry_label')}: <span class="font-medium text-gray-700">{lastEntry.product?.name}</span>
+      </p>
+      <button onclick={openEditEntry}
+        class="w-full py-2.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+        <span class="flex items-center justify-center gap-1"><Pencil size={14} /> {t('scanner.btn_edit_last_entry')}</span>
+      </button>
+      <button onclick={openDuplicateEntry}
+        class="w-full py-2.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+        <span class="flex items-center justify-center gap-1"><Copy size={14} /> {t('scanner.btn_duplicate_last_entry')}</span>
+      </button>
+      <button onclick={openEditLastProduct}
+        class="w-full py-2.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+        <span class="flex items-center justify-center gap-1"><Tag size={14} /> {t('scanner.btn_edit_last_product')}</span>
+      </button>
+    </div>
+  {/if}
+
   <!-- Hints -->
-  {#if !result}
+  {#if !result && !lastEntry}
     {@const stockPrefix = getSetting('stock_id_prefix')}
     {@const stockMode = getSetting('stock_id_mode')}
     <div class="grid grid-cols-2 gap-3">
@@ -339,9 +438,10 @@
   </Modal>
 {/if}
 
-<!-- New Product Modal -->
-{#if newProductModal}
-  <Modal title={t('scanner.new_product_modal')} onclose={() => newProductModal = null}>
+<!-- Product Modal (create new / edit last) -->
+{#if productModal}
+  <Modal title={productModal.mode === 'edit' ? t('scanner.edit_product_modal') : t('scanner.new_product_modal')}
+    onclose={() => productModal = null}>
     <div class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_name')}</label>
@@ -375,7 +475,7 @@
           </select>
         </div>
       </div>
-      {#if newProd.unit_id}
+      {#if newProd.unit_id && productModal.mode === 'new'}
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-2">{t('products.puc_label')}</label>
           <UnitConversionEditor
@@ -388,29 +488,44 @@
         </div>
       {/if}
       <div class="flex justify-end gap-2">
-        <button onclick={() => newProductModal = null}
+        <button onclick={() => productModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
-        <button onclick={createNewProduct}
+        <button onclick={saveProduct}
           class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-          {t('scanner.btn_create_product')}
+          {productModal.mode === 'edit' ? t('common.save') : t('scanner.btn_create_product')}
         </button>
       </div>
     </div>
   </Modal>
 {/if}
 
-<!-- Add Entry Modal -->
+<!-- Add Entry Modal (also handles the "duplicate last entry" flow) -->
 {#if addEntryModal}
   <StockEntryModal
     {products}
     {vaults}
     {units}
-    initial={addEntryModal.product
-      ? { product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || 'base' }
-      : { stock_id: addEntryModal.stockId }}
-    productLocked={!!addEntryModal.product}
+    initial={addEntryModal.duplicate
+      ? addEntryModal.initial
+      : addEntryModal.product
+        ? { product_id: addEntryModal.product.id, entry_unit_id: addEntryModal.product.entry_unit_key || 'base' }
+        : { stock_id: addEntryModal.stockId }}
+    productLocked={!!addEntryModal.product || !!addEntryModal.duplicate}
     isNew={true}
     autoPrintEnabled={getSetting('label_auto_print') === '1'}
     onsave={createEntry}
     onclose={() => addEntryModal = null} />
+{/if}
+
+<!-- Edit Last Entry Modal -->
+{#if editEntryModal}
+  <StockEntryModal
+    {products}
+    {vaults}
+    {units}
+    initial={editEntryModal.initial}
+    productLocked={true}
+    isNew={false}
+    onsave={saveEditEntry}
+    onclose={() => editEntryModal = null} />
 {/if}

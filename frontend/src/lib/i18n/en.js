@@ -162,7 +162,14 @@ export default {
     placeholder_comment: 'Comment', btn_add_entry: 'Add Entry', toast_entry_created: 'Entry created',
     off_banner_label: 'OpenFoodFacts', off_banner_hint: 'Data from OpenFoodFacts',
     hint_ean_title: 'EAN / Barcode', hint_ean_desc: 'Looks up the matching product and opens the stock entry dialog. Unknown codes can be created as a new product on the spot.',
-    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Opens the stock entry directly — take out or adjust the quantity.'
+    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Opens the stock entry directly — take out or adjust the quantity.',
+    last_entry_label: 'Last entry',
+    btn_edit_last_entry: 'Edit last entry',
+    btn_duplicate_last_entry: 'Duplicate last entry',
+    btn_edit_last_product: 'Edit last product',
+    edit_product_modal: 'Edit Product',
+    toast_entry_updated: 'Entry updated',
+    toast_product_updated: 'Product updated'
   },
   settings: {
     title: 'Settings', stockid_title: 'Stock ID', stockid_desc: 'Configure Stock ID generation',

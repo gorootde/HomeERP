@@ -166,7 +166,14 @@ export default {
     placeholder_comment: 'Kommentar', btn_add_entry: 'Eintrag hinzufügen',
     toast_entry_created: 'Eintrag erstellt', off_banner_label: 'OpenFoodFacts', off_banner_hint: 'Daten aus OpenFoodFacts',
     hint_ean_title: 'EAN / Barcode', hint_ean_desc: 'Sucht das zugehörige Produkt und öffnet den Dialog für einen neuen Bestandseintrag. Unbekannte Codes können direkt als neues Produkt angelegt werden.',
-    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Öffnet den Bestandseintrag direkt — Menge entnehmen oder anpassen.'
+    hint_stockid_title: 'Stock ID ({prefix}…)', hint_stockid_desc: 'Öffnet den Bestandseintrag direkt — Menge entnehmen oder anpassen.',
+    last_entry_label: 'Letzter Eintrag',
+    btn_edit_last_entry: 'Letzten Eintrag bearbeiten',
+    btn_duplicate_last_entry: 'Letzten Eintrag duplizieren',
+    btn_edit_last_product: 'Letztes Produkt bearbeiten',
+    edit_product_modal: 'Produkt bearbeiten',
+    toast_entry_updated: 'Eintrag aktualisiert',
+    toast_product_updated: 'Produkt aktualisiert'
   },
   settings: {
     title: 'Einstellungen', stockid_title: 'Stock ID', stockid_desc: 'Konfiguriere die Stock ID-Generierung',
