@@ -227,8 +227,14 @@ class CategoryStockSummaryItem(BaseModel):
     category_name: str
     min_stock_quantity: Optional[float]
     min_stock_unit: Optional[UnitSimple]
+    # ``total_quantity`` is expressed in ``min_stock_unit`` (each product's stock
+    # is converted from its own base unit via the global UnitConversion table
+    # before summing). Products whose base unit has no conversion path to
+    # ``min_stock_unit`` are left out of the sum and counted here so the UI can
+    # warn that the figure is incomplete.
     total_quantity: float
     product_count: int
+    unconverted_product_count: int = 0
 
 
 # ── Stock Movements (audit log) ────────────────────────────────────────────────

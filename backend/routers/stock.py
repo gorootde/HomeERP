@@ -12,6 +12,7 @@ from ..models import (
     ProductCategory,
     StockEntry,
     StockEntryId,
+    UnitConversion,
     Vault,
 )
 from ..schemas import (
@@ -91,7 +92,7 @@ def get_stock_summary(db: Session = Depends(get_db)):
 
 @router.get("/category-summary", response_model=list[CategoryStockSummaryItem])
 def get_category_stock_summary(db: Session = Depends(get_db)):
-    # Total stock per product
+    # Total stock per product, in the product's own base unit.
     product_stock = {
         row.product_id: float(row.total_qty)
         for row in db.query(
@@ -100,17 +101,43 @@ def get_category_stock_summary(db: Session = Depends(get_db)):
         ).group_by(StockEntry.product_id).all()
     }
 
-    # Aggregate by category
+    categories = {c.id: c for c in db.query(ProductCategory).all()}
+
+    # Direct unit conversions, both directions (the API stores the reverse too).
+    conversions = {
+        (c.from_unit_id, c.to_unit_id): c.factor
+        for c in db.query(UnitConversion).all()
+    }
+
+    def _to_category_unit(qty: float, from_unit_id, target_unit_id):
+        """Return (converted_qty, ok). ok is False when no conversion path exists."""
+        if target_unit_id is None or from_unit_id == target_unit_id:
+            return qty, True
+        if from_unit_id is None:
+            return 0.0, False
+        factor = conversions.get((from_unit_id, target_unit_id))
+        if factor is None:
+            return 0.0, False
+        return qty * factor, True
+
+    # Aggregate by category, converting each product into the category's
+    # min_stock_unit first so the dashboard compares like with like.
     cat_totals: dict = {}
     for p in db.query(Product).all():
         key = p.category_id
+        cat = categories.get(key)
+        target_unit_id = cat.min_stock_unit_id if cat else None
         qty = product_stock.get(p.id, 0.0)
-        if key not in cat_totals:
-            cat_totals[key] = {"total_quantity": 0.0, "product_count": 0}
-        cat_totals[key]["total_quantity"] += qty
-        cat_totals[key]["product_count"] += 1
+        converted, ok = _to_category_unit(qty, p.unit_id, target_unit_id)
 
-    categories = {c.id: c for c in db.query(ProductCategory).all()}
+        stats = cat_totals.setdefault(
+            key, {"total_quantity": 0.0, "product_count": 0, "unconverted_product_count": 0}
+        )
+        stats["product_count"] += 1
+        if ok:
+            stats["total_quantity"] += converted
+        elif qty > 0:
+            stats["unconverted_product_count"] += 1
 
     result = []
     for cat_id, stats in cat_totals.items():
@@ -142,6 +169,7 @@ def get_category_stock_summary(db: Session = Depends(get_db)):
                 min_stock_unit=cat.min_stock_unit,
                 total_quantity=0.0,
                 product_count=0,
+                unconverted_product_count=0,
             ))
 
     return sorted(result, key=lambda x: (x.category_id is None, x.category_name))

@@ -21,7 +21,8 @@ export default {
     col_product: 'Product', col_vendor: 'Vendor',
     col_total_qty: 'Total', col_by_vault: 'By Vault', empty: 'No stock entries',
     status_ok: 'OK', status_low: 'Low', status_critical: 'Critical', status_none: 'No minimum stock',
-    min_prefix: 'Min:'
+    min_prefix: 'Min:',
+    unconverted_hint: '{count} product(s) with no conversion to this unit – not included'
   },
   products: {
     title: 'Products', btn_add: 'Add Product', search_placeholder: 'Search by name or vendor…',

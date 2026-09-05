@@ -22,7 +22,8 @@ export default {
     col_product: 'Produkt', col_vendor: 'Hersteller',
     col_total_qty: 'Gesamt', col_by_vault: 'Nach Lagerort', empty: 'Kein Bestand vorhanden',
     status_ok: 'OK', status_low: 'Gering', status_critical: 'Kritisch', status_none: 'Kein Mindestbestand',
-    min_prefix: 'Min:'
+    min_prefix: 'Min:',
+    unconverted_hint: '{count} Produkt(e) ohne Umrechnung in diese Einheit – nicht eingerechnet'
   },
   products: {
     title: 'Produkte', btn_add: 'Produkt hinzufügen', search_placeholder: 'Suche nach Name oder Hersteller…',

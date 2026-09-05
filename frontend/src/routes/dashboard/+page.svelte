@@ -98,6 +98,11 @@
                 {t('dashboard.min_prefix')} {fmtQty(cat.min_stock_quantity)} {cat.min_stock_unit?.abbreviation || ''}
               </p>
             {/if}
+            {#if cat.unconverted_product_count > 0}
+              <p class="text-xs text-gray-500 mt-0.5">
+                {t('dashboard.unconverted_hint', { count: cat.unconverted_product_count })}
+              </p>
+            {/if}
           </div>
         {/each}
       </div>

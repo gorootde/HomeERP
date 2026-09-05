@@ -1,5 +1,6 @@
 """Coverage for backend/routers/stock.py – entries, summaries, sub-resources."""
 
+import pytest
 
 # ── create / read / update / delete ────────────────────────────────────────
 
@@ -229,6 +230,194 @@ def test_category_summary_includes_empty_categories(client, make_category):
     rows = {r["category_name"]: r for r in client.get("/api/stock/category-summary").json()}
     assert rows["Empty"]["total_quantity"] == 0
     assert rows["Empty"]["product_count"] == 0
+
+
+# ── category summary: unit conversion of the aggregated balance ─────────────
+#
+# StockEntry.quantity is stored in each product's own base unit. The category
+# card on the dashboard prints that sum with the category's ``min_stock_unit``
+# label and the traffic light compares it against ``min_stock_quantity`` — so
+# the backend has to express ``total_quantity`` in ``min_stock_unit``, applying
+# the global UnitConversion table per product before summing.
+
+
+@pytest.fixture()
+def make_conversion(client):
+    """1 <from> == factor <to>; the reverse factor is auto-created by the API."""
+    def _make(from_unit_id, to_unit_id, factor):
+        resp = client.post(
+            f"/api/units/{from_unit_id}/conversions",
+            json={"to_unit_id": to_unit_id, "factor": factor},
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()
+
+    return _make
+
+
+def test_category_summary_converts_grams_to_kilograms(
+    client, make_unit, make_conversion, make_category, make_product, make_stock_entry
+):
+    # Repro of the prod report: 1441 g in stock must not surface as "1441 kg".
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    make_conversion(kg["id"], g["id"], 1000)  # 1 kg == 1000 g
+
+    cat = make_category(
+        name="Fisch & Fleisch", min_stock_quantity=1, min_stock_unit_id=kg["id"]
+    )
+    pid = make_product(name="Lachs", unit_id=g["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=pid, quantity=1441)  # 1441 g
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fisch & Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(1.441)
+    assert row["min_stock_unit"]["abbreviation"] == "kg"
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_sums_mixed_base_units_after_conversion(
+    client, make_unit, make_conversion, make_category, make_product, make_stock_entry
+):
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    make_conversion(kg["id"], g["id"], 1000)
+
+    cat = make_category(name="Fleisch", min_stock_unit_id=kg["id"])
+    in_g = make_product(name="Hack", unit_id=g["id"], category_id=cat["id"])["id"]
+    in_kg = make_product(name="Braten", unit_id=kg["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=in_g, quantity=500)   # 0.5 kg
+    make_stock_entry(product_id=in_kg, quantity=2)    # 2   kg
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(2.5)
+    assert row["product_count"] == 2
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_no_conversion_needed_when_unit_matches(
+    client, make_unit, make_category, make_product, make_stock_entry
+):
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    cat = make_category(name="Fleisch", min_stock_unit_id=kg["id"])
+    pid = make_product(name="Braten", unit_id=kg["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=pid, quantity=3)
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(3)
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_flags_products_without_conversion_path(
+    client, make_unit, make_conversion, make_category, make_product, make_stock_entry
+):
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    stk = make_unit(name="Stück", abbreviation="Stk")
+    make_conversion(kg["id"], g["id"], 1000)  # no path between Stück and kg
+
+    cat = make_category(name="Fleisch", min_stock_unit_id=kg["id"])
+    convertible = make_product(name="Hack", unit_id=g["id"], category_id=cat["id"])["id"]
+    orphan = make_product(name="Würstchen", unit_id=stk["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=convertible, quantity=1000)  # 1 kg
+    make_stock_entry(product_id=orphan, quantity=5)          # cannot convert
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(1.0)  # orphan excluded
+    assert row["product_count"] == 2
+    assert row["unconverted_product_count"] == 1
+
+
+def test_category_summary_flags_product_without_unit(
+    client, make_unit, make_category, make_product, make_stock_entry
+):
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    cat = make_category(name="Fleisch", min_stock_unit_id=kg["id"])
+    pid = make_product(name="Mystery", category_id=cat["id"])["id"]  # unit_id is None
+    make_stock_entry(product_id=pid, quantity=4)
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(0.0)
+    assert row["unconverted_product_count"] == 1
+
+
+def test_category_summary_without_min_stock_unit_sums_raw(
+    client, make_unit, make_category, make_product, make_stock_entry
+):
+    # No target unit on the category → nothing to convert to; keep the plain sum
+    # and report nothing as unconverted.
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    cat = make_category(name="Diverses")  # min_stock_unit_id omitted
+    a = make_product(name="A", unit_id=g["id"], category_id=cat["id"])["id"]
+    b = make_product(name="B", unit_id=kg["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=a, quantity=2)
+    make_stock_entry(product_id=b, quantity=3)
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Diverses"
+    )
+    assert row["total_quantity"] == pytest.approx(5)
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_uncategorised_sums_raw(
+    client, make_unit, make_product, make_stock_entry
+):
+    g = make_unit(name="Gramm", abbreviation="g")
+    pid = make_product(name="Salz", unit_id=g["id"])["id"]  # no category
+    make_stock_entry(product_id=pid, quantity=750)
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_id"] is None
+    )
+    assert row["total_quantity"] == pytest.approx(750)
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_uses_reverse_conversion_factor(
+    client, make_unit, make_conversion, make_category, make_product, make_stock_entry
+):
+    # Conversion registered as kg→g; product is in kg, category wants g.
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    make_conversion(kg["id"], g["id"], 1000)
+
+    cat = make_category(name="Fleisch", min_stock_unit_id=g["id"])
+    pid = make_product(name="Braten", unit_id=kg["id"], category_id=cat["id"])["id"]
+    make_stock_entry(product_id=pid, quantity=2)  # 2 kg → 2000 g
+
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Fleisch"
+    )
+    assert row["total_quantity"] == pytest.approx(2000)
+    assert row["unconverted_product_count"] == 0
+
+
+def test_category_summary_empty_category_reports_zero_unconverted(client, make_category):
+    make_category(name="Empty")
+    row = next(
+        r for r in client.get("/api/stock/category-summary").json()
+        if r["category_name"] == "Empty"
+    )
+    assert row["unconverted_product_count"] == 0
 
 
 # ── stock-entry tags ───────────────────────────────────────────────────────
