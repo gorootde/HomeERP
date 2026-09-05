@@ -172,7 +172,11 @@ class StockEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     vault_id = Column(Integer, ForeignKey("vaults.id"), nullable=False)
-    quantity = Column(Float, nullable=False, default=1.0)
+    quantity = Column(Float, nullable=False, default=1.0)  # canonical amount in the product's base unit
+    # Unit the user picked when creating the entry + the raw amount they typed, kept only
+    # for display ("1 Kasten (12 L)"). NULL on legacy rows and base-unit entries.
+    entry_unit_key = Column(String(64), nullable=True)   # 'base' | 'puc_<id>' | 'global_<id>'
+    entry_quantity = Column(Float, nullable=True)
     comment = Column(Text, nullable=True)
     best_before_date = Column(Date, nullable=True)
 

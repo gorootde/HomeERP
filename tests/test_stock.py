@@ -60,6 +60,71 @@ def test_create_stock_entry_rejects_non_positive_quantity(client, make_product, 
     assert resp.status_code == 422
 
 
+def test_create_stock_entry_persists_entry_unit(client, make_product, make_vault):
+    pid, vid = make_product()["id"], make_vault()["id"]
+    resp = client.post(
+        "/api/stock/entries",
+        json={
+            "product_id": pid, "vault_id": vid,
+            "quantity": 12, "entry_unit_key": "puc_7", "entry_quantity": 1,
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["quantity"] == 12
+    assert body["entry_unit_key"] == "puc_7"
+    assert body["entry_quantity"] == 1
+    # round-trips on a follow-up GET too
+    got = client.get(f"/api/stock/entries/{body['id']}").json()
+    assert got["entry_unit_key"] == "puc_7"
+    assert got["entry_quantity"] == 1
+
+
+def test_create_stock_entry_without_entry_unit_is_null(client, make_product, make_vault):
+    pid, vid = make_product()["id"], make_vault()["id"]
+    body = client.post(
+        "/api/stock/entries",
+        json={"product_id": pid, "vault_id": vid, "quantity": 5},
+    ).json()
+    assert body["entry_unit_key"] is None
+    assert body["entry_quantity"] is None
+
+
+def test_create_stock_entry_rejects_non_positive_entry_quantity(client, make_product, make_vault):
+    pid, vid = make_product()["id"], make_vault()["id"]
+    resp = client.post(
+        "/api/stock/entries",
+        json={"product_id": pid, "vault_id": vid, "quantity": 5, "entry_quantity": 0},
+    )
+    assert resp.status_code == 422
+
+
+def test_update_stock_entry_rewrites_entry_unit(client, make_stock_entry):
+    entry = make_stock_entry(quantity=12, entry_unit_key="puc_7", entry_quantity=1)
+    resp = client.put(
+        f"/api/stock/entries/{entry['id']}",
+        json={"quantity": 6, "entry_unit_key": "base", "entry_quantity": 6},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["quantity"] == 6
+    assert body["entry_unit_key"] == "base"
+    assert body["entry_quantity"] == 6
+
+
+def test_entry_unit_does_not_affect_stock_summary(client, make_product, make_vault):
+    pid, vid = make_product()["id"], make_vault()["id"]
+    client.post(
+        "/api/stock/entries",
+        json={
+            "product_id": pid, "vault_id": vid,
+            "quantity": 12, "entry_unit_key": "puc_7", "entry_quantity": 1,
+        },
+    )
+    row = next(r for r in client.get("/api/stock/summary").json() if r["product_id"] == pid)
+    assert row["total_quantity"] == 12
+
+
 def test_get_stock_entry_404(client):
     assert client.get("/api/stock/entries/999").status_code == 404
 

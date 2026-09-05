@@ -19,8 +19,10 @@
    *   productLocked — when true, product field is shown as readonly text (pre-selected)
    *   isNew         — controls modal title and save button label
    *   autoPrintEnabled — when true (and isNew), show the per-entry "print label" opt-out
-   *   onsave(data)  — called with { product_id, vault_id, quantity, best_before_date, comment }
-   *                   quantity is already converted to the product's base unit
+   *   onsave(data)  — called with { product_id, vault_id, quantity, entry_unit_key,
+   *                   entry_quantity, best_before_date, comment }
+   *                   quantity is already converted to the product's base unit;
+   *                   entry_unit_key / entry_quantity keep the unit + raw amount the user typed
    *   onclose()     — called on cancel / modal close
    */
   let {
@@ -111,6 +113,9 @@
       product_id:      Number(form.product_id),
       vault_id:        Number(form.vault_id),
       quantity:        Number(form.quantity) * factor,
+      // Keep what the user actually entered, for display in the stock list.
+      entry_unit_key:  form.entry_unit_id || 'base',
+      entry_quantity:  Number(form.quantity),
       best_before_date: form.best_before_date || null,
       comment:         form.comment || null,
       ...(isNew && form.stock_id ? { stock_id: form.stock_id } : {}),

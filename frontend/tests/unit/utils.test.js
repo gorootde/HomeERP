@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSizeString, matchUnitFromOffSize } from '../../src/lib/utils.js';
+import { parseSizeString, matchUnitFromOffSize, fmtEntryQty } from '../../src/lib/utils.js';
 
 describe('parseSizeString', () => {
   it('parses a simple "amount unit" string', () => {
@@ -68,5 +68,41 @@ describe('matchUnitFromOffSize', () => {
 
   it('returns null/empty for a missing size', () => {
     expect(matchUnitFromOffSize(units, null)).toEqual({ numeric: '', matchedUnit: null });
+  });
+});
+
+describe('fmtEntryQty', () => {
+  const units = [
+    { id: 2, name: 'Liter', abbreviation: 'L' },
+    { id: 5, name: 'Milliliter', abbreviation: 'ml' },
+  ];
+  const product = {
+    unit: { id: 2, abbreviation: 'L' },
+    unit_conversions: [{ id: 7, unit_name: 'Kasten', factor: 12 }],
+  };
+
+  it('shows the picked unit with the base amount in parentheses (puc)', () => {
+    const entry = { quantity: 12, entry_unit_key: 'puc_7', entry_quantity: 1, product };
+    expect(fmtEntryQty(entry, units)).toBe('1 Kasten (12 L)');
+  });
+
+  it('shows a global unit the entry was created in', () => {
+    const entry = { quantity: 0.5, entry_unit_key: 'global_5', entry_quantity: 500, product };
+    expect(fmtEntryQty(entry, units)).toBe('500 ml (0.5 L)');
+  });
+
+  it('falls back to plain base unit for base-unit entries', () => {
+    const entry = { quantity: 5, entry_unit_key: 'base', entry_quantity: 5, product };
+    expect(fmtEntryQty(entry, units)).toBe('5 L');
+  });
+
+  it('falls back to plain base unit for legacy entries with no entry unit', () => {
+    const entry = { quantity: 12, entry_unit_key: null, entry_quantity: null, product };
+    expect(fmtEntryQty(entry, units)).toBe('12 L');
+  });
+
+  it('falls back when the referenced conversion no longer exists', () => {
+    const entry = { quantity: 12, entry_unit_key: 'puc_99', entry_quantity: 1, product };
+    expect(fmtEntryQty(entry, units)).toBe('12 L');
   });
 });

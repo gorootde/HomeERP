@@ -7,7 +7,7 @@
     getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
     getEntryMovements, undoStockMovement, printStockEntryLabel, getCategories
   } from '$lib/api.js';
-  import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
+  import { fmtDate, fmtProductLabel, fmtEntryQty } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
@@ -266,7 +266,7 @@
       {/snippet}
       {#snippet vaultCell(e)}<span class="text-gray-600">{e.vault?.description || '—'}</span>{/snippet}
       {#snippet qtyCell(e)}
-        <span class="font-semibold text-gray-900">{fmtQty(e.quantity)} {e.product?.unit?.abbreviation || ''}</span>
+        <span class="font-semibold text-gray-900">{fmtEntryQty(e, units)}</span>
       {/snippet}
       {#snippet bbdCell(e)}<span class={bbdClass(e.best_before_date)}>{fmtDate(e.best_before_date)}</span>{/snippet}
       {#snippet commentCell(e)}<span class="text-gray-500">{e.comment || '—'}</span>{/snippet}

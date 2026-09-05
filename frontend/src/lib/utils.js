@@ -3,6 +3,26 @@ export function fmtQty(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, '');
 }
 
+// Stock-entry amount shown in the unit the user picked at creation, with the base-unit
+// amount in parentheses ("1 Kasten (12 L)"). Falls back to plain base-unit display for
+// base-unit / legacy entries, or when the referenced conversion was since deleted.
+// entry: StockEntryRead (incl. product.unit + product.unit_conversions); units: global unit list.
+export function fmtEntryQty(entry, units = []) {
+  const baseAbbr = entry?.product?.unit?.abbreviation || '';
+  const base = `${fmtQty(entry?.quantity)} ${baseAbbr}`.trim();
+  const key = entry?.entry_unit_key;
+  if (!key || key === 'base' || entry.entry_quantity == null) return base;
+
+  let label = null;
+  if (key.startsWith('puc_')) {
+    label = (entry.product?.unit_conversions || []).find(c => `puc_${c.id}` === key)?.unit_name ?? null;
+  } else if (key.startsWith('global_')) {
+    label = units.find(u => `global_${u.id}` === key)?.abbreviation ?? null;
+  }
+  if (!label) return base;
+  return `${fmtQty(entry.entry_quantity)} ${label} (${base})`;
+}
+
 export function fmtDate(d) {
   if (!d) return '—';
   const date = typeof d === 'string' ? new Date(d + 'T00:00:00') : new Date(d);

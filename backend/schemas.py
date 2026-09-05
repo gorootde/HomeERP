@@ -169,7 +169,11 @@ class StockEntryIdRead(BaseModel):
 class StockEntryBase(BaseModel):
     product_id: int
     vault_id: int
-    quantity: float = Field(..., gt=0)
+    quantity: float = Field(..., gt=0)  # amount in the product's base unit
+    # Unit picked at creation + raw amount typed, kept for display only ("1 Kasten (12 L)").
+    # entry_unit_key: 'base' | 'puc_<id>' | 'global_<id>'; both null for base-unit / legacy entries.
+    entry_unit_key: Optional[str] = Field(None, max_length=64)
+    entry_quantity: Optional[float] = Field(None, gt=0)
     comment: Optional[str] = None
     best_before_date: Optional[date] = None
 
@@ -180,6 +184,8 @@ class StockEntryCreate(StockEntryBase):
 
 class StockEntryUpdate(BaseModel):
     quantity: Optional[float] = Field(None, gt=0)
+    entry_unit_key: Optional[str] = Field(None, max_length=64)
+    entry_quantity: Optional[float] = Field(None, gt=0)
     comment: Optional[str] = None
     best_before_date: Optional[date] = None
     # Audit-log context; consumed by the router, not persisted on the entry.
