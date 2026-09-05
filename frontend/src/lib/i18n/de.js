@@ -122,7 +122,8 @@ export default {
     toast_deleted: 'Kategorie gelöscht', modal_edit: 'Kategorie bearbeiten', modal_add: 'Neue Kategorie',
     label_name: 'Name', placeholder_name: 'z.B. Getränke', label_min_qty: 'Mindestmenge',
     placeholder_min_qty: '0', label_unit: 'Einheit', toast_saved: 'Kategorie gespeichert',
-    toast_created: 'Kategorie erstellt'
+    toast_created: 'Kategorie erstellt', no_min_stock: 'Kein Mindestbestand',
+    min_qty_hint: 'Leer lassen: kein Mindestbestand – die Kategorie erscheint dann nicht auf dem Dashboard.'
   },
   inventory: {
     title: 'Inventur', step_select_heading: 'Lagerort auswählen', label_vault: 'Lagerort',

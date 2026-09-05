@@ -23,11 +23,14 @@
 
   let runningLow = $derived(forecast.filter(f => f.days_remaining != null).slice(0, 6));
 
+  // Categories without a minimum stock are not tracked on the dashboard.
+  let trackedCats = $derived(catSummary.filter(c => c.min_stock_quantity != null));
+
   let totalProducts = $derived(summary.length);
   let totalQty = $derived(summary.reduce((s, e) => s + (e.total_quantity || 0), 0));
   let vaultSet = $derived(new Set(summary.flatMap(e => (e.by_vault || []).map(v => v.vault_id))));
-  let criticalCount = $derived(catSummary.filter(c => trafficStatus(c.total_quantity, c.min_stock_quantity) === 'critical').length);
-  let lowCount = $derived(catSummary.filter(c => trafficStatus(c.total_quantity, c.min_stock_quantity) === 'low').length);
+  let criticalCount = $derived(trackedCats.filter(c => trafficStatus(c.total_quantity, c.min_stock_quantity) === 'critical').length);
+  let lowCount = $derived(trackedCats.filter(c => trafficStatus(c.total_quantity, c.min_stock_quantity) === 'low').length);
 
   const statusColors = {
     ok: 'bg-green-100 border-green-300',
@@ -82,10 +85,10 @@
     </div>
 
     <!-- Category cards -->
-    {#if catSummary.length > 0}
+    {#if trackedCats.length > 0}
       <h2 class="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.section_by_category')}</h2>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-        {#each catSummary as cat}
+        {#each trackedCats as cat}
           {@const st = trafficStatus(cat.total_quantity, cat.min_stock_quantity)}
           <div class={`rounded-xl border p-3 ${statusColors[st]}`}>
             <div class="flex items-center justify-between mb-1">

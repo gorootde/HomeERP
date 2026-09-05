@@ -85,7 +85,7 @@
             <tr class="hover:bg-gray-50">
               <td class="px-4 py-2.5 font-medium text-gray-900">{c.name}</td>
               <td class="px-4 py-2.5 text-gray-500">
-                {c.min_stock_quantity != null ? `${c.min_stock_quantity} ${c.min_stock_unit?.abbreviation || ''}` : '—'}
+                {c.min_stock_quantity != null ? `${c.min_stock_quantity} ${c.min_stock_unit?.abbreviation || ''}` : t('categories.no_min_stock')}
               </td>
               <td class="px-4 py-2.5">
                 <div class="flex gap-1 justify-end">
@@ -132,6 +132,7 @@
           </select>
         </div>
       </div>
+      <p class="text-xs text-gray-500">{t('categories.min_qty_hint')}</p>
       <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
         <button onclick={() => editModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>

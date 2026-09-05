@@ -44,3 +44,26 @@ test('seeded stock shows up in the totals, category cards and product table', as
     await api.dispose();
   }
 });
+
+test('a category without a minimum stock is not shown on the dashboard', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const unit = await api.createUnit(uid('Litre'), uabbr('l'));
+    // No min_stock_quantity => "kein Mindestbestand"
+    const cat = await api.createCategory({ name: uid('Untracked'), min_stock_unit_id: unit.id });
+    const product = await api.createProduct({
+      name: uid('UntrackedProduct'),
+      unit_id: unit.id,
+      category_id: cat.id,
+    });
+    const vault = await api.createVault(uid('UntrackedVault'));
+    await api.createStockEntry({ product_id: product.id, vault_id: vault.id, quantity: 7 });
+
+    await page.goto('/dashboard');
+    // wait for the category section to have rendered at all before asserting absence
+    await expect(page.getByText('Alle Produkte')).toBeVisible();
+    await expect(page.getByText(cat.name)).toHaveCount(0);
+  } finally {
+    await api.dispose();
+  }
+});

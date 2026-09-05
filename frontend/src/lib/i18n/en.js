@@ -119,7 +119,9 @@ export default {
     empty: 'No categories', btn_edit: 'Edit', confirm_delete: 'Really delete category?',
     toast_deleted: 'Category deleted', modal_edit: 'Edit Category', modal_add: 'New Category',
     label_name: 'Name', placeholder_name: 'e.g. Beverages', label_min_qty: 'Min Quantity',
-    placeholder_min_qty: '0', label_unit: 'Unit', toast_saved: 'Category saved', toast_created: 'Category created'
+    placeholder_min_qty: '0', label_unit: 'Unit', toast_saved: 'Category saved', toast_created: 'Category created',
+    no_min_stock: 'No minimum stock',
+    min_qty_hint: 'Leave empty for no minimum stock — the category is then hidden from the dashboard.'
   },
   inventory: {
     title: 'Inventory', step_select_heading: 'Select Vault', label_vault: 'Vault',
