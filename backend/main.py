@@ -10,6 +10,7 @@ from .routers import (
     categories,
     data_transfer,
     ean_lookup,
+    health,
     label_printing,
     products,
     stock,
@@ -31,6 +32,7 @@ app.include_router(categories.router, prefix="/api/categories", tags=["categorie
 app.include_router(app_settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(label_printing.router, prefix="/api/settings/printing", tags=["printing"])
 app.include_router(ean_lookup.router, prefix="/api/ean-info", tags=["ean-info"])
+app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(data_transfer.export_router, prefix="/api/export", tags=["export"])
 app.include_router(data_transfer.import_router, prefix="/api/import", tags=["import"])
 

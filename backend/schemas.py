@@ -40,6 +40,14 @@ class UnitRead(UnitBase):
     conversions: list[UnitConversionRead] = []
 
 
+# ── Health ──────────────────────────────────────────────────────────────────
+
+class HealthRead(BaseModel):
+    status:   str  # "ok" | "degraded"
+    version:  str
+    database: str  # "ok" | "error"
+
+
 # ── Settings ────────────────────────────────────────────────────────────────
 
 class SettingRead(BaseModel):
