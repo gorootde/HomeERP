@@ -14,6 +14,7 @@
   import FilterSelect from '$lib/components/FilterSelect.svelte';
   import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
+  import ProductEditModal from '$lib/components/ProductEditModal.svelte';
   import MovementList from '$lib/components/MovementList.svelte';
   import { Plus, Pencil, Trash2, QrCode, History, Printer } from 'lucide-svelte';
 
@@ -31,6 +32,7 @@
   let filterExpiry = $state('');
 
   let editModal = $state(null);
+  let productEditModal = $state(null);
   let stockIdModal = $state(null);
   let confirmDelete = $state(null);
   let historyModal = $state(null);
@@ -260,7 +262,15 @@
       </p>
     {:else}
       {#snippet productCell(e)}
-        <p class="font-medium text-gray-900">{e.product?.name || '—'}</p>
+        {#if e.product?.id}
+          <button type="button" onclick={() => productEditModal = { productId: e.product.id }}
+            title={t('products.btn_edit')}
+            class="font-medium text-blue-600 hover:underline text-left">
+            {e.product.name}
+          </button>
+        {:else}
+          <p class="font-medium text-gray-900">—</p>
+        {/if}
         {#if e.product?.vendor}
           <p class="text-xs text-gray-500">{e.product.vendor}</p>
         {/if}
@@ -333,6 +343,16 @@
     {autoPrintEnabled}
     onsave={save}
     onclose={() => editModal = null} />
+{/if}
+
+<!-- Product Edit Modal -->
+{#if productEditModal}
+  <ProductEditModal
+    productId={productEditModal.productId}
+    {units}
+    {categories}
+    onsaved={() => { productEditModal = null; reload(); }}
+    onclose={() => productEditModal = null} />
 {/if}
 
 <!-- Stock ID Modal -->

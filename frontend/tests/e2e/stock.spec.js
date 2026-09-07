@@ -210,6 +210,32 @@ test('editing an unrelated field keeps the entry-unit quantity intact', async ({
   }
 });
 
+test('open the product edit dialog by clicking a product in the stock list', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const { product, vault } = await seedProductAndVault(api);
+    await api.createStockEntry({ product_id: product.id, vault_id: vault.id, quantity: 1 });
+    await page.goto('/stock');
+
+    await page
+      .getByRole('row', { name: new RegExp(product.name) })
+      .getByRole('button', { name: product.name })
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: 'Produkt bearbeiten' });
+    await expect(dialog).toBeVisible();
+
+    const renamed = uid('RenamedFromStock');
+    await dialog.getByPlaceholder('Produktname').fill(renamed);
+    await dialog.getByRole('button', { name: 'Speichern' }).click();
+
+    await expect(page.getByText('Produkt gespeichert')).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(renamed) })).toBeVisible();
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('manage stock IDs on an entry', async ({ page }) => {
   const api = await makeApi();
   try {
