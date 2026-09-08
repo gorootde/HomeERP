@@ -48,7 +48,11 @@ export default {
     puc_label: 'Einheitenkonvertierungen', puc_empty: 'Keine Konvertierungen',
     puc_name_placeholder: 'z.B. Flasche', puc_toast_removed: 'Konvertierung entfernt',
     puc_err_name: 'Name erforderlich', puc_err_factor: 'Faktor ungültig', puc_err_unit: 'Einheit wählen',
-    puc_toast_added: 'Konvertierung hinzugefügt'
+    puc_toast_added: 'Konvertierung hinzugefügt',
+    unit_suggested_by_size: 'Vorgeschlagen anhand der Packungsgröße',
+    unit_suggested_by_category: 'Vorgeschlagen anhand der Kategorie',
+    unit_suggested_by_name: 'Vorgeschlagen anhand des Namens',
+    unit_suggested_by_history: 'Vorgeschlagen anhand bisheriger Produkte'
   },
   vaults: {
     title: 'Lagerorte', btn_add: 'Lagerort hinzufügen', col_id: 'ID', col_description: 'Beschreibung',
@@ -115,7 +119,11 @@ export default {
     toast_conv_deleted: 'Konvertierung entfernt', toast_conv_err_factor: 'Ungültiger Faktor',
     toast_conv_saved: 'Konvertierung gespeichert', toast_saved: 'Einheit gespeichert',
     toast_created: 'Einheit erstellt',
-    optgroup_units: 'Einheiten', optgroup_product_units: 'Produkteinheiten'
+    optgroup_units: 'Einheiten', optgroup_product_units: 'Produkteinheiten',
+    label_dimension: 'Größenart', dimension_auto: 'Automatisch erkennen',
+    dimension_hint: 'Steuert den Einheiten-Vorschlag beim Anlegen von Produkten.',
+    dimension_mass: 'Masse', dimension_volume: 'Volumen', dimension_count: 'Stückzahl',
+    dimension_length: 'Länge', dimension_other: 'Sonstige'
   },
   categories: {
     title: 'Kategorien', btn_add: 'Kategorie hinzufügen', col_name: 'Name', col_min_stock: 'Mindestbestand',

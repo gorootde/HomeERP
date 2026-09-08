@@ -35,6 +35,9 @@ def test_ean_info_found(client, real_off):
                     "brands": "Fritz, Other",
                     "quantity": "0.33 l",
                     "image_front_url": "http://img/cola.jpg",
+                    "categories_tags": ["en:beverages", "en:sodas"],
+                    "product_quantity": "330",
+                    "product_quantity_unit": "ml",
                 },
             },
         )
@@ -46,6 +49,9 @@ def test_ean_info_found(client, real_off):
         "size": "0.33 l",
         "image_url": "http://img/cola.jpg",
         "source": "openfoodfacts",
+        "categories": ["en:beverages", "en:sodas"],
+        "size_value": 330.0,
+        "size_unit": "ml",
     }
 
 
@@ -73,6 +79,9 @@ def test_ean_info_not_found_returns_empty_result(client, real_off):
         "size": None,
         "image_url": None,
         "source": None,
+        "categories": [],
+        "size_value": None,
+        "size_unit": None,
     }
 
 

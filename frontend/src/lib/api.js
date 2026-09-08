@@ -119,6 +119,14 @@ export const deleteCategory = (id) => del(`/categories/${id}`);
 
 // Units
 export const getUnits = () => get('/units');
+// Best-effort unit pre-selection for a new product. Pass any of { name, size,
+// off_categories }; empty values are dropped. Returns { unit_id, dimension,
+// confidence, source, size_value } — advisory, never overrides a manual pick.
+export const suggestUnit = (params = {}) => {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  return get(`/units/suggest${q.toString() ? `?${q}` : ''}`);
+};
 export const createUnit = (data) => post('/units', data);
 export const updateUnit = (id, data) => put(`/units/${id}`, data);
 export const deleteUnit = (id) => del(`/units/${id}`);

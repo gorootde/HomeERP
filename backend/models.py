@@ -54,6 +54,9 @@ class Unit(Base):
     id           = Column(Integer, primary_key=True, index=True)
     name         = Column(String(64), nullable=False, unique=True)
     abbreviation = Column(String(16), nullable=False, unique=True)
+    # Physical dimension ('mass' | 'volume' | 'count' | 'length' | 'other'), used
+    # to auto-suggest a product's unit. Nullable — unknown for free-form units.
+    dimension    = Column(String(16), nullable=True)
 
     conversions = relationship(
         "UnitConversion",

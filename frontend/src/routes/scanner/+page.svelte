@@ -5,7 +5,7 @@
   import {
     getByEan, getEanInfo, getStockEntryByStockId, getProduct,
     createProduct, updateProduct, createStockEntry, updateStockEntry, deleteStockEntry, addProductUnitConversion,
-    getVaults, getProducts, getUnits, getCategories, getSettings
+    getVaults, getProducts, getUnits, getCategories, getSettings, suggestUnit
   } from '$lib/api.js';
   import { fmtDate, fmtQty, isStockId, matchUnitFromOffSize, stagePucConversion } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
@@ -37,6 +37,15 @@
 
   let adjustQty = $state('');
   let newProd = $state({ name: '', vendor: '', unit_id: '', category_id: '', puc: [] });
+  // Which signal drove the auto-selected unit ('' = user/OFF-size, not a guess).
+  let unitSuggestedBy = $state('');
+
+  const SUGGESTION_HINT_KEYS = {
+    size_token: 'products.unit_suggested_by_size',
+    off_category: 'products.unit_suggested_by_category',
+    name_keyword: 'products.unit_suggested_by_name',
+    existing_products: 'products.unit_suggested_by_history'
+  };
 
   // Pause the camera/scan loop while any modal is open — keeping it running
   // in the background is heavy and makes the browser noticeably sluggish.
@@ -130,12 +139,26 @@
   }
 
   // New product + entry flow
-  function openNewProduct(code, offData) {
+  async function openNewProduct(code, offData) {
     const { numeric, matchedUnit } = matchUnitFromOffSize(units, offData?.size);
+    unitSuggestedBy = '';
+    let unitId = matchedUnit ? matchedUnit.id : '';
+    // No exact unit from the OFF package size — ask the backend to infer one
+    // from the size, the OFF category tags or a keyword in the name.
+    if (!unitId) {
+      try {
+        const s = await suggestUnit({
+          name: offData?.name || '',
+          size: offData?.size || '',
+          off_categories: (offData?.categories || []).join(',')
+        });
+        if (s?.unit_id) { unitId = s.unit_id; unitSuggestedBy = s.source || ''; }
+      } catch { /* advisory only */ }
+    }
     newProd = {
       name: offData?.name || '',
       vendor: offData?.vendor || '',
-      unit_id: matchedUnit ? matchedUnit.id : '',
+      unit_id: unitId || '',
       category_id: '',
       ean: code,
       puc: []
@@ -151,6 +174,7 @@
   function openEditLastProduct() {
     const p = lastEntry?.product;
     if (!p) return;
+    unitSuggestedBy = '';
     newProd = {
       name: p.name || '',
       vendor: p.vendor || '',
@@ -458,13 +482,16 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_unit')}</label>
-          <select bind:value={newProd.unit_id}
+          <select bind:value={newProd.unit_id} onchange={() => unitSuggestedBy = ''}
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('scanner.unit_placeholder')}</option>
             {#each units as u}
               <option value={u.id}>{u.name} ({u.abbreviation})</option>
             {/each}
           </select>
+          {#if unitSuggestedBy && SUGGESTION_HINT_KEYS[unitSuggestedBy]}
+            <p class="text-[11px] text-indigo-500 mt-1">{t(SUGGESTION_HINT_KEYS[unitSuggestedBy])}</p>
+          {/if}
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_category')}</label>

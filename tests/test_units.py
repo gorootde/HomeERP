@@ -126,3 +126,100 @@ def test_delete_conversion_404(client, make_unit):
     assert client.delete(
         f"/api/units/{u['id']}/conversions/123"
     ).status_code == 404
+
+
+# ── dimension + suggestion ─────────────────────────────────────────────────
+
+def test_create_unit_infers_dimension_from_abbreviation(client):
+    body = client.post(
+        "/api/units", json={"name": "Kilogramm", "abbreviation": "kg"}
+    ).json()
+    assert body["dimension"] == "mass"
+
+
+def test_create_unit_respects_explicit_dimension(client):
+    body = client.post(
+        "/api/units",
+        json={"name": "Dose", "abbreviation": "do", "dimension": "count"},
+    ).json()
+    assert body["dimension"] == "count"
+
+
+def test_create_unit_unknown_abbreviation_has_no_dimension(client):
+    body = client.post(
+        "/api/units", json={"name": "Bund", "abbreviation": "bnd"}
+    ).json()
+    assert body["dimension"] is None
+
+
+def test_update_unit_sets_dimension(client, make_unit):
+    u = make_unit(name="Bund", abbreviation="bnd")
+    assert u["dimension"] is None
+    updated = client.put(
+        f"/api/units/{u['id']}", json={"dimension": "count"}
+    ).json()
+    assert updated["dimension"] == "count"
+
+
+def test_suggest_unit_exact_from_size_token(client, make_unit):
+    make_unit(name="Gramm", abbreviation="g")
+    litre = make_unit(name="Liter", abbreviation="l")
+    body = client.get("/api/units/suggest", params={"size": "0,33 l"}).json()
+    assert body["unit_id"] == litre["id"]
+    assert body["confidence"] == "exact"
+    assert body["source"] == "size_token"
+
+
+def test_suggest_unit_size_token_falls_back_to_dimension(client, make_unit):
+    # "33 cl" — no 'cl' unit exists, but the dimension (volume) still resolves.
+    ml = make_unit(name="Milliliter", abbreviation="ml", dimension="volume")
+    body = client.get("/api/units/suggest", params={"size": "33 cl"}).json()
+    assert body["dimension"] == "volume"
+    assert body["unit_id"] == ml["id"]
+    assert body["confidence"] == "dimension"
+
+
+def test_suggest_unit_from_off_category(client, make_unit):
+    g = make_unit(name="Gramm", abbreviation="g")
+    make_unit(name="Liter", abbreviation="l")
+    body = client.get(
+        "/api/units/suggest",
+        params={"name": "Mystery", "off_categories": "en:flours,en:cereals"},
+    ).json()
+    assert body["dimension"] == "mass"
+    assert body["unit_id"] == g["id"]
+    assert body["source"] == "off_category"
+
+
+def test_suggest_unit_from_name_keyword(client, make_unit):
+    make_unit(name="Liter", abbreviation="l", dimension="volume")
+    g = make_unit(name="Gramm", abbreviation="g")
+    body = client.get(
+        "/api/units/suggest", params={"name": "Weizenmehl Type 405"}
+    ).json()
+    assert body["dimension"] == "mass"
+    assert body["unit_id"] == g["id"]
+    assert body["source"] == "name_keyword"
+
+
+def test_suggest_unit_magnitude_prefers_kg_over_g(client, make_unit):
+    g = make_unit(name="Gramm", abbreviation="g")
+    kg = make_unit(name="Kilogramm", abbreviation="kg")
+    client.post(
+        f"/api/units/{kg['id']}/conversions",
+        json={"to_unit_id": g["id"], "factor": 1000},
+    )
+    small = client.get("/api/units/suggest", params={"size": "500 g"}).json()
+    big = client.get("/api/units/suggest", params={"size": "1000 g"}).json()
+    assert small["unit_id"] == g["id"]
+    assert big["unit_id"] == kg["id"]
+    assert big["confidence"] == "exact"
+
+
+def test_suggest_unit_no_signal_returns_none(client, make_unit):
+    make_unit(name="Gramm", abbreviation="g")
+    body = client.get(
+        "/api/units/suggest", params={"name": "Schrauben verzinkt"}
+    ).json()
+    assert body["unit_id"] is None
+    assert body["confidence"] == "none"

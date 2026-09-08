@@ -107,10 +107,11 @@ def no_external_side_effects(monkeypatch):
 
 @pytest.fixture()
 def make_unit(client):
-    def _make(name="Litre", abbreviation="l"):
-        resp = client.post(
-            "/api/units", json={"name": name, "abbreviation": abbreviation}
-        )
+    def _make(name="Litre", abbreviation="l", dimension=None):
+        body = {"name": name, "abbreviation": abbreviation}
+        if dimension is not None:
+            body["dimension"] = dimension
+        resp = client.post("/api/units", json=body)
         assert resp.status_code == 201, resp.text
         return resp.json()
 

@@ -6,7 +6,7 @@
     getProduct, createProduct, updateProduct,
     setImageFromUrl, uploadProductImage, deleteProductImage,
     addTagToProduct, removeTagFromProduct,
-    addProductUnitConversion, deleteProductUnitConversion
+    addProductUnitConversion, deleteProductUnitConversion, suggestUnit
   } from '$lib/api.js';
   import { matchUnitFromOffSize, resolveUnitConversion, stagePucConversion } from '$lib/utils.js';
   import { useTags } from '$lib/useTags.js';
@@ -35,6 +35,35 @@
   let formPhotoFile = $state(null);
   let formPhotoPreview = $state('');
   let offBanner = $state(null);
+
+  // Which signal drove the auto-selected unit ('' = manual / none).
+  let unitSuggestedBy = $state('');
+  const SUGGESTION_HINT_KEYS = {
+    size_token: 'products.unit_suggested_by_size',
+    off_category: 'products.unit_suggested_by_category',
+    name_keyword: 'products.unit_suggested_by_name',
+    existing_products: 'products.unit_suggested_by_history'
+  };
+
+  // While adding a product and before the user has picked a unit, ask the
+  // backend to infer one from the name (debounced on each keystroke).
+  let suggestTimer;
+  $effect(() => {
+    const name = form.name;
+    if (!isNew || form.unit_id || !name || name.trim().length < 3) return;
+    clearTimeout(suggestTimer);
+    suggestTimer = setTimeout(async () => {
+      if (!isNew || form.unit_id) return;
+      try {
+        const s = await suggestUnit({ name });
+        if (s?.unit_id && !form.unit_id) {
+          form.unit_id = s.unit_id;
+          unitSuggestedBy = s.source || '';
+        }
+      } catch { /* advisory only */ }
+    }, 400);
+    return () => clearTimeout(suggestTimer);
+  });
 
   // Available entry units for the currently edited product (base + product conversions + global units with conversion)
   let entryUnitOptions = $derived(() => {
@@ -148,7 +177,18 @@
       form.name = info.name || form.name;
       form.vendor = info.vendor || form.vendor;
       const { numeric, matchedUnit } = matchUnitFromOffSize(units, info.size);
-      if (matchedUnit) form.unit_id = matchedUnit.id;
+      if (matchedUnit) {
+        form.unit_id = matchedUnit.id;
+        unitSuggestedBy = '';
+      } else if (!form.unit_id) {
+        try {
+          const s = await suggestUnit({
+            name: info.name || '', size: info.size || '',
+            off_categories: (info.categories || []).join(',')
+          });
+          if (s?.unit_id) { form.unit_id = s.unit_id; unitSuggestedBy = s.source || ''; }
+        } catch { /* advisory only */ }
+      }
       const baseUnitId = matchedUnit?.id ?? (form.unit_id ? Number(form.unit_id) : null);
       if (numeric && baseUnitId) {
         await addPuc({ factor: parseFloat(numeric), to_unit_id: baseUnitId, name: t('common.unit_piece_label') });
@@ -242,13 +282,16 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_unit')}</label>
-          <select bind:value={form.unit_id}
+          <select bind:value={form.unit_id} onchange={() => unitSuggestedBy = ''}
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('common.unit_placeholder')}</option>
             {#each units as u}
               <option value={u.id}>{u.name} ({u.abbreviation})</option>
             {/each}
           </select>
+          {#if unitSuggestedBy && SUGGESTION_HINT_KEYS[unitSuggestedBy]}
+            <p class="text-[11px] text-indigo-500 mt-1">{t(SUGGESTION_HINT_KEYS[unitSuggestedBy])}</p>
+          {/if}
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_category')}</label>

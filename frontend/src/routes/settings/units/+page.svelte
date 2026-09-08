@@ -13,7 +13,9 @@
   let loading = $state(true);
   let editModal = $state(null);
   let confirmDelete = $state(null);
-  let form = $state({ name: '', abbreviation: '', conversions: [] });
+  let form = $state({ name: '', abbreviation: '', dimension: '', conversions: [] });
+
+  const DIMENSIONS = ['mass', 'volume', 'count', 'length', 'other'];
 
   onMount(async () => { await reload(); });
 
@@ -23,17 +25,20 @@
   }
 
   function openAdd() {
-    form = { name: '', abbreviation: '', conversions: [] };
+    form = { name: '', abbreviation: '', dimension: '', conversions: [] };
     editModal = { unit: null, isNew: true };
   }
 
   function openEdit(u) {
-    form = { name: u.name, abbreviation: u.abbreviation, conversions: [...(u.conversions || [])] };
+    form = {
+      name: u.name, abbreviation: u.abbreviation, dimension: u.dimension || '',
+      conversions: [...(u.conversions || [])]
+    };
     editModal = { unit: u, isNew: false };
   }
 
   async function save() {
-    const data = { name: form.name, abbreviation: form.abbreviation };
+    const data = { name: form.name, abbreviation: form.abbreviation, dimension: form.dimension || null };
     try {
       if (editModal.isNew) { await createUnit(data); showToast(t('units.toast_created'), 'success'); }
       else { await updateUnit(editModal.unit.id, data); showToast(t('units.toast_saved'), 'success'); }
@@ -137,6 +142,18 @@
           <input bind:value={form.abbreviation} placeholder={t('units.placeholder_abbr')}
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">{t('units.label_dimension')}</label>
+        <select bind:value={form.dimension}
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">{t('units.dimension_auto')}</option>
+          {#each DIMENSIONS as d}
+            <option value={d}>{t(`units.dimension_${d}`)}</option>
+          {/each}
+        </select>
+        <p class="text-[11px] text-gray-400 mt-1">{t('units.dimension_hint')}</p>
       </div>
 
       <!-- Conversions (only for existing units) -->

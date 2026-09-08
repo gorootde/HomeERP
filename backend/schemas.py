@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
+
+Dimension = Literal["mass", "volume", "count", "length", "other"]
 
 # ── Units ───────────────────────────────────────────────────────────────────
 
 class UnitBase(BaseModel):
     name:         str = Field(..., min_length=1, max_length=64)
     abbreviation: str = Field(..., min_length=1, max_length=16)
+    dimension:    Optional[Dimension] = None
 
 class UnitCreate(UnitBase):
     pass
@@ -17,6 +20,7 @@ class UnitCreate(UnitBase):
 class UnitUpdate(BaseModel):
     name:         Optional[str] = Field(None, min_length=1, max_length=64)
     abbreviation: Optional[str] = Field(None, min_length=1, max_length=16)
+    dimension:    Optional[Dimension] = None
 
 class UnitConversionCreate(BaseModel):
     to_unit_id: int
@@ -27,6 +31,17 @@ class UnitSimple(BaseModel):
     id:           int
     name:         str
     abbreviation: str
+    dimension:    Optional[str] = None
+
+class UnitSuggestionRead(BaseModel):
+    """Result of GET /api/units/suggest — a best-effort unit pre-selection."""
+    unit_id:    Optional[int] = None
+    dimension:  Optional[str] = None
+    confidence: Literal["exact", "dimension", "learned", "none"] = "none"
+    source:     Optional[
+        Literal["size_token", "off_category", "name_keyword", "existing_products"]
+    ] = None
+    size_value: Optional[float] = None
 
 class UnitConversionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)

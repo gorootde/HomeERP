@@ -47,7 +47,11 @@ export default {
     puc_label: 'Unit Conversions', puc_empty: 'No conversions',
     puc_name_placeholder: 'e.g. Bottle', puc_toast_removed: 'Conversion removed',
     puc_err_name: 'Name required', puc_err_factor: 'Invalid factor', puc_err_unit: 'Choose unit',
-    puc_toast_added: 'Conversion added'
+    puc_toast_added: 'Conversion added',
+    unit_suggested_by_size: 'Suggested from the package size',
+    unit_suggested_by_category: 'Suggested from the category',
+    unit_suggested_by_name: 'Suggested from the name',
+    unit_suggested_by_history: 'Suggested from existing products'
   },
   vaults: {
     title: 'Vaults', btn_add: 'Add Vault', col_id: 'ID', col_description: 'Description',
@@ -113,7 +117,11 @@ export default {
     conv_preview: '1 {from} = {factor} {to}', conv_no_other_units: 'No other units',
     toast_conv_deleted: 'Conversion removed', toast_conv_err_factor: 'Invalid factor',
     toast_conv_saved: 'Conversion saved', toast_saved: 'Unit saved', toast_created: 'Unit created',
-    optgroup_units: 'Units', optgroup_product_units: 'Product Units'
+    optgroup_units: 'Units', optgroup_product_units: 'Product Units',
+    label_dimension: 'Dimension', dimension_auto: 'Detect automatically',
+    dimension_hint: 'Drives the unit suggestion when adding products.',
+    dimension_mass: 'Mass', dimension_volume: 'Volume', dimension_count: 'Count',
+    dimension_length: 'Length', dimension_other: 'Other'
   },
   categories: {
     title: 'Categories', btn_add: 'Add Category', col_name: 'Name', col_min_stock: 'Min Stock',
