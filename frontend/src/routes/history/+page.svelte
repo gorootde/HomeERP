@@ -8,6 +8,7 @@
   } from '$lib/api.js';
   import { fmtQty, fmtDate, fmtProductLabel } from '$lib/utils.js';
   import MovementList from '$lib/components/MovementList.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import FilterSelect from '$lib/components/FilterSelect.svelte';
   import { History, TrendingDown } from 'lucide-svelte';
@@ -87,37 +88,35 @@
         <option value="365">{t('forecast.window_365d')}</option>
       </select>
     </div>
-    {#if forecast.length === 0}
-      <p class="text-sm text-gray-400 px-4 py-6 text-center">{t('forecast.empty')}</p>
-    {:else}
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-gray-200 bg-gray-50">
-              <th class="text-left px-4 py-2 text-xs font-semibold text-gray-500">{t('forecast.col_product')}</th>
-              <th class="text-right px-4 py-2 text-xs font-semibold text-gray-500">{t('forecast.col_stock')}</th>
-              <th class="text-right px-4 py-2 text-xs font-semibold text-gray-500">{t('forecast.col_rate')}</th>
-              <th class="text-right px-4 py-2 text-xs font-semibold text-gray-500">{t('forecast.col_days_left')}</th>
-              <th class="text-left px-4 py-2 text-xs font-semibold text-gray-500 hidden sm:table-cell">{t('forecast.col_until')}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {#each forecast as f}
-              {@const days = f.days_remaining == null ? null : Math.round(f.days_remaining)}
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2 font-medium text-gray-900">{f.product_name}</td>
-                <td class="px-4 py-2 text-right tabular-nums text-gray-700">{fmtQty(f.current_stock)} {f.unit?.abbreviation || ''}</td>
-                <td class="px-4 py-2 text-right tabular-nums text-gray-500">{fmtQty(f.avg_daily_consumption)} {f.unit?.abbreviation || ''}</td>
-                <td class="px-4 py-2 text-right tabular-nums font-semibold {days != null && days <= 14 ? 'text-red-600' : days != null && days <= 30 ? 'text-amber-600' : 'text-gray-800'}">
-                  {days == null ? t('forecast.na') : t('forecast.days_value', { days })}
-                </td>
-                <td class="px-4 py-2 text-gray-500 hidden sm:table-cell">{f.depletion_date ? fmtDate(f.depletion_date) : t('forecast.na')}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-    {/if}
+    {#snippet fProductCell(f)}<span class="font-medium text-gray-900">{f.product_name}</span>{/snippet}
+    {#snippet fStockCell(f)}<span class="tabular-nums text-gray-700">{fmtQty(f.current_stock)} {f.unit?.abbreviation || ''}</span>{/snippet}
+    {#snippet fRateCell(f)}<span class="tabular-nums text-gray-500">{fmtQty(f.avg_daily_consumption)} {f.unit?.abbreviation || ''}</span>{/snippet}
+    {#snippet fDaysCell(f)}
+      {@const days = f.days_remaining == null ? null : Math.round(f.days_remaining)}
+      <span class="tabular-nums font-semibold {days != null && days <= 14 ? 'text-red-600' : days != null && days <= 30 ? 'text-amber-600' : 'text-gray-800'}">
+        {days == null ? t('forecast.na') : t('forecast.days_value', { days })}
+      </span>
+    {/snippet}
+    {#snippet fUntilCell(f)}<span class="text-gray-500">{f.depletion_date ? fmtDate(f.depletion_date) : t('forecast.na')}</span>{/snippet}
+    <DataTable
+      rows={forecast}
+      rowKey={(f) => f.product_id ?? f.product_name}
+      columns={[
+        { key: 'product', label: t('forecast.col_product'), sortable: true,
+          value: (f) => f.product_name, cell: fProductCell },
+        { key: 'stock', label: t('forecast.col_stock'), align: 'right', sortable: true,
+          value: (f) => f.current_stock ?? 0, cell: fStockCell },
+        { key: 'rate', label: t('forecast.col_rate'), align: 'right', sortable: true,
+          value: (f) => f.avg_daily_consumption ?? 0, cell: fRateCell },
+        { key: 'daysLeft', label: t('forecast.col_days_left'), align: 'right', sortable: true,
+          value: (f) => f.days_remaining ?? Infinity, cell: fDaysCell },
+        { key: 'until', label: t('forecast.col_until'), hideBelow: 'sm', sortable: true,
+          value: (f) => f.depletion_date, cell: fUntilCell },
+      ]}>
+      {#snippet empty()}
+        <p class="text-sm text-gray-400 px-4 py-6 text-center">{t('forecast.empty')}</p>
+      {/snippet}
+    </DataTable>
   </div>
 
   <!-- Filters -->

@@ -1,12 +1,15 @@
 <script>
   import { Search } from 'lucide-svelte';
 
-  /** Text search box with a leading search icon. Props: value (bindable), placeholder. */
-  let { value = $bindable(''), placeholder = '' } = $props();
+  /**
+   * Text search box with a leading search icon.
+   * Props: value (bindable), placeholder, ...rest (forwarded to the <input>, e.g. aria-label).
+   */
+  let { value = $bindable(''), placeholder = '', ...rest } = $props();
 </script>
 
 <div class="relative">
   <Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-  <input bind:value {placeholder}
+  <input bind:value {placeholder} {...rest}
     class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
 </div>

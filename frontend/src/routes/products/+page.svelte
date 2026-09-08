@@ -9,9 +9,7 @@
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
-  import SearchInput from '$lib/components/SearchInput.svelte';
-  import FilterSelect from '$lib/components/FilterSelect.svelte';
-  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import ProductEditModal from '$lib/components/ProductEditModal.svelte';
   import { Plus, Pencil, Barcode, Trash2, Image } from 'lucide-svelte';
 
@@ -19,8 +17,6 @@
   let units = $state([]);
   let categories = $state([]);
   let loading = $state(true);
-  let search = $state('');
-  let filterCategory = $state('');
 
   // Modals
   let editModal = $state(null); // null | { productId: number | null }
@@ -31,16 +27,10 @@
   let eanList = $state([]);
   let eanInput = $state('');
 
-  let filtered = $derived(
-    products.filter(p => {
-      if (search &&
-        !p.name?.toLowerCase().includes(search.toLowerCase()) &&
-        !p.vendor?.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterCategory === 'none') return p.category_id == null;
-      if (filterCategory) return p.category_id === Number(filterCategory);
-      return true;
-    })
-  );
+  const searchProduct = (p, q) => {
+    const s = q.toLowerCase();
+    return !!p.name?.toLowerCase().includes(s) || !!p.vendor?.toLowerCase().includes(s);
+  };
 
   onMount(async () => {
     await reload();
@@ -121,22 +111,8 @@
     </button>
   </div>
 
-  <!-- Search + filters -->
-  <div class="flex flex-wrap items-center gap-2 mb-4">
-    <div class="flex-1 min-w-48">
-      <SearchInput bind:value={search} placeholder={t('products.search_placeholder')} />
-    </div>
-    <FilterSelect bind:value={filterCategory} placeholder={t('products.filter_all_categories')}
-      options={[
-        ...categories.map(c => ({ value: c.id, label: c.name })),
-        { value: 'none', label: t('common.no_category') },
-      ]} />
-  </div>
-
   {#if loading}
     <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
-  {:else if filtered.length === 0}
-    <p class="text-center text-gray-400 py-12">{t('products.empty')}</p>
   {:else}
     {#snippet productCell(p)}
       <div class="flex items-center gap-3">
@@ -187,18 +163,35 @@
         </button>
       </div>
     {/snippet}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <ResponsiveTable
-        rows={filtered}
-        rowKey={(p) => p.id}
-        columns={[
-          { label: t('products.col_product'), cell: productCell },
-          { label: t('products.col_unit'), hideBelow: 'sm', cell: unitCell },
-          { label: t('products.col_eans'), hideBelow: 'md', cell: eansCell },
-          { label: t('products.col_tags'), hideBelow: 'lg', cell: tagsCell },
-          { cell: actionsCell },
-        ]} />
-    </div>
+    <DataTable
+      card
+      rows={products}
+      rowKey={(p) => p.id}
+      search={searchProduct}
+      searchPlaceholder={t('products.search_placeholder')}
+      actions={actionsCell}
+      columns={[
+          { key: 'product', label: t('products.col_product'), sortable: true,
+            value: (p) => p.name, cell: productCell },
+          { key: 'unit', label: t('products.col_unit'), hideBelow: 'sm', sortable: true,
+            value: (p) => p.unit?.name, cell: unitCell },
+          { key: 'eans', label: t('products.col_eans'), hideBelow: 'md', cell: eansCell },
+          { key: 'tags', label: t('products.col_tags'), hideBelow: 'lg', cell: tagsCell },
+          { key: 'category', hidden: true, label: t('products.label_category'),
+            filter: {
+              kind: 'select',
+              placeholder: t('products.filter_all_categories'),
+              options: [
+                ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+                { value: 'none', label: t('common.no_category') },
+              ],
+              match: (p, v) => v === 'none' ? p.category_id == null : p.category_id === Number(v),
+            } },
+      ]}>
+      {#snippet empty()}
+        <p class="text-center text-gray-400 py-12">{t('products.empty')}</p>
+      {/snippet}
+    </DataTable>
   {/if}
 </div>
 

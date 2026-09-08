@@ -3,7 +3,7 @@
   import { t } from '$lib/i18n.svelte.js';
   import { getStockSummary, getCategoryStockSummary, getConsumptionForecast } from '$lib/api.js';
   import { fmtQty, fmtDate, trafficStatus } from '$lib/utils.js';
-  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import { Package, BarChart3, Warehouse, AlertTriangle, TrendingDown } from 'lucide-svelte';
 
   let summary = $state([]);
@@ -139,34 +139,36 @@
 
     <!-- All products table -->
     <h2 class="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.section_all_products')}</h2>
-    {#if summary.length === 0}
-      <p class="text-gray-400 text-sm text-center py-8">{t('dashboard.empty')}</p>
-    {:else}
-      {#snippet nameCell(row)}<span class="font-medium text-gray-900">{row.product_name}</span>{/snippet}
-      {#snippet vendorCell(row)}<span class="text-gray-500">{row.vendor || '—'}</span>{/snippet}
-      {#snippet qtyCell(row)}
-        <span class="font-semibold text-gray-900">{fmtQty(row.total_quantity)} {row.unit?.abbreviation || ''}</span>
-      {/snippet}
-      {#snippet byVaultCell(row)}
-        <div class="flex flex-wrap gap-1">
-          {#each row.by_vault || [] as bv}
-            <span class="text-xs bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5">
-              {bv.vault_description}: {fmtQty(bv.total_quantity)}
-            </span>
-          {/each}
-        </div>
-      {/snippet}
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <ResponsiveTable
-          rows={summary}
-          rowKey={(row) => row.product_id}
-          columns={[
-            { label: t('dashboard.col_product'), cell: nameCell },
-            { label: t('dashboard.col_vendor'), hideBelow: 'sm', cell: vendorCell },
-            { label: t('dashboard.col_total_qty'), align: 'right', cell: qtyCell },
-            { label: t('dashboard.col_by_vault'), hideBelow: 'md', cell: byVaultCell },
-          ]} />
+    {#snippet nameCell(row)}<span class="font-medium text-gray-900">{row.product_name}</span>{/snippet}
+    {#snippet vendorCell(row)}<span class="text-gray-500">{row.vendor || '—'}</span>{/snippet}
+    {#snippet qtyCell(row)}
+      <span class="font-semibold text-gray-900">{fmtQty(row.total_quantity)} {row.unit?.abbreviation || ''}</span>
+    {/snippet}
+    {#snippet byVaultCell(row)}
+      <div class="flex flex-wrap gap-1">
+        {#each row.by_vault || [] as bv}
+          <span class="text-xs bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5">
+            {bv.vault_description}: {fmtQty(bv.total_quantity)}
+          </span>
+        {/each}
       </div>
-    {/if}
+    {/snippet}
+    <DataTable
+      card
+      rows={summary}
+      rowKey={(row) => row.product_id}
+      columns={[
+        { key: 'product', label: t('dashboard.col_product'), sortable: true,
+          value: (row) => row.product_name, cell: nameCell },
+        { key: 'vendor', label: t('dashboard.col_vendor'), hideBelow: 'sm', sortable: true,
+          value: (row) => row.vendor, cell: vendorCell },
+        { key: 'qty', label: t('dashboard.col_total_qty'), align: 'right', sortable: true,
+          value: (row) => row.total_quantity ?? 0, cell: qtyCell },
+        { key: 'byVault', label: t('dashboard.col_by_vault'), hideBelow: 'md', cell: byVaultCell },
+      ]}>
+      {#snippet empty()}
+        <p class="text-gray-400 text-sm text-center py-8">{t('dashboard.empty')}</p>
+      {/snippet}
+    </DataTable>
   {/if}
 </div>

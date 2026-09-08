@@ -6,7 +6,7 @@
   import { useTags } from '$lib/useTags.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import TagChips from '$lib/components/TagChips.svelte';
   import { Plus, Pencil, Trash2, ChevronLeft } from 'lucide-svelte';
 
@@ -76,8 +76,6 @@
 
   {#if loading}
     <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
-  {:else if vaults.length === 0}
-    <p class="text-center text-gray-400 py-12">{t('vaults.empty')}</p>
   {:else}
     {#snippet idCell(v)}<span class="text-gray-500 font-mono text-xs">{v.id}</span>{/snippet}
     {#snippet descCell(v)}<span class="font-medium text-gray-900">{v.description}</span>{/snippet}
@@ -99,17 +97,20 @@
         </button>
       </div>
     {/snippet}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <ResponsiveTable
-        rows={vaults}
-        rowKey={(v) => v.id}
-        columns={[
-          { label: t('vaults.col_id'), cell: idCell },
-          { label: t('vaults.col_description'), cell: descCell },
-          { label: t('vaults.col_tags'), hideBelow: 'sm', cell: tagsCell },
-          { cell: actionsCell },
-        ]} />
-    </div>
+    <DataTable
+      card
+      rows={vaults}
+      rowKey={(v) => v.id}
+      actions={actionsCell}
+      columns={[
+        { key: 'id', label: t('vaults.col_id'), sortable: true, value: (v) => v.id, cell: idCell },
+        { key: 'description', label: t('vaults.col_description'), sortable: true, value: (v) => v.description, cell: descCell },
+        { key: 'tags', label: t('vaults.col_tags'), hideBelow: 'sm', cell: tagsCell },
+      ]}>
+      {#snippet empty()}
+        <p class="text-center text-gray-400 py-12">{t('vaults.empty')}</p>
+      {/snippet}
+    </DataTable>
   {/if}
 </div>
 

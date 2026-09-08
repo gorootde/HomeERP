@@ -5,6 +5,7 @@
   import { getCategories, createCategory, updateCategory, deleteCategory, getUnits } from '$lib/api.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import { Plus, Pencil, Trash2, ChevronLeft } from 'lucide-svelte';
 
   let categories = $state([]);
@@ -71,42 +72,39 @@
 
   {#if loading}
     <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
-  {:else if categories.length === 0}
-    <p class="text-center text-gray-400 py-12">{t('categories.empty')}</p>
   {:else}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-200 bg-gray-50">
-            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('categories.col_name')}</th>
-            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('categories.col_min_stock')}</th>
-            <th class="px-4 py-2.5"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {#each categories as c}
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-2.5 font-medium text-gray-900">{c.name}</td>
-              <td class="px-4 py-2.5 text-gray-500">
-                {c.min_stock_quantity != null ? `${c.min_stock_quantity} ${c.min_stock_unit?.abbreviation || ''}` : t('categories.no_min_stock')}
-              </td>
-              <td class="px-4 py-2.5">
-                <div class="flex gap-1 justify-end">
-                  <button onclick={() => openEdit(c)} aria-label={t('common.edit')} title={t('common.edit')}
-                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-                    <Pencil size={15} />
-                  </button>
-                  <button onclick={() => confirmDelete = { id: c.id }} aria-label={t('common.delete')} title={t('common.delete')}
-                    class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    {#snippet nameCell(c)}<span class="font-medium text-gray-900">{c.name}</span>{/snippet}
+    {#snippet minStockCell(c)}
+      <span class="text-gray-500">
+        {c.min_stock_quantity != null ? `${c.min_stock_quantity} ${c.min_stock_unit?.abbreviation || ''}` : t('categories.no_min_stock')}
+      </span>
+    {/snippet}
+    {#snippet actionsCell(c)}
+      <div class="flex gap-1 justify-end">
+        <button onclick={() => openEdit(c)} aria-label={t('common.edit')} title={t('common.edit')}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+          <Pencil size={15} />
+        </button>
+        <button onclick={() => confirmDelete = { id: c.id }} aria-label={t('common.delete')} title={t('common.delete')}
+          class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+          <Trash2 size={15} />
+        </button>
+      </div>
+    {/snippet}
+    <DataTable
+      card
+      rows={categories}
+      rowKey={(c) => c.id}
+      actions={actionsCell}
+      columns={[
+        { key: 'name', label: t('categories.col_name'), sortable: true, value: (c) => c.name, cell: nameCell },
+        { key: 'minStock', label: t('categories.col_min_stock'), sortable: true,
+          value: (c) => c.min_stock_quantity, cell: minStockCell },
+      ]}>
+      {#snippet empty()}
+        <p class="text-center text-gray-400 py-12">{t('categories.empty')}</p>
+      {/snippet}
+    </DataTable>
   {/if}
 </div>
 

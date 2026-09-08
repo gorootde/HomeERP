@@ -37,6 +37,28 @@ test('search filters the product list', async ({ page }) => {
   }
 });
 
+test('sorts the product list by clicking the Produkt column header', async ({ page }) => {
+  const api = await makeApi();
+  try {
+    const token = uid('SortTok');
+    await api.createProduct({ name: `ZZZ ${token}` });
+    await api.createProduct({ name: `AAA ${token}` });
+    await page.reload();
+
+    await page.getByPlaceholder('Suche nach Name oder Hersteller…').fill(token);
+    const rows = page.getByRole('row', { name: new RegExp(token) });
+    await expect(rows).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Produkt', exact: true }).click(); // ascending
+    await expect(rows.first()).toContainText(`AAA ${token}`);
+
+    await page.getByRole('button', { name: 'Produkt', exact: true }).click(); // descending
+    await expect(rows.first()).toContainText(`ZZZ ${token}`);
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('filter the product list by category', async ({ page }) => {
   const api = await makeApi();
   try {
@@ -47,11 +69,11 @@ test('filter the product list by category', async ({ page }) => {
     await api.createProduct({ name: noCat });
     await page.reload();
 
-    await page.getByRole('combobox').first().selectOption({ label: cat.name });
+    await page.getByRole('combobox', { name: 'Kategorie' }).selectOption({ label: cat.name });
     await expect(page.getByRole('row', { name: new RegExp(inCat) })).toBeVisible();
     await expect(page.getByRole('row', { name: new RegExp(noCat) })).toHaveCount(0);
 
-    await page.getByRole('combobox').first().selectOption({ label: 'Keine Kategorie' });
+    await page.getByRole('combobox', { name: 'Kategorie' }).selectOption({ label: 'Keine Kategorie' });
     await expect(page.getByRole('row', { name: new RegExp(noCat) })).toBeVisible();
     await expect(page.getByRole('row', { name: new RegExp(inCat) })).toHaveCount(0);
   } finally {

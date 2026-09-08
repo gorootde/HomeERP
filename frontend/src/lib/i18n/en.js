@@ -7,7 +7,8 @@ export default {
     error_load_page: 'Could not load page', camera_unavailable: 'Camera not available',
     scanner_unavailable: 'Scanner not available', optional: 'optional', stop_scan: 'Stop scanner',
     start_scan: 'Scan', loading: 'Loading…',
-    unit_piece_label: 'piece'
+    unit_piece_label: 'piece',
+    sort_by: 'Sort by {col}', table_search: 'Search…', table_filter_all: 'All'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', stock: 'Stock', scanner: 'Scanner',

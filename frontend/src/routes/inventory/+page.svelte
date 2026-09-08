@@ -9,6 +9,7 @@
   import { fmtQty, isStockId } from '$lib/utils.js';
   import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   // Steps: select | counting | result
   let step = $state('select');
@@ -294,51 +295,45 @@
         </div>
       </div>
 
-      {#if results.length === 0}
-        <p class="text-center text-gray-400 py-8">{t('inventory.empty')}</p>
-      {:else}
-        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-gray-200 bg-gray-50">
-                  <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('inventory.col_product')}</th>
-                  <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">{t('inventory.col_expected')}</th>
-                  <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">{t('inventory.col_scanned')}</th>
-                  <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">{t('inventory.col_diff')}</th>
-                  <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">{t('inventory.col_status')}</th>
-                  <th class="px-4 py-2.5"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                {#each results as row}
-                  <tr class={row.status !== 'ok' ? statusBg[row.status] : ''}>
-                    <td class="px-4 py-2.5 font-medium text-gray-900">{row.product?.name || '—'}</td>
-                    <td class="px-4 py-2.5 text-right text-gray-600">{fmtQty(row.expected)}</td>
-                    <td class="px-4 py-2.5 text-right text-gray-600">{fmtQty(row.scanned)}</td>
-                    <td class="px-4 py-2.5 text-right font-medium {statusColors[row.status]}">
-                      {row.diff > 0 ? '+' : ''}{fmtQty(row.diff)}
-                    </td>
-                    <td class="px-4 py-2.5">
-                      <span class={`text-xs font-medium ${statusColors[row.status]}`}>
-                        {t(`inventory.status_${row.status}`)}
-                      </span>
-                    </td>
-                    <td class="px-4 py-2.5">
-                      {#if row.status !== 'ok' && row.entryId}
-                        <button onclick={() => applyResult(row)}
-                          class="text-xs px-2.5 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                          {t('inventory.btn_update_db')}
-                        </button>
-                      {/if}
-                    </td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {/if}
+      {#snippet invProductCell(row)}<span class="font-medium text-gray-900">{row.product?.name || '—'}</span>{/snippet}
+      {#snippet invExpectedCell(row)}<span class="text-gray-600">{fmtQty(row.expected)}</span>{/snippet}
+      {#snippet invScannedCell(row)}<span class="text-gray-600">{fmtQty(row.scanned)}</span>{/snippet}
+      {#snippet invDiffCell(row)}
+        <span class="font-medium {statusColors[row.status]}">{row.diff > 0 ? '+' : ''}{fmtQty(row.diff)}</span>
+      {/snippet}
+      {#snippet invStatusCell(row)}
+        <span class="text-xs font-medium {statusColors[row.status]}">{t(`inventory.status_${row.status}`)}</span>
+      {/snippet}
+      {#snippet invActionsCell(row)}
+        {#if row.status !== 'ok' && row.entryId}
+          <button onclick={() => applyResult(row)}
+            class="text-xs px-2.5 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+            {t('inventory.btn_update_db')}
+          </button>
+        {/if}
+      {/snippet}
+      <DataTable
+        card
+        rows={results}
+        rowKey={(row) => row.product?.id}
+        rowClass={(row) => row.status !== 'ok' ? statusBg[row.status] : ''}
+        actions={invActionsCell}
+        columns={[
+          { key: 'product', label: t('inventory.col_product'), sortable: true,
+            value: (row) => row.product?.name, cell: invProductCell },
+          { key: 'expected', label: t('inventory.col_expected'), align: 'right', sortable: true,
+            value: (row) => row.expected, cell: invExpectedCell },
+          { key: 'scanned', label: t('inventory.col_scanned'), align: 'right', sortable: true,
+            value: (row) => row.scanned, cell: invScannedCell },
+          { key: 'diff', label: t('inventory.col_diff'), align: 'right', sortable: true,
+            value: (row) => row.diff, cell: invDiffCell },
+          { key: 'status', label: t('inventory.col_status'), sortable: true,
+            value: (row) => row.status, cell: invStatusCell },
+        ]}>
+        {#snippet empty()}
+          <p class="text-center text-gray-400 py-8">{t('inventory.empty')}</p>
+        {/snippet}
+      </DataTable>
 
       <!-- Unknown EANs in result -->
       {#if unknownEans.length > 0}

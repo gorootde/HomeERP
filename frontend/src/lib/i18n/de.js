@@ -8,7 +8,8 @@ export default {
     error_load_page: 'Seite konnte nicht geladen werden', camera_unavailable: 'Kamera nicht verfügbar',
     scanner_unavailable: 'Scanner nicht verfügbar', optional: 'optional', stop_scan: 'Scanner stoppen',
     start_scan: 'Scannen', loading: 'Lade…',
-    unit_piece_label: 'Stück'
+    unit_piece_label: 'Stück',
+    sort_by: 'Nach {col} sortieren', table_search: 'Suchen…', table_filter_all: 'Alle'
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produkte', stock: 'Lager', scanner: 'Scanner',

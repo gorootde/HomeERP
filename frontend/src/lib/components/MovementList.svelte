@@ -1,7 +1,7 @@
 <script>
   import { t } from '$lib/i18n.svelte.js';
   import { fmtQty, fmtDateTime } from '$lib/utils.js';
-  import ResponsiveTable from './ResponsiveTable.svelte';
+  import DataTable from './DataTable.svelte';
   import { Undo2 } from 'lucide-svelte';
 
   /**
@@ -59,20 +59,20 @@
   {/if}
 {/snippet}
 
-<ResponsiveTable
+<DataTable
   dense
   rows={movements}
   rowKey={(m) => m.id}
   rowClass={(m) => m.undone ? 'opacity-50' : ''}
+  actions={actionsCell}
   columns={[
-    { label: t('history.col_time'), cell: timeCell },
+    { key: 'time', label: t('history.col_time'), sortable: true, value: (m) => m.created_at, cell: timeCell },
     ...(showContext ? [
-      { label: t('history.col_product'), cell: productCell },
-      { label: t('history.col_vault'), hideBelow: 'sm', cell: vaultCell },
+      { key: 'product', label: t('history.col_product'), sortable: true, value: (m) => m.product_name, cell: productCell },
+      { key: 'vault', label: t('history.col_vault'), hideBelow: 'sm', sortable: true, value: (m) => m.vault_description, cell: vaultCell },
     ] : []),
-    { label: t('history.col_change'), align: 'right', cell: changeCell },
-    { label: t('history.col_result'), align: 'right', hideBelow: 'md', cell: resultCell },
-    { label: t('history.col_reason'), cell: reasonCell },
-    { label: t('history.col_note'), hideBelow: 'lg', cell: noteCell },
-    { align: 'right', cell: actionsCell },
+    { key: 'change', label: t('history.col_change'), align: 'right', sortable: true, value: (m) => m.delta, cell: changeCell },
+    { key: 'result', label: t('history.col_result'), align: 'right', hideBelow: 'md', cell: resultCell },
+    { key: 'reason', label: t('history.col_reason'), sortable: true, value: (m) => m.reason, cell: reasonCell },
+    { key: 'note', label: t('history.col_note'), hideBelow: 'lg', cell: noteCell },
   ]} />

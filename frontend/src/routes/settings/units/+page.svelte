@@ -5,7 +5,7 @@
   import { getUnits, createUnit, updateUnit, deleteUnit, addUnitConversion, deleteUnitConversion } from '$lib/api.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import UnitConversionEditor from '$lib/components/UnitConversionEditor.svelte';
   import { Plus, Pencil, Trash2, ChevronLeft } from 'lucide-svelte';
 
@@ -84,8 +84,6 @@
 
   {#if loading}
     <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
-  {:else if units.length === 0}
-    <p class="text-center text-gray-400 py-12">{t('units.empty')}</p>
   {:else}
     {#snippet nameCell(u)}<span class="font-medium text-gray-900">{u.name}</span>{/snippet}
     {#snippet abbrCell(u)}<span class="text-gray-600 font-mono">{u.abbreviation}</span>{/snippet}
@@ -107,17 +105,21 @@
         </button>
       </div>
     {/snippet}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <ResponsiveTable
-        rows={units}
-        rowKey={(u) => u.id}
-        columns={[
-          { label: t('units.col_name'), cell: nameCell },
-          { label: t('units.col_abbr'), cell: abbrCell },
-          { label: t('units.col_conversions'), hideBelow: 'sm', cell: convCell },
-          { cell: actionsCell },
-        ]} />
-    </div>
+    <DataTable
+      card
+      rows={units}
+      rowKey={(u) => u.id}
+      actions={actionsCell}
+      columns={[
+        { key: 'name', label: t('units.col_name'), sortable: true, value: (u) => u.name, cell: nameCell },
+        { key: 'abbr', label: t('units.col_abbr'), sortable: true, value: (u) => u.abbreviation, cell: abbrCell },
+        { key: 'conversions', label: t('units.col_conversions'), hideBelow: 'sm',
+          value: (u) => (u.conversions || []).length, sortable: true, cell: convCell },
+      ]}>
+      {#snippet empty()}
+        <p class="text-center text-gray-400 py-12">{t('units.empty')}</p>
+      {/snippet}
+    </DataTable>
   {/if}
 </div>
 

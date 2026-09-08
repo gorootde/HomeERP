@@ -89,7 +89,7 @@ test('filter entries by vault', async ({ page }) => {
     await page.goto('/stock');
     await expect(page.getByRole('row', { name: new RegExp(p.name) })).toHaveCount(2);
 
-    await page.getByRole('combobox').first().selectOption({ label: v1.description });
+    await page.getByRole('combobox', { name: 'Lagerort' }).selectOption({ label: v1.description });
     await expect(page.getByRole('row', { name: new RegExp(p.name) })).toHaveCount(1);
   } finally {
     await api.dispose();
@@ -111,8 +111,7 @@ test('filter entries by category', async ({ page }) => {
     await expect(page.getByRole('row', { name: new RegExp(inCat.name) })).toBeVisible();
     await expect(page.getByRole('row', { name: new RegExp(noCat.name) })).toBeVisible();
 
-    // category filter is the second select in the filter bar (after vault)
-    await page.getByRole('combobox').nth(1).selectOption({ label: cat.name });
+    await page.getByRole('combobox', { name: 'Kategorie' }).selectOption({ label: cat.name });
     await expect(page.getByRole('row', { name: new RegExp(inCat.name) })).toBeVisible();
     await expect(page.getByRole('row', { name: new RegExp(noCat.name) })).toHaveCount(0);
   } finally {

@@ -7,12 +7,11 @@
     getVaults, getProducts, addStockId, removeStockId, getUnits, getSetting,
     getEntryMovements, undoStockMovement, printStockEntryLabel, getCategories
   } from '$lib/api.js';
-  import { fmtDate, fmtProductLabel, fmtEntryQty } from '$lib/utils.js';
+  import { fmtDate, fmtProductLabel, fmtEntryQty, isExpiringSoon } from '$lib/utils.js';
   import Modal from '$lib/components/Modal.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import ScannableCodeList from '$lib/components/ScannableCodeList.svelte';
-  import FilterSelect from '$lib/components/FilterSelect.svelte';
-  import ResponsiveTable from '$lib/components/ResponsiveTable.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import StockEntryModal from '$lib/components/StockEntryModal.svelte';
   import ProductEditModal from '$lib/components/ProductEditModal.svelte';
   import MovementList from '$lib/components/MovementList.svelte';
@@ -25,11 +24,6 @@
   let categories = $state([]);
   let autoPrintEnabled = $state(false);
   let loading = $state(true);
-
-  let filterVault = $state('');
-  let filterCategory = $state('');
-  let filterProduct = $state('');
-  let filterExpiry = $state('');
 
   let editModal = $state(null);
   let productEditModal = $state(null);
@@ -45,27 +39,6 @@
   let stockIdList = $state([]);
 
   // editModal.initial holds the pre-filled form values passed into StockEntryModal
-  let filtered = $derived(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return entries.filter(e => {
-      if (filterVault && e.vault_id !== Number(filterVault)) return false;
-      if (filterCategory === 'none') {
-        if (e.product?.category_id != null) return false;
-      } else if (filterCategory && e.product?.category_id !== Number(filterCategory)) {
-        return false;
-      }
-      if (filterProduct && e.product_id !== Number(filterProduct)) return false;
-      if (filterExpiry) {
-        if (!e.best_before_date) return false;
-        const bbd = new Date(e.best_before_date);
-        const cutoff = new Date(now);
-        cutoff.setDate(cutoff.getDate() + Number(filterExpiry));
-        if (bbd < now || bbd > cutoff) return false;
-      }
-      return true;
-    });
-  });
 
   onMount(async () => { await reload(); });
 
@@ -233,34 +206,9 @@
     </button>
   </div>
 
-  <!-- Filters -->
-  <div class="flex flex-wrap gap-2 mb-4">
-    <FilterSelect bind:value={filterVault} placeholder={t('stock.filter_all_vaults')}
-      options={vaults.map(v => ({ value: v.id, label: v.description }))} />
-    <FilterSelect bind:value={filterCategory} placeholder={t('stock.filter_all_categories')}
-      options={[
-        ...categories.map(c => ({ value: c.id, label: c.name })),
-        { value: 'none', label: t('common.no_category') },
-      ]} />
-    <FilterSelect bind:value={filterProduct} placeholder={t('stock.filter_all_products')}
-      options={products.map(p => ({ value: p.id, label: fmtProductLabel(p) }))} />
-    <FilterSelect bind:value={filterExpiry} placeholder={t('stock.filter_expiry_all')}
-      options={[
-        { value: '7', label: t('stock.filter_expiry_7d') },
-        { value: '30', label: t('stock.filter_expiry_30d') },
-        { value: '180', label: t('stock.filter_expiry_6m') },
-      ]} />
-  </div>
-
   {#if loading}
     <div class="flex justify-center py-16 text-gray-400">{t('common.loading')}</div>
   {:else}
-    {@const rows = filtered()}
-    {#if rows.length === 0}
-      <p class="text-center text-gray-400 py-12">
-        {filterVault || filterCategory || filterProduct || filterExpiry ? t('stock.empty_filter') : t('stock.empty')}
-      </p>
-    {:else}
       {#snippet productCell(e)}
         {#if e.product?.id}
           <button type="button" onclick={() => productEditModal = { productId: e.product.id }}
@@ -314,21 +262,67 @@
           </button>
         </div>
       {/snippet}
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <ResponsiveTable
-          rows={rows}
+      <DataTable
+          card
+          rows={entries}
           rowKey={(e) => e.id}
+          actions={actionsCell}
           columns={[
-            { label: t('stock.col_product'), cell: productCell },
-            { label: t('stock.col_vault'), hideBelow: 'sm', cell: vaultCell },
-            { label: t('stock.col_qty'), align: 'right', cell: qtyCell },
-            { label: t('stock.col_bbd'), hideBelow: 'md', cell: bbdCell },
-            { label: t('stock.col_comment'), hideBelow: 'lg', cell: commentCell },
-            { label: t('stock.col_stockids'), hideBelow: 'lg', cell: stockIdsCell },
-            { cell: actionsCell },
-          ]} />
-      </div>
-    {/if}
+            { key: 'product', label: t('stock.col_product'), sortable: true,
+              value: (e) => e.product?.name, cell: productCell },
+            { key: 'vault', label: t('stock.col_vault'), hideBelow: 'sm', sortable: true,
+              value: (e) => e.vault?.description, cell: vaultCell,
+              filter: {
+                kind: 'select',
+                placeholder: t('stock.filter_all_vaults'),
+                options: vaults.map((v) => ({ value: String(v.id), label: v.description })),
+                match: (e, v) => e.vault_id === Number(v),
+              } },
+            { key: 'qty', label: t('stock.col_qty'), align: 'right', sortable: true,
+              value: (e) => e.quantity ?? 0, cell: qtyCell },
+            { key: 'bbd', label: t('stock.col_bbd'), hideBelow: 'md', sortable: true,
+              value: (e) => e.best_before_date, cell: bbdCell },
+            { key: 'comment', label: t('stock.col_comment'), hideBelow: 'lg', cell: commentCell },
+            { key: 'stockids', label: t('stock.col_stockids'), hideBelow: 'lg', cell: stockIdsCell },
+            { key: 'category', hidden: true, label: t('stock.filter_all_categories'),
+              filterLabel: t('products.label_category'),
+              filter: {
+                kind: 'select',
+                placeholder: t('stock.filter_all_categories'),
+                options: [
+                  ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+                  { value: 'none', label: t('common.no_category') },
+                ],
+                match: (e, v) => v === 'none'
+                  ? e.product?.category_id == null
+                  : e.product?.category_id === Number(v),
+              } },
+            { key: 'productFilter', hidden: true, label: t('stock.filter_all_products'),
+              filterLabel: t('stock.col_product'),
+              filter: {
+                kind: 'select',
+                placeholder: t('stock.filter_all_products'),
+                options: products.map((p) => ({ value: String(p.id), label: fmtProductLabel(p) })),
+                match: (e, v) => e.product_id === Number(v),
+              } },
+            { key: 'expiry', hidden: true, label: t('stock.filter_expiry_all'),
+              filter: {
+                kind: 'select',
+                placeholder: t('stock.filter_expiry_all'),
+                options: [
+                  { value: '7', label: t('stock.filter_expiry_7d') },
+                  { value: '30', label: t('stock.filter_expiry_30d') },
+                  { value: '180', label: t('stock.filter_expiry_6m') },
+                ],
+                match: (e, v) => isExpiringSoon(e.best_before_date, Number(v)),
+              } },
+          ]}>
+        {#snippet empty({ filtered })}
+          <p class="text-center text-gray-400 py-12">
+            {filtered ? t('stock.empty_filter') : t('stock.empty')}
+          </p>
+        {/snippet}
+      </DataTable>
   {/if}
 </div>
 
