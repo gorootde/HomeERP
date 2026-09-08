@@ -155,7 +155,10 @@
 </script>
 
 <div class="space-y-2">
-  <div id={containerId} class="w-full rounded-lg overflow-hidden bg-gray-100 min-h-[200px]"></div>
+  <div
+    id={containerId}
+    class="scanner-box w-full max-w-sm mx-auto rounded-lg overflow-hidden bg-gray-100 aspect-square max-h-[45vh]"
+  ></div>
   {#if status === 'starting'}
     <p class="text-sm text-gray-500 text-center">{t('scanner.status_starting')}</p>
   {:else if status === 'active'}
@@ -173,3 +176,18 @@
     <p class="text-sm text-red-600 text-center">{errorMsg}</p>
   {/if}
 </div>
+
+<style>
+  /* html5-qrcode injects a <video> (and helper <canvas>/overlay) with inline
+     dimensions that follow the camera stream's aspect ratio. On a portrait phone
+     that stream is tall, so the preview grew into a full-screen rectangle and
+     pushed the post-scan action buttons off screen. Force the injected media to
+     fill our fixed square box instead. */
+  .scanner-box :global(video),
+  .scanner-box :global(canvas) {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block;
+  }
+</style>
