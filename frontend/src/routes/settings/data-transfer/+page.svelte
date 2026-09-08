@@ -93,7 +93,7 @@
 
   const statusColors = {
     ok: 'text-green-600', error: 'text-red-600', skipped: 'text-gray-400',
-    known: 'text-blue-600', unknown: 'text-amber-600'
+    known: 'text-indigo-600', unknown: 'text-amber-600'
   };
 </script>
 
@@ -113,7 +113,7 @@
 
     <div class="flex justify-between items-center mb-2">
       <p class="text-xs font-medium text-gray-700">{t('data_transfer.tables_label')}</p>
-      <button onclick={selectAll} class="text-xs text-blue-600 hover:underline">{t('data_transfer.select_all')}</button>
+      <button onclick={selectAll} class="text-xs text-indigo-600 hover:underline">{t('data_transfer.select_all')}</button>
     </div>
     <div class="grid grid-cols-2 gap-1.5 mb-3">
       {#each models as model}
@@ -130,7 +130,7 @@
       <span class="text-gray-700">{t('data_transfer.images_label')}</span>
     </label>
     <button onclick={doExport} disabled={exporting}
-      class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50">
       <Download size={16} />
       {exporting ? t('data_transfer.exporting') : t('data_transfer.btn_export')}
     </button>

@@ -168,7 +168,7 @@
     <div>
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_vault')}</label>
       <select bind:value={form.vault_id}
-        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <option value="">{t('stock.select_vault')}</option>
         {#each vaults as v}
           <option value={v.id}>{v.description}</option>
@@ -180,13 +180,13 @@
     <div>
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_qty')}</label>
       <div class="flex gap-2">
-        <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden flex-1">
+        <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-indigo-500 overflow-hidden flex-1">
           <input bind:value={form.quantity} type="number" step="any"
             class="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0" />
         </div>
         {#if entryUnits().length > 1}
           <select bind:value={form.entry_unit_id}
-            class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {#each entryUnits() as u}
               <option value={u.id}>{u.abbreviation}</option>
             {/each}
@@ -202,7 +202,7 @@
     <!-- Best before date -->
     <div>
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_bbd')}</label>
-      <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden">
+      <div class="flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-indigo-500 overflow-hidden">
         <input bind:value={form.best_before_date} type="date"
           class="flex-1 min-w-0 px-3 py-2 text-sm focus:outline-none" />
         {#if form.best_before_date}
@@ -222,7 +222,7 @@
     <div>
       <label class="block text-xs font-medium text-gray-700 mb-1">{t('stock.label_comment')}</label>
       <input bind:value={form.comment} placeholder={t('stock.placeholder_comment')}
-        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
     </div>
 
     <!-- Stock ID (only when creating new entry) -->
@@ -253,7 +253,7 @@
         {t('common.cancel')}
       </button>
       <button onclick={save}
-        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+        class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
         {isNew ? t('common.create') : t('common.save')}
       </button>
     </div>

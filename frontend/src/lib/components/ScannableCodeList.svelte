@@ -70,9 +70,9 @@
   <div class="flex gap-2">
     <input bind:value {placeholder}
       onkeydown={(e) => e.key === 'Enter' && onadd?.()}
-      class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+      class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
     {#if onadd}
-      <button type="button" onclick={onadd} class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      <button type="button" onclick={onadd} class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
         {t('common.add')}
       </button>
     {/if}

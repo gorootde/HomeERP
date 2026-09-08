@@ -60,7 +60,7 @@
                 ['generated', 'stockid.mode_auto_title', 'stockid.mode_auto_desc'],
                 ['extern', 'stockid.mode_extern_title', 'stockid.mode_extern_desc']] as [val, titleKey, descKey]}
           <label class="flex items-start gap-3 bg-white rounded-xl border p-4 cursor-pointer
-            {mode === val ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}">
+            {mode === val ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'}">
             <input type="radio" bind:group={mode} value={val} class="mt-0.5" />
             <div>
               <p class="text-sm font-medium text-gray-900">{t(titleKey)}</p>
@@ -76,19 +76,19 @@
           <div>
             <label class="block text-xs font-medium text-gray-700 mb-1">{t('stockid.label_prefix')}</label>
             <input bind:value={prefix} placeholder={t('stockid.placeholder_prefix')}
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p class="text-xs text-gray-400 mt-0.5">{t('stockid.hint_prefix')}</p>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-700 mb-1">{t('stockid.label_counter')}</label>
             <input bind:value={counter} type="number" min="1"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <p class="text-xs text-blue-600 mt-0.5">{t('stockid.hint_next_id', { id: nextId() })}</p>
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <p class="text-xs text-indigo-600 mt-0.5">{t('stockid.hint_next_id', { id: nextId() })}</p>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-700 mb-1">{t('stockid.label_pad')}</label>
             <input bind:value={padLength} type="number" min="1" max="20"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p class="text-xs text-gray-400 mt-0.5">{t('stockid.hint_pad')}</p>
           </div>
         </div>
@@ -100,7 +100,7 @@
           <div>
             <label class="block text-xs font-medium text-gray-700 mb-1">{t('stockid.label_webhook')}</label>
             <input bind:value={webhookUrl} placeholder="https://…"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p class="text-xs text-gray-400 mt-0.5">{t('stockid.hint_webhook')}</p>
           </div>
           <!-- Placeholders -->
@@ -116,7 +116,7 @@
       {/if}
 
       <button onclick={save}
-        class="w-full py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        class="w-full py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
         {t('stockid.btn_save')}
       </button>
     </div>

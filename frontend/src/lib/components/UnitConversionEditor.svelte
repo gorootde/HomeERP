@@ -91,13 +91,13 @@
       {#if withName}
         <input bind:value={name} onkeydown={keydown}
           placeholder={t('products.puc_name_placeholder')}
-          class="flex-1 min-w-24 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          class="flex-1 min-w-24 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
       {/if}
       <input bind:value={factor} onkeydown={keydown} type="number" step="any"
         placeholder={t('units.conv_placeholder_factor')}
-        class="w-20 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+        class="w-20 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
       <select bind:value={toUnitId}
-        class="flex-1 min-w-28 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+        class="flex-1 min-w-28 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
         <option value="">{t('common.unit_placeholder')}</option>
         {#if units.length > 0}
           {#if pucUnits.length > 0}
@@ -126,7 +126,7 @@
       </button>
     </div>
     {#if preview()}
-      <p class="text-xs text-blue-600">{preview()}</p>
+      <p class="text-xs text-indigo-600">{preview()}</p>
     {/if}
   {/if}
 </div>

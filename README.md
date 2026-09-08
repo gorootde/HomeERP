@@ -1,6 +1,10 @@
-# HomeERP
+<p align="center">
+  <img src="homeerp-icon.svg" alt="HomeERP" width="128" height="128" />
+</p>
 
-A self-hosted home inventory and stock management system built with FastAPI and SvelteKit.
+<h1 align="center">HomeERP</h1>
+
+<p align="center">A self-hosted home inventory and stock management system built with FastAPI and SvelteKit.</p>
 
 I was deeply disappointed by the attitude of maintainers in some existing open-source inventory management solutions who were unwilling to accept contributions or changes, so I created this project as a more flexible and community-driven alternative.
 

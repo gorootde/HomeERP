@@ -77,7 +77,7 @@
     <a href="/settings" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"><ChevronLeft size={20} /></a>
     <h1 class="text-xl font-bold text-gray-900 flex-1">{t('units.title')}</h1>
     <button onclick={openAdd}
-      class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
       <Plus size={16} /> {t('units.btn_add')}
     </button>
   </div>
@@ -128,12 +128,12 @@
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('units.label_name')}</label>
           <input bind:value={form.name} placeholder={t('units.placeholder_name')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('units.label_abbr')}</label>
           <input bind:value={form.abbreviation} placeholder={t('units.placeholder_abbr')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
       </div>
 
@@ -154,7 +154,7 @@
         <button onclick={() => editModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
         <button onclick={save}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
           {editModal.isNew ? t('common.create') : t('common.save')}
         </button>
       </div>

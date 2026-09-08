@@ -41,12 +41,12 @@
     <div class="flex gap-2">
       <button onclick={() => setLocale('de')}
         class="flex-1 py-2 text-sm font-medium rounded-lg border transition-colors
-          {getLocale() === 'de' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
+          {getLocale() === 'de' ? 'bg-indigo-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
         {t('settings.lang_de')}
       </button>
       <button onclick={() => setLocale('en')}
         class="flex-1 py-2 text-sm font-medium rounded-lg border transition-colors
-          {getLocale() === 'en' ? 'bg-blue-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
+          {getLocale() === 'en' ? 'bg-indigo-600 text-white border-transparent' : 'border-gray-300 hover:bg-gray-50'}">
         {t('settings.lang_en')}
       </button>
     </div>

@@ -228,7 +228,7 @@
   <div class="flex flex-wrap items-center gap-3 mb-4">
     <h1 class="text-xl font-bold text-gray-900 flex-1">{t('stock.title')}</h1>
     <button onclick={openAdd}
-      class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shrink-0">
+      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shrink-0">
       <Plus size={16} /> {t('stock.btn_add')}
     </button>
   </div>
@@ -265,7 +265,7 @@
         {#if e.product?.id}
           <button type="button" onclick={() => productEditModal = { productId: e.product.id }}
             title={t('products.btn_edit')}
-            class="font-medium text-blue-600 hover:underline text-left">
+            class="font-medium text-indigo-600 hover:underline text-left">
             {e.product.name}
           </button>
         {:else}

@@ -230,20 +230,20 @@
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_name')}</label>
         <input bind:value={form.name} placeholder={t('products.placeholder_name')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <!-- Vendor -->
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_vendor')}</label>
         <input bind:value={form.vendor} placeholder={t('products.placeholder_vendor')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <!-- Unit + Category -->
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_unit')}</label>
           <select bind:value={form.unit_id}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('common.unit_placeholder')}</option>
             {#each units as u}
               <option value={u.id}>{u.name} ({u.abbreviation})</option>
@@ -253,7 +253,7 @@
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_category')}</label>
           <select bind:value={form.category_id}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('common.no_category')}</option>
             {#each categories as c}
               <option value={c.id}>{c.name}</option>
@@ -266,7 +266,7 @@
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('products.label_entry_unit')}</label>
           <select bind:value={form.entry_unit_key}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('products.label_unit')} ({t('common.default')})</option>
             {#each entryUnitOptions() as opt}
               <option value={opt.id}>{opt.label}</option>
@@ -329,7 +329,7 @@
           {t('common.cancel')}
         </button>
         <button onclick={saveProduct}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
           {isNew ? t('common.create') : t('common.save')}
         </button>
       </div>

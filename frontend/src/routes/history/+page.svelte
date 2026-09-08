@@ -81,7 +81,7 @@
       </div>
       <label class="text-xs text-gray-500">{t('forecast.window_label')}</label>
       <select bind:value={forecastDays} onchange={reload}
-        class="px-2 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        class="px-2 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <option value="30">{t('forecast.window_30d')}</option>
         <option value="90">{t('forecast.window_90d')}</option>
         <option value="365">{t('forecast.window_365d')}</option>

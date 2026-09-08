@@ -288,7 +288,7 @@
     <button
       onclick={() => { scannerActive = !scannerActive; if (!scannerActive) { result = null; lastCode = ''; lastEntry = null; } }}
       class="mt-3 w-full py-2.5 text-sm font-medium rounded-lg border transition-colors
-        {scannerActive ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700'}">
+        {scannerActive ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700'}">
       <span class="flex items-center justify-center gap-2">
         <ScanBarcode size={16} />
         {scannerActive ? t('inventory.btn_stop_scanner') : t('inventory.btn_start_scanner')}
@@ -345,7 +345,7 @@
       {#if result.type === 'stockid'}
         {@const entry = result.data}
         <div class="flex items-center gap-2">
-          <span class="text-xs font-medium bg-blue-100 text-blue-700 rounded-full px-2.5 py-0.5">{t('scanner.stockid_badge')}</span>
+          <span class="text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full px-2.5 py-0.5">{t('scanner.stockid_badge')}</span>
           <span class="font-mono text-sm text-gray-600">{result.code}</span>
         </div>
         <div>
@@ -358,7 +358,7 @@
         </div>
         <div class="flex gap-2">
           <button onclick={() => consume(entry)}
-            class="flex-1 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            class="flex-1 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
             <span class="flex items-center justify-center gap-1"><Minus size={14} /> {t('scanner.btn_consume')}</span>
           </button>
           <button onclick={() => openAdjust(entry)}
@@ -372,7 +372,7 @@
         <p class="text-sm text-gray-500">{t('scanner.stockid_not_found_hint')}</p>
         <p class="text-xs font-mono text-gray-400">{result.code}</p>
         <button onclick={() => openCreateEntryForStockId(result.code)}
-          class="w-full py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          class="w-full py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
           {t('scanner.btn_create_entry')}
         </button>
 
@@ -394,7 +394,7 @@
           </div>
         </div>
         <button onclick={() => openAddEntry(product, result.code)}
-          class="w-full py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          class="w-full py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
           {t('scanner.btn_add_entry')}
         </button>
 
@@ -428,13 +428,13 @@
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_new_qty')}</label>
         <input bind:value={adjustQty} type="number" step="any"
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <div class="flex justify-end gap-2">
         <button onclick={() => adjustModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
         <button onclick={doAdjust}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">{t('common.save')}</button>
+          class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">{t('common.save')}</button>
       </div>
     </div>
   </Modal>
@@ -448,18 +448,18 @@
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_name')}</label>
         <input bind:value={newProd.name} placeholder={t('scanner.placeholder_name')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_vendor')}</label>
         <input bind:value={newProd.vendor} placeholder={t('scanner.placeholder_vendor')}
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_unit')}</label>
           <select bind:value={newProd.unit_id}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('scanner.unit_placeholder')}</option>
             {#each units as u}
               <option value={u.id}>{u.name} ({u.abbreviation})</option>
@@ -469,7 +469,7 @@
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">{t('scanner.label_category')}</label>
           <select bind:value={newProd.category_id}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">{t('common.no_category')}</option>
             {#each categories as c}
               <option value={c.id}>{c.name}</option>
@@ -493,7 +493,7 @@
         <button onclick={() => productModal = null}
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">{t('common.cancel')}</button>
         <button onclick={saveProduct}
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
           {productModal.mode === 'edit' ? t('common.save') : t('scanner.btn_create_product')}
         </button>
       </div>

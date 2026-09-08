@@ -12,7 +12,7 @@
 </script>
 
 <select bind:value {onchange}
-  class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+  class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
   {#if placeholder}<option value="">{placeholder}</option>{/if}
   {#each options as opt}
     <option value={opt.value}>{opt.label}</option>

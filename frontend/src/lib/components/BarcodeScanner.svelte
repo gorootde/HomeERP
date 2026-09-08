@@ -169,7 +169,7 @@
         <input type="range" min={zoomMin} max={zoomMax} step="0.1"
           value={zoomValue}
           oninput={(e) => applyZoom(Number(e.target.value))}
-          class="flex-1 accent-blue-600" />
+          class="flex-1 accent-indigo-600" />
       </div>
     {/if}
   {:else if status === 'error'}

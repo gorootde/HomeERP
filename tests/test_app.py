@@ -29,6 +29,32 @@ def test_spa_fallback_serves_index_for_client_routes(client):
         assert resp.status_code == 404
 
 
+def test_root_static_assets_are_served(client, tmp_path, monkeypatch):
+    """Files emitted at the root of the SvelteKit build (favicon, manifest,
+    PWA icons, …) must be served as real files, not shadowed by the SPA
+    index fallback."""
+    import backend.main as main
+
+    (tmp_path / "index.html").write_text("<!doctype html><title>SPA</title>")
+    (tmp_path / "favicon.ico").write_bytes(b"\x00\x00\x01\x00")
+    (tmp_path / "homeerp-icon.svg").write_text("<svg xmlns='http://www.w3.org/2000/svg'/>")
+    monkeypatch.setattr(main, "FRONTEND_DIR", tmp_path)
+
+    ico = client.get("/favicon.ico")
+    assert ico.status_code == 200
+    assert ico.content == b"\x00\x00\x01\x00"
+    assert "text/html" not in ico.headers["content-type"]
+
+    svg = client.get("/homeerp-icon.svg")
+    assert svg.status_code == 200
+    assert "svg" in svg.headers["content-type"]
+
+    # Unknown non-API paths still fall through to the SPA index.
+    spa = client.get("/some/client/route")
+    assert spa.status_code == 200
+    assert "text/html" in spa.headers["content-type"]
+
+
 def test_full_crud_smoke(client):
     unit = client.post("/api/units", json={"name": "Piece", "abbreviation": "pc"}).json()
     cat = client.post("/api/categories", json={"name": "Misc"}).json()

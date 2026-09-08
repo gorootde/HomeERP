@@ -52,6 +52,14 @@ if _app_dir.exists():
 async def spa_fallback(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
+    # Serve real files emitted at the root of the SvelteKit build (favicon.ico,
+    # manifest.json, homeerp-icon.svg, apple-touch-icon.png, icon-*.png, …)
+    # before falling through to the SPA index.
+    if full_path:
+        root = FRONTEND_DIR.resolve()
+        candidate = (FRONTEND_DIR / full_path).resolve()
+        if candidate.is_file() and root in candidate.parents:
+            return FileResponse(str(candidate))
     index = FRONTEND_DIR / "index.html"
     if index.exists():
         return FileResponse(str(index))

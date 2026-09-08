@@ -116,7 +116,7 @@
   <div class="flex flex-wrap items-center gap-3 mb-5">
     <h1 class="text-xl font-bold text-gray-900 flex-1">{t('products.title')}</h1>
     <button onclick={openAdd}
-      class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shrink-0">
+      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shrink-0">
       <Plus size={16} /> {t('products.btn_add')}
     </button>
   </div>
@@ -167,7 +167,7 @@
     {#snippet tagsCell(p)}
       <div class="flex flex-wrap gap-1">
         {#each p.tags || [] as tag}
-          <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{tag.name}</span>
+          <span class="text-xs bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">{tag.name}</span>
         {/each}
       </div>
     {/snippet}

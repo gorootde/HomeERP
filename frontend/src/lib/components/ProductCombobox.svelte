@@ -125,7 +125,7 @@
     onfocus={openList}
     oninput={onInput}
     onkeydown={onKeydown}
-    class="w-full min-w-0 pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500" />
+    class="w-full min-w-0 pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500" />
   {#if value && !disabled}
     <button
       type="button"
@@ -152,7 +152,7 @@
             aria-selected={p.id === Number(value)}
             onclick={() => choose(p)}
             onmousemove={() => (highlight = i)}
-            class={`block w-full text-left px-3 py-1.5 ${i === highlight ? 'bg-blue-50' : ''}`}>
+            class={`block w-full text-left px-3 py-1.5 ${i === highlight ? 'bg-indigo-50' : ''}`}>
             <span class={`block text-gray-900 ${p.id === Number(value) ? 'font-semibold' : ''}`}>
               {fmtProductLabel(p)}
             </span>

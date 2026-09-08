@@ -8,7 +8,7 @@
   import { onMount } from 'svelte';
   import {
     LayoutDashboard, Boxes, Layers, ScanBarcode, ClipboardCheck,
-    History, Settings, Code2, MoreHorizontal, Package2
+    History, Settings, Code2, MoreHorizontal
   } from 'lucide-svelte';
 
   let { children } = $props();
@@ -58,7 +58,7 @@
   <!-- Desktop sidebar -->
   <nav class="hidden md:flex flex-col fixed inset-y-0 left-0 w-60 bg-white border-r border-gray-200 z-30">
     <div class="flex items-center gap-2.5 px-5 h-14 border-b border-gray-200 shrink-0">
-      <Package2 size={22} class="text-blue-600" />
+      <img src="/homeerp-icon.svg" alt="" width="24" height="24" class="rounded-md" />
       <span class="font-semibold text-gray-900 text-sm">HomeERP</span>
     </div>
     <ul class="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
@@ -67,7 +67,7 @@
           <a href={item.href}
             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
               {isActive(item.href)
-                ? 'bg-blue-50 text-blue-700'
+                ? 'bg-indigo-50 text-indigo-700'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
             <svelte:component this={item.icon} size={18} />
             {t(item.labelKey)}
@@ -79,7 +79,7 @@
       {#each navFooterItems as item}
         <a href={item.href}
           class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-            {isActive(item.href) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
+            {isActive(item.href) ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}">
           <svelte:component this={item.icon} size={18} />
           {t(item.labelKey)}
         </a>
@@ -101,7 +101,7 @@
     {#each bottomPrimary as item}
       <a href={item.href}
         class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors
-          {isActive(item.href) ? 'text-blue-600' : 'text-gray-500'}">
+          {isActive(item.href) ? 'text-indigo-600' : 'text-gray-500'}">
         <svelte:component this={item.icon} size={20} />
         {t(item.mobileLabelKey || item.labelKey)}
       </a>
@@ -124,7 +124,7 @@
         {#each moreItems as item}
           <button onclick={() => navigateMore(item.href)}
             class="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl text-xs font-medium
-              {isActive(item.href) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}">
+              {isActive(item.href) ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}">
             <svelte:component this={item.icon} size={22} />
             {t(item.labelKey)}
           </button>

@@ -114,7 +114,7 @@
             {t('printing.label_orientation')}
           </label>
           <select id="label-orientation" bind:value={orientation}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {#each orientationChoices as o}
               <option value={o}>{t(`printing.orientation_${o}`)}</option>
             {/each}
@@ -126,7 +126,7 @@
             {t('printing.label_width')}
           </label>
           <select id="label-width" bind:value={widthMm}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {#each widthChoices as w}
               <option value={String(w)}>{w} mm</option>
             {/each}
@@ -138,7 +138,7 @@
             {t('printing.label_length')}
           </label>
           <select id="label-length-mode" bind:value={lengthMode}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {#each lengthModeChoices as m}
               <option value={m}>{t(`printing.length_mode_${m}`)}</option>
             {/each}
@@ -146,7 +146,7 @@
           {#if lengthMode === 'fixed'}
             <div class="flex items-center gap-2 mt-2">
               <input id="label-length" bind:value={lengthMm} type="number" min="15" max="500" step="1"
-                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               <span class="text-sm text-gray-500 shrink-0">mm</span>
             </div>
           {/if}
@@ -163,7 +163,7 @@
             {t('printing.label_printer_ip')}
           </label>
           <input id="printer-ip" bind:value={printerIp} placeholder={t('printing.placeholder_printer_ip')}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
           <p class="text-xs text-gray-400 mt-0.5">{t('printing.hint_printer_ip')}</p>
         </div>
 
@@ -172,7 +172,7 @@
             {t('printing.label_protocol')}
           </label>
           <select id="printer-protocol" bind:value={protocol}
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {#each protocolChoices as p}
               <option value={p}>{t(`printing.protocol_${p}`)}</option>
             {/each}
@@ -186,7 +186,7 @@
               {t('printing.label_model')}
             </label>
             <input id="printer-model" bind:value={model} placeholder="QL-710W"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
             <p class="text-xs text-gray-400 mt-0.5">{t('printing.hint_model')}</p>
           </div>
         {/if}
@@ -213,7 +213,7 @@
       </label>
 
       <button onclick={save}
-        class="w-full py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        class="w-full py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
         {t('printing.btn_save')}
       </button>
     </div>
